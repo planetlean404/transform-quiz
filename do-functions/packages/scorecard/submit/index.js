@@ -53,7 +53,9 @@ async function getAccessToken(serviceAccountJson) {
 }
 
 async function appendRow(sheetId, accessToken, row) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${SHEET_TAB}%21A1:append?valueInputOption=USER_ENTERED`;
+  // RAW: values are stored literally — a first name starting with "=" must
+  // never be interpreted as a spreadsheet formula.
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${SHEET_TAB}%21A1:append?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -78,38 +80,58 @@ function phpEncode(params, prefix, out) {
   return out;
 }
 
-async function pushToKartra({ firstName, email, phase, pattern }) {
+async function kartraCall(params) {
+  const res = await fetch('https://app.kartra.com/api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: phpEncode(params, '', new URLSearchParams())
+  });
+  const text = await res.text();
+  try { return JSON.parse(text); } catch (e) {
+    return { status: 'Unparseable', message: text.slice(0, 120) };
+  }
+}
+
+async function pushToKartra({ firstName, email, phase }) {
   const { KARTRA_API_KEY, KARTRA_API_PASSWORD, KARTRA_APP_ID } = process.env;
   const missing = v => !v || v === 'unset';
   if (missing(KARTRA_API_KEY) || missing(KARTRA_API_PASSWORD) || missing(KARTRA_APP_ID)) {
     return 'kartra-skipped-no-creds';
   }
 
+  const auth = { api_key: KARTRA_API_KEY, api_password: KARTRA_API_PASSWORD, app_id: KARTRA_APP_ID };
+  // Kartra's WAF rejects names containing markup; strip anything suspicious
+  // for the Kartra copy only (the sheet keeps the original).
+  const safeName = firstName.replace(/[<>={}\[\]\\]/g, '').trim().slice(0, 60) || 'Visitor';
+
+  // Two separate calls because create_lead ERRORS on an existing contact and
+  // kills every action bundled with it — repeat visitors would lose their
+  // tags. Tags are assigned in their own call, which works for new and
+  // existing leads alike.
+  const created = await kartraCall({
+    ...auth,
+    lead: { email, first_name: safeName },
+    actions: [{ cmd: 'create_lead' }]
+  });
+  const createStatus = created.status === 'Success' ? 'created' : 'existing';
+
   // Minimal tag set (Jim's call): "scorecard" identifies the lead source,
   // phase number tag (phase1–phase4) drives segmented follow-up. The pattern
   // is stored in the sheet if pattern-level segmentation is ever wanted.
   const phaseNum = { 'Formative': 1, 'Localized': 2, 'Broad-based': 3, 'Benchmark': 4 }[phase];
-  const body = phpEncode({
-    api_key: KARTRA_API_KEY,
-    api_password: KARTRA_API_PASSWORD,
-    app_id: KARTRA_APP_ID,
-    lead: { email, first_name: firstName },
+  const tagged = await kartraCall({
+    ...auth,
+    lead: { email },
     actions: [
-      { cmd: 'create_lead' },
       { cmd: 'assign_tag', tag_name: 'scorecard' },
       { cmd: 'assign_tag', tag_name: `phase${phaseNum}` }
     ]
-  }, '', new URLSearchParams());
-
-  const res = await fetch('https://app.kartra.com/api', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
   });
-  const text = await res.text();
-  let status;
-  try { status = JSON.parse(text).status; } catch (e) { status = `unparseable: ${text.slice(0, 120)}`; }
-  return `kartra-${status}`;
+
+  if (tagged.status !== 'Success') {
+    return `kartra-tag-failed(${createStatus}): ${String(tagged.message || tagged.status).slice(0, 100)}`;
+  }
+  return `kartra-Success(${createStatus})`;
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────
