@@ -85,6 +85,9 @@ async function pushToKartra({ firstName, email, phase, pattern }) {
     return 'kartra-skipped-no-creds';
   }
 
+  // Minimal tag set (Jim's call): "scorecard" identifies the lead source,
+  // phase tag drives segmented follow-up. The pattern is stored in the sheet
+  // if pattern-level segmentation is ever wanted.
   const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const body = phpEncode({
     api_key: KARTRA_API_KEY,
@@ -94,8 +97,7 @@ async function pushToKartra({ firstName, email, phase, pattern }) {
     actions: [
       { cmd: 'create_lead' },
       { cmd: 'assign_tag', tag_name: 'scorecard' },
-      { cmd: 'assign_tag', tag_name: `phase-${slug(phase)}` },
-      { cmd: 'assign_tag', tag_name: `pattern-${slug(pattern)}` }
+      { cmd: 'assign_tag', tag_name: `phase-${slug(phase)}` }
     ]
   }, '', new URLSearchParams());
 
