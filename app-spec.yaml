@@ -1,0 +1,12 @@
+name: transform-quiz
+region: nyc
+static_sites:
+  - name: quiz
+    git:
+      repo_clone_url: https://github.com/planetlean404/transform-quiz.git
+      branch: main
+    source_dir: /
+    catchall_document: index.html
+domains:
+  - domain: transform.planetlean.com
+    type: PRIMARY
