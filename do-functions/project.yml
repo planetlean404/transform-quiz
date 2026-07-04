@@ -1,0 +1,26 @@
+packages:
+  - name: scorecard
+    functions:
+      - name: submit
+        runtime: 'nodejs:22'
+        web: true
+        annotations:
+          web-custom-options: true
+        limits:
+          timeout: 30000
+        environment:
+          GOOGLE_SHEET_ID: "${GOOGLE_SHEET_ID}"
+          GOOGLE_SERVICE_ACCOUNT_JSON_B64: "${GOOGLE_SERVICE_ACCOUNT_JSON_B64}"
+          KARTRA_API_KEY: "${KARTRA_API_KEY}"
+          KARTRA_API_PASSWORD: "${KARTRA_API_PASSWORD}"
+          KARTRA_APP_ID: "${KARTRA_APP_ID}"
+      - name: report
+        runtime: 'nodejs:22'
+        web: true
+        annotations:
+          web-custom-options: true
+        limits:
+          timeout: 15000
+        environment:
+          GOOGLE_SHEET_ID: "${GOOGLE_SHEET_ID}"
+          GOOGLE_SERVICE_ACCOUNT_JSON_B64: "${GOOGLE_SERVICE_ACCOUNT_JSON_B64}"

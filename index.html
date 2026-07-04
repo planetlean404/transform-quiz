@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformation Readiness Scorecard — planet LEAN</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pl-accent: #1595D3; /* planet LEAN brand blue (from logo) */
+    --pl-accent-dark: #2c3e50;
+    --pl-orange: #ff8c00;
+    --pl-bg: #ffffff;
+    --pl-bg-soft: #f5f6f7;
+    --pl-text: #2c3e50;
+    --pl-text-muted: #7f8c95;
+    --pl-border: #dfe3e6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--pl-bg-soft);
+    color: var(--pl-text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px;
+  }
+  .wrap {
+    width: 100%;
+    max-width: 720px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 16px 0 6px;
+  }
+  .brand img.lockup { height: 48px; width: auto; }
+  .brand-sub {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--pl-text-muted);
+    margin-bottom: 20px;
+  }
+  .card {
+    background: var(--pl-bg);
+    border: 1px solid #e8ebee;
+    border-radius: 14px;
+    padding: 48px 44px;
+    box-shadow: 0 1px 3px rgba(16,24,40,0.06), 0 10px 28px rgba(16,24,40,0.05);
+  }
+
+  /* ---------- Landing screen ---------- */
+  .landing { text-align: center; }
+  .landing h1 {
+    font-size: 33px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    color: var(--pl-accent-dark);
+    margin: 4px 0 14px;
+  }
+  .landing .sub {
+    font-size: 16.5px;
+    line-height: 1.6;
+    color: var(--pl-text-muted);
+    max-width: 520px;
+    margin: 0 auto 26px;
+  }
+  .chip-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+  .chip {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--pl-accent-dark);
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 999px;
+    padding: 7px 15px;
+  }
+  .chip::before { content: "✓ "; color: var(--pl-accent); font-weight: 800; }
+  .start-btn {
+    display: inline-block;
+    background: var(--pl-accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 17px 42px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .start-btn:hover { background: #0F7DB3; transform: translateY(-1px); }
+  .trust-line {
+    font-size: 13px;
+    color: var(--pl-text-muted);
+    margin-top: 18px;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--pl-border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--pl-accent);
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .progress-label {
+    text-align: right;
+    font-size: 13px;
+    color: var(--pl-text-muted);
+    margin-bottom: 28px;
+  }
+  .q-principle {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--pl-accent);
+    margin-bottom: 10px;
+  }
+  .question {
+    font-size: 25px;
+    font-weight: 700;
+    color: var(--pl-accent-dark);
+    margin-bottom: 26px;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+  }
+  .quiz-anim { animation: qfade 0.25s ease; }
+  @keyframes qfade {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    padding: 15px 18px;
+    border: 1.5px solid var(--pl-border);
+    border-radius: 10px;
+    background: var(--pl-bg);
+    color: var(--pl-text);
+    font-size: 15.5px;
+    line-height: 1.45;
+    cursor: pointer;
+    transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+    font-family: inherit;
+  }
+  .option .key {
+    flex: 0 0 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pl-text-muted);
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 6px;
+    transition: all 0.12s ease;
+  }
+  .option:hover {
+    border-color: var(--pl-accent);
+    transform: translateY(-1px);
+  }
+  .option:hover .key { color: var(--pl-accent); border-color: var(--pl-accent); }
+  .option.selected {
+    border-color: var(--pl-accent);
+    background: rgba(21,149,211,0.07);
+  }
+  .option.selected .key {
+    background: var(--pl-accent);
+    border-color: var(--pl-accent);
+    color: #fff;
+  }
+  .back-link {
+    display: inline-block;
+    margin-top: 20px;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--pl-text-muted);
+    cursor: pointer;
+    padding: 4px 2px;
+  }
+  .back-link:hover { color: var(--pl-accent); }
+  .gate { display: none; text-align: center; }
+  .gate h2 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: var(--pl-accent-dark);
+    margin-bottom: 8px;
+  }
+  .gate p {
+    color: var(--pl-text-muted);
+    margin-bottom: 24px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .gate .privacy {
+    font-size: 12.5px;
+    color: var(--pl-text-muted);
+    margin: 14px 0 0;
+  }
+  .gate input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--pl-border);
+    border-radius: 8px;
+    font-size: 16px;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  .gate input:focus { outline: none; border-color: var(--pl-accent); }
+  .gate button {
+    width: 100%;
+    padding: 15px;
+    background: var(--pl-accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .gate button:hover { background: var(--pl-accent-dark); }
+
+  /* ---------- Results ---------- */
+  .results { display: none; }
+  .results-header {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .results-header .eyebrow {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--pl-text-muted);
+    margin-bottom: 10px;
+  }
+  .results-header h2 {
+    font-size: 28px;
+    color: var(--pl-accent-dark);
+    margin: 0 0 6px;
+    line-height: 1.25;
+  }
+  .phase-badge {
+    display: inline-block;
+    background: var(--pl-orange);
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    padding: 6px 18px;
+    border-radius: 999px;
+    margin: 10px 0 4px;
+  }
+  .phase-tagline {
+    color: var(--pl-text-muted);
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+  .curve-box { margin: 8px 0 0; }
+  .curve-box svg { width: 100%; height: auto; display: block; }
+  .curve-caption {
+    text-align: center;
+    font-size: 12px;
+    color: var(--pl-text-muted);
+    margin: 4px 0 28px;
+  }
+  .narrative {
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 8px;
+    padding: 22px 24px;
+    font-size: 15.5px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .narrative h3 {
+    margin: 0 0 10px;
+    font-size: 17px;
+    color: var(--pl-accent-dark);
+  }
+  /* ---------- Numbered report sections ---------- */
+  .result-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 4px 0 30px;
+  }
+  .result-nav a {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pl-accent);
+    text-decoration: none;
+    border: 1px solid var(--pl-border);
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+  .result-nav a:hover { background: var(--pl-bg-soft); }
+  .section { margin-bottom: 30px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 2px solid var(--pl-border);
+    padding-bottom: 8px;
+    margin-bottom: 18px;
+  }
+  /* Accordion sections (02–05) */
+  button.section-head {
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 2px solid var(--pl-border);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    padding: 0 0 8px;
+    margin-bottom: 0;
+  }
+  button.section-head:hover .section-title { color: var(--pl-accent); }
+  .chev {
+    margin-left: auto;
+    font-size: 15px;
+    color: var(--pl-text-muted);
+    transition: transform 0.25s ease;
+  }
+  .acc:not(.open) .chev { transform: rotate(-90deg); }
+  .acc-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+  .acc-inner { padding-top: 18px; }
+  .section-num {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--pl-accent);
+    letter-spacing: 1px;
+  }
+  .section-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--pl-accent-dark);
+  }
+  .hero-date {
+    font-size: 13px;
+    color: var(--pl-text-muted);
+    margin-bottom: 14px;
+  }
+  .big-score {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--pl-accent-dark);
+    margin: 12px 0 2px;
+  }
+  .big-score span {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--pl-text-muted);
+  }
+  .strength-list { margin: 0; padding-left: 0; list-style: none; }
+  .strength-list li {
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .strength-list li strong { color: var(--pl-accent-dark); }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 130px;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 13px;
+  }
+  .bar-name { font-size: 14px; font-weight: 600; color: var(--pl-accent-dark); }
+  .bar-track {
+    position: relative;
+    height: 14px;
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 999px;
+  }
+  .bar-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--pl-accent);
+    border-radius: 999px;
+  }
+  .bar-tick {
+    position: absolute;
+    top: -3px; bottom: -3px;
+    width: 1px;
+    background: #c3cad0;
+  }
+  .bar-score { font-size: 13.5px; font-weight: 700; color: var(--pl-accent-dark); text-align: right; }
+  .bar-score em { font-style: normal; font-weight: 500; color: var(--pl-text-muted); }
+  .bar-legend { font-size: 12px; color: var(--pl-text-muted); margin-top: 6px; text-align: right; }
+  .insight-card {
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-left: 4px solid var(--pl-orange);
+    border-radius: 8px;
+    padding: 20px 22px;
+    font-size: 15.5px;
+    line-height: 1.6;
+  }
+  .insight-card h3 { margin: 0 0 10px; font-size: 16.5px; color: var(--pl-accent-dark); }
+  .plan-list { list-style: none; margin: 0; padding: 0; }
+  .plan-day {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--pl-border);
+  }
+  .plan-day:last-child { border-bottom: none; }
+  .day-num {
+    flex: 0 0 52px;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--pl-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-top: 2px;
+  }
+  .plan-body { font-size: 14.5px; line-height: 1.55; }
+  .plan-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--pl-accent);
+    background: rgba(21,149,211,0.1);
+    border-radius: 4px;
+    padding: 2px 7px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .cta-row { display: flex; gap: 12px; }
+  .cta-row button {
+    flex: 1;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .cta-primary {
+    background: var(--pl-accent);
+    color: #fff;
+    border: none;
+  }
+  .cta-primary:hover { background: var(--pl-accent-dark); }
+  .cta-secondary {
+    background: var(--pl-bg);
+    color: var(--pl-accent);
+    border: 1px solid var(--pl-accent);
+  }
+  .cta-secondary:hover { background: var(--pl-bg-soft); }
+  .placeholder-note {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--pl-text-muted);
+    background: var(--pl-bg-soft);
+    border: 1px dashed var(--pl-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .reset {
+    display: block;
+    margin: 20px auto 0;
+    background: none;
+    border: none;
+    color: var(--pl-text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  @media (max-width: 560px) {
+    .card { padding: 28px 20px; }
+    .question { font-size: 21px; }
+    .score-strip { flex-direction: column; }
+    .cta-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <img class="lockup" src="logo-full.png" alt="planet LEAN">
+  </div>
+  <div class="brand-sub">Transformation Readiness Scorecard</div>
+  <div class="card">
+
+    <div class="landing" id="landingScreen">
+      <h1>How ready is your plant for a lean transformation?</h1>
+      <div class="sub">Answer a few questions about how your plant actually runs — not how the binder says it should. Get a personalized report showing where you are on the transformation curve and what to fix first.</div>
+      <div class="chip-row">
+        <span class="chip">Under 5 minutes</span>
+        <span class="chip">No cost</span>
+        <span class="chip">Instant personalized report</span>
+      </div>
+      <button class="start-btn" onclick="startQuiz()">Get My Scorecard&nbsp;&nbsp;→</button>
+      <div class="trust-line">Built on the LEAN Enterprise System — the same model behind our full plant assessments. [PLACEHOLDER — Jim refines trust line]</div>
+    </div>
+
+    <div id="quizScreen" style="display:none">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">Question 1 of 3</div>
+      <div class="quiz-anim" id="quizBody">
+        <div class="q-principle" id="questionPrinciple"></div>
+        <div class="question" id="questionText"></div>
+        <div class="options" id="optionsList"></div>
+        <button class="back-link" id="backLink" onclick="goBack()" style="visibility:hidden">← Back</button>
+      </div>
+    </div>
+
+    <div class="gate" id="gateScreen">
+      <h2>Your report is ready</h2>
+      <p>Tell us where to send it — your personalized results appear instantly, right here.</p>
+      <input type="text" id="firstName" placeholder="First name">
+      <input type="email" id="email" placeholder="Email you check frequently">
+      <input type="text" id="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true">
+      <button onclick="submitGate()">Show My Results&nbsp;&nbsp;→</button>
+      <div class="privacy">One report, no spam. We never share your email. [PLACEHOLDER — Jim refines privacy line]</div>
+    </div>
+
+    <div class="results" id="resultsScreen">
+      <nav class="result-nav">
+        <a href="#sec-overview">01 Overview</a>
+        <a href="#sec-strengths">02 Strengths</a>
+        <a href="#sec-breakdown">03 Breakdown</a>
+        <a href="#sec-insights">04 Insights</a>
+        <a href="#sec-plan">05 Action Plan</a>
+        <a href="#sec-download">06 Download</a>
+      </nav>
+
+      <section class="section" id="sec-overview">
+        <div class="results-header">
+          <div class="eyebrow">Your Transformation Readiness Result</div>
+          <h2 id="resultsTitle"></h2>
+          <div class="hero-date" id="resultsDate"></div>
+          <div class="big-score" id="bigScore"></div>
+          <div class="phase-badge" id="phaseBadge"></div>
+          <div class="phase-tagline" id="phaseTagline"></div>
+        </div>
+        <div class="curve-box" id="curveBox"></div>
+        <div class="curve-caption">SQDCPS — Safety, Quality, Delivery, Cost, People, Sustainability</div>
+        <div class="narrative" id="narrative"></div>
+      </section>
+
+      <section class="section acc open" id="sec-strengths">
+        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="true">
+          <span class="section-num">02</span><span class="section-title">Where You're Strong</span><span class="chev">▾</span>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <ul class="strength-list" id="strengthsList"></ul>
+        </div></div>
+      </section>
+
+      <section class="section acc" id="sec-breakdown">
+        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
+          <span class="section-num">03</span><span class="section-title">Score Breakdown by Principle</span><span class="chev">▾</span>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div id="breakdownList"></div>
+          <div class="bar-legend">Tick marks show phase boundaries: 2 Localized · 3 Broad-based · 4 Benchmark</div>
+        </div></div>
+      </section>
+
+      <section class="section acc" id="sec-insights">
+        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
+          <span class="section-num">04</span><span class="section-title">What Your Pattern Reveals</span><span class="chev">▾</span>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="insight-card" id="insightCard"></div>
+        </div></div>
+      </section>
+
+      <section class="section acc" id="sec-plan">
+        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
+          <span class="section-num">05</span><span class="section-title">Your 7-Day Action Plan</span><span class="chev">▾</span>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <ol class="plan-list" id="planList"></ol>
+        </div></div>
+      </section>
+
+      <section class="section" id="sec-download">
+        <div class="section-head"><span class="section-num">06</span><span class="section-title">Take It With You</span></div>
+        <div class="cta-row">
+          <button class="cta-primary" onclick="alert('PDF generation comes in the next build step.')">Download PDF Report</button>
+          <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
+        </div>
+        <div class="placeholder-note">Prototype note: narrative, strengths, insights, and action-plan copy are placeholders — Jim supplies real content later. PDF + Kartra sync are the next build steps.</div>
+      </section>
+    </div>
+
+  </div>
+  <button class="reset" onclick="resetQuiz()">Reset demo</button>
+</div>
+
+<script>
+  // ---------- Phase model ----------
+  // Index order matters: 0 → 3 = low → high maturity. Scoring averages these.
+  const PHASES = [
+    {
+      key: "formative",
+      name: "Formative",
+      tagline: "Early days — lean practices are new or ad hoc",
+      narrative: "Your plant is at the starting line of its lean journey. Improvement happens, but it depends on individual heroics rather than systems. The biggest opportunity right now is establishing foundational routines — standard work, daily management, and structured problem-solving — in one model area to prove the approach. [PLACEHOLDER — Jim supplies real Formative copy]"
+    },
+    {
+      key: "localized",
+      name: "Localized",
+      tagline: "Pockets of excellence — strong in places, not yet connected",
+      narrative: "You have real islands of lean success — a cell, a line, or a department that shows what's possible. The challenge now is spreading what works beyond those pockets before momentum stalls. Plants at this phase typically need to shift ownership from a few champions to line leadership. [PLACEHOLDER — Jim supplies real Localized copy]"
+    },
+    {
+      key: "broad-based",
+      name: "Broad-based",
+      tagline: "Plant-wide momentum — lean is how most of the plant runs",
+      narrative: "Lean thinking has crossed the tipping point in your plant — most departments run on standard work and structured problem-solving. The frontier now is consistency across shifts, deepening coaching capability, and connecting improvement directly to business results. [PLACEHOLDER — Jim supplies real Broad-based copy]"
+    },
+    {
+      key: "benchmark",
+      name: "Benchmark",
+      tagline: "An industry model — others study how you operate",
+      narrative: "Your plant operates at a level most facilities aspire to — improvement is a daily habit at every level, and results show it. The work at this phase is sustaining: developing the next generation of leaders, protecting the culture through turnover and growth, and extending lean upstream and downstream. [PLACEHOLDER — Jim supplies real Benchmark copy]"
+    }
+  ];
+
+  // ---------- Principles & questions (placeholder content) ----------
+  // Transformation progress is measured across the 5 principles of the LEAN
+  // Enterprise System. Each principle can hold multiple questions (the paid
+  // plant assessment uses the same structure) — principle score = average of
+  // its questions, overall score = average of the principle scores.
+  // Scoring scale: 1 to 4.5. Answer values low → high: 1, 2, 3, 4.5.
+  // Top answer is 4.5 (not 4) so a Benchmark average is actually reachable.
+  const PRINCIPLES = [
+    {
+      name: "Standardization",
+      questions: [
+        {
+          text: "How would you describe your plant's use of standard work?",
+          options: [
+            { label: "We don't have standardized work documented", score: 1 },
+            { label: "A few areas have standard work, but it's inconsistent", score: 2 },
+            { label: "Standard work is documented and followed across most departments", score: 3 },
+            { label: "Standard work is the default, continuously improved, and audited", score: 4.5 }
+          ]
+        }
+      ]
+    },
+    {
+      name: "People Involvement",
+      questions: [
+        {
+          text: "How engaged is your workforce in improving their own work?",
+          options: [
+            { label: "Improvement ideas come from management, if at all", score: 1 },
+            { label: "Some operators suggest ideas, but follow-through is spotty", score: 2 },
+            { label: "Most teams regularly surface and implement their own improvements", score: 3 },
+            { label: "Every employee improves their work as part of the daily routine", score: 4.5 }
+          ]
+        }
+      ]
+    },
+    {
+      name: "Short Lead Time",
+      questions: [
+        {
+          text: "How does material and information flow through your plant?",
+          options: [
+            { label: "Large batches, long queues — expediting is a way of life", score: 1 },
+            { label: "Flow is improved in a few cells, but most of the plant runs in batches", score: 2 },
+            { label: "Most value streams flow with managed WIP and predictable lead times", score: 3 },
+            { label: "Pull systems and rapid changeovers keep lead times short plant-wide", score: 4.5 }
+          ]
+        }
+      ]
+    },
+    {
+      name: "Built-In Quality",
+      questions: [
+        {
+          text: "How is quality assured in your processes?",
+          options: [
+            { label: "Quality is checked at the end — inspection catches what it catches", score: 1 },
+            { label: "Some processes have in-station checks, but escapes still reach customers", score: 2 },
+            { label: "Most processes detect and contain defects at the source", score: 3 },
+            { label: "Error-proofing and andon are standard — defects are stopped, not passed", score: 4.5 }
+          ]
+        }
+      ]
+    },
+    {
+      name: "Continuous Improvement",
+      questions: [
+        {
+          text: "How does your team identify and solve problems?",
+          options: [
+            { label: "Whoever notices a problem fixes it, with no consistent method", score: 1 },
+            { label: "A few trained leaders use root-cause tools in select areas", score: 2 },
+            { label: "Structured problem-solving (A3, 5-Why) is used broadly across the plant", score: 3 },
+            { label: "Problem-solving is a daily habit at every level, and other plants study our approach", score: 4.5 }
+          ]
+        }
+      ]
+    }
+  ];
+
+  // Flattened question list drives the quiz flow; each remembers its principle.
+  const questions = PRINCIPLES.flatMap(p =>
+    p.questions.map(q => ({ ...q, principle: p.name }))
+  );
+
+  let current = 0;
+  let gateTimer = null;
+  const answers = [];
+
+  // ---------- Quiz flow ----------
+  function startQuiz() {
+    document.getElementById("landingScreen").style.display = "none";
+    document.getElementById("quizScreen").style.display = "block";
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const q = questions[current];
+    document.getElementById("questionPrinciple").textContent = q.principle;
+    document.getElementById("questionText").textContent = q.text;
+    document.getElementById("progressLabel").textContent = `Question ${current + 1} of ${questions.length}`;
+    document.getElementById("progressFill").style.width = `${(current / questions.length) * 100}%`;
+
+    const list = document.getElementById("optionsList");
+    list.innerHTML = "";
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "option";
+      btn.innerHTML = `<span class="key">${"ABCD"[idx]}</span><span>${opt.label}</span>`;
+      btn.onclick = () => selectAnswer(opt, btn);
+      list.appendChild(btn);
+    });
+
+    document.getElementById("backLink").style.visibility = current > 0 ? "visible" : "hidden";
+
+    // Replay the entrance animation on each question
+    const body = document.getElementById("quizBody");
+    body.classList.remove("quiz-anim");
+    void body.offsetWidth;
+    body.classList.add("quiz-anim");
+  }
+
+  let advancing = false;
+  function selectAnswer(opt, btn) {
+    if (advancing || answers.length >= questions.length) return;
+    advancing = true;
+    if (btn) btn.classList.add("selected");
+    // Brief pause so the visitor sees their selection register
+    setTimeout(() => {
+      advancing = false;
+      answers.push(opt);
+      if (current < questions.length - 1) {
+        current++;
+        renderQuestion();
+      } else {
+        document.getElementById("progressFill").style.width = "100%";
+        gateTimer = setTimeout(showGate, 200);
+      }
+    }, 220);
+  }
+
+  function goBack() {
+    if (current === 0 || advancing) return;
+    current--;
+    answers.pop();
+    renderQuestion();
+  }
+
+  function showGate() {
+    if (document.getElementById("resultsScreen").style.display === "block") return;
+    document.getElementById("quizScreen").style.display = "none";
+    document.getElementById("gateScreen").style.display = "block";
+  }
+
+  // Backend: stores each report under a unique id (shareable /r/pl-XXXX URL)
+  // and pushes the lead to Kartra. Results render instantly either way.
+  const API_BASE = "https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-ff1b984d-dbbe-4147-97b1-81aea98278a6/scorecard";
+
+  function submitGate() {
+    const name = document.getElementById("firstName").value.trim();
+    const email = document.getElementById("email").value.trim();
+    if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert("Please enter your first name and a valid email.");
+      return;
+    }
+    showResults(name);
+    syncToServer(name, email);
+  }
+
+  // Fire-and-forget: the visitor never waits on the network. On success the
+  // address bar silently upgrades to the permanent report URL.
+  async function syncToServer(name, email) {
+    try {
+      const ps = computePrincipleScores();
+      const score = computeScore();
+      const res = await fetch(`${API_BASE}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: name,
+          email,
+          score,
+          phase: PHASES[phaseIndexForScore(score)].name,
+          principles: ps.map(p => ({ name: p.name, score: p.score })),
+          pattern: detectPattern(ps),
+          answers: answers.map(a => a.score),
+          website: document.getElementById("website").value
+        })
+      });
+      const out = await res.json();
+      if (out.ok && out.id) {
+        try { history.replaceState({}, "", `/r/${out.id}`); } catch (e) { /* file:// etc. */ }
+      }
+    } catch (err) {
+      console.error("Report sync failed (results shown anyway):", err);
+    }
+  }
+
+  // ---------- Scoring ----------
+  // Principle score = raw average of that principle's answers. Overall score =
+  // raw average of the principle scores, NOT rounded. Phase boundaries:
+  // 1 to <2 Formative, 2 to <3 Localized, 3 to <4 Broad-based, >=4 Benchmark.
+  // No zero scoring — floor is 1.
+  function computePrincipleScores() {
+    return PRINCIPLES.map(p => {
+      const vals = answers
+        .filter((a, i) => questions[i].principle === p.name)
+        .map(a => a.score);
+      const avg = vals.reduce((acc, v) => acc + v, 0) / vals.length;
+      return { name: p.name, score: Math.min(4.5, Math.max(1, avg)) };
+    });
+  }
+
+  function computeScore() {
+    const ps = computePrincipleScores();
+    const avg = ps.reduce((acc, p) => acc + p.score, 0) / ps.length;
+    return Math.min(4.5, Math.max(1, avg));
+  }
+
+  function phaseIndexForScore(score) {
+    return Math.min(3, Math.floor(score) - 1);
+  }
+
+  // Display: truncate (not round) to 2 decimals so the shown score never
+  // crosses a phase boundary the raw average didn't cross.
+  function formatScore(score) {
+    const truncated = Math.floor(score * 100) / 100;
+    return String(truncated);
+  }
+
+  // ---------- Pattern engine ----------
+  // Reads the SHAPE of the 5 principle scores, not just the average. Rules are
+  // checked in priority order; the first match wins. All copy is placeholder.
+  const PATTERNS = {
+    "calibration": {
+      title: "Strong across the board — now the question is calibration",
+      body: "Your self-assessment puts every principle at or near Benchmark. That's either a genuinely exceptional plant — or optimistic self-scoring, which is the most common finding when we assess high-self-scoring plants in person. Either way, the next step is the same: an external calibration to confirm the level and find the gaps self-assessment can't see. [PLACEHOLDER — Jim refines calibration copy]"
+    },
+    "starting-line": {
+      title: "You're at the starting line — don't boil the ocean",
+      body: "Every principle scored in the Formative range, which is honest and common. The mistake plants make here is launching everything at once. The proven path is one model area: prove standard work, daily management, and problem-solving in a single line or cell, then expand from strength. [PLACEHOLDER — Jim refines starting-line copy]"
+    },
+    "fragile-foundation": {
+      title: "Advanced tools on a weak foundation — your gains are at risk",
+      body: "You scored well in advanced areas, but Standardization — the foundation everything else stands on — lags behind. Without standard work as the baseline, improvements have nothing to hold onto and quietly erode. This is the classic setup for the dashed blue curve on your chart: a quick boost that fades. Stabilize the foundation first. [PLACEHOLDER — Jim refines fragile-foundation copy]"
+    },
+    "tools-without-culture": {
+      title: "Strong tools, lagging people engagement — the classic trap",
+      body: "Your technical principles score well, but People Involvement lags. That's the exact profile of the \"tools only\" trajectory shown as the dashed blue arc on your chart: metrics jump, then fade, because the culture that sustains improvement never developed. The highest-leverage move now isn't another tool — it's leadership behavior and workforce engagement. [PLACEHOLDER — Jim refines tools-without-culture copy]"
+    },
+    "speed-over-quality": {
+      title: "Flow is ahead of quality — speed amplifies defects",
+      body: "Your Short Lead Time score is ahead of Built-In Quality. Faster flow with weak quality-at-the-source means defects travel further, faster. Before tightening flow another notch, close the quality gap: error-proofing, in-station checks, and a working help chain. [PLACEHOLDER — Jim refines speed-over-quality copy]"
+    },
+    "focus-weakest": {
+      title: "One principle is holding the others back",
+      body: "Your profile is uneven — and in a lean system, the weakest principle sets the pace for the whole transformation. Concentrating your next 90 days on {WEAKEST} will do more for overall results than pushing your strong areas higher. [PLACEHOLDER — Jim refines focus-weakest copy]"
+    }
+  };
+
+  function detectPattern(ps) {
+    const by = {};
+    ps.forEach(p => by[p.name] = p.score);
+    const all = ps.map(p => p.score);
+    if (all.every(s => s >= 3.5)) return "calibration";
+    if (all.every(s => s < 2)) return "starting-line";
+    if (by["Standardization"] < 2.5 && Math.max(...all) >= 3) return "fragile-foundation";
+    const tools = (by["Standardization"] + by["Short Lead Time"] + by["Built-In Quality"]) / 3;
+    if (tools >= 3 && by["People Involvement"] < 2.5) return "tools-without-culture";
+    if (by["Short Lead Time"] >= 3 && by["Built-In Quality"] < 2.5) return "speed-over-quality";
+    return "focus-weakest";
+  }
+
+  // Placeholder strength blurbs per principle (shown for the visitor's
+  // strongest areas). Jim replaces with real voice later.
+  const STRENGTH_NOTES = {
+    "Standardization": "Standard work and visual management give your improvements something to hold onto — this is the foundation many plants never lay properly.",
+    "People Involvement": "An engaged workforce is the single hardest thing to build and the most valuable — improvements here compound everywhere else.",
+    "Short Lead Time": "Material and information flow with discipline — you're ahead of most plants on the mechanics of lean flow.",
+    "Built-In Quality": "Catching defects at the source instead of inspecting them out puts you in rare company.",
+    "Continuous Improvement": "Structured problem-solving as a habit — not an event — is what separates programs from transformations."
+  };
+
+  // 7-day action plan: days 1–3 attack the weakest principle, 4–5 the second
+  // weakest, 6 leverages the strongest, 7 sets the habit. Placeholder copy.
+  function buildPlan(ps) {
+    const sorted = [...ps].sort((a, b) => a.score - b.score);
+    const weakest = sorted[0], second = sorted[1], strongest = sorted[sorted.length - 1];
+    return [
+      { day: 1, tag: weakest.name, text: `Go to the floor and observe your weakest area (${weakest.name.toLowerCase()}) for 30 uninterrupted minutes. Write down only what you see, not what you believe. [PLACEHOLDER]` },
+      { day: 2, tag: weakest.name, text: "Ask three operators how they know they're doing the job the right way. Their answers tell you whether standards live on paper or on the floor. [PLACEHOLDER]" },
+      { day: 3, tag: weakest.name, text: "Pick the single most obvious gap from days 1–2 and fix it visibly within 24 hours. Small, fast, and public beats big and slow. [PLACEHOLDER]" },
+      { day: 4, tag: second.name, text: `Repeat the 30-minute floor observation in your second-weakest area (${second.name.toLowerCase()}). [PLACEHOLDER]` },
+      { day: 5, tag: second.name, text: "Ask your team leaders what stops them from fixing problems themselves. Listen for system barriers, not people problems. [PLACEHOLDER]" },
+      { day: 6, tag: strongest.name, text: `Visit your strongest area (${strongest.name.toLowerCase()}) and identify what made it work. That recipe is your template for the weak areas. [PLACEHOLDER]` },
+      { day: 7, tag: "All", text: "Block 30 minutes on your calendar, same time every day next week, for floor observation. The habit matters more than the findings. [PLACEHOLDER]" }
+    ];
+  }
+
+  // ---------- Results ----------
+  // A live quiz completion renders from in-memory answers; a /r/<id> visit
+  // renders the same report from stored data — both go through renderReport.
+  function showResults(name) {
+    const ps = computePrincipleScores();
+    renderReport({
+      firstName: name,
+      date: new Date().toISOString(),
+      score: computeScore(),
+      principles: ps,
+      pattern: detectPattern(ps)
+    });
+  }
+
+  function renderReport(data) {
+    const score = data.score;
+    const phaseIdx = phaseIndexForScore(score);
+    const phase = PHASES[phaseIdx];
+    const ps = data.principles;
+
+    clearTimeout(gateTimer);
+    document.getElementById("landingScreen").style.display = "none";
+    document.getElementById("quizScreen").style.display = "none";
+    document.getElementById("gateScreen").style.display = "none";
+    document.getElementById("resultsScreen").style.display = "block";
+
+    // 01 — Overview
+    document.getElementById("resultsTitle").textContent = `${data.firstName}, your plant is in the`;
+    document.getElementById("resultsDate").textContent = new Date(data.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    document.getElementById("bigScore").innerHTML = `${formatScore(score)}<span> / 4.5</span>`;
+    document.getElementById("phaseBadge").textContent = `${phase.name} Phase`;
+    document.getElementById("phaseTagline").textContent = phase.tagline;
+    document.getElementById("narrative").innerHTML = `<h3>What this means</h3>${phase.narrative}`;
+    document.getElementById("curveBox").innerHTML = buildCurveSVG(phaseIdx);
+    positionMarker(score);
+
+    // 02 — Strengths: principles at Broad-based or better; if none, top 2 framed as relative
+    const strong = ps.filter(p => p.score >= 3).sort((a, b) => b.score - a.score);
+    const shown = strong.length ? strong : [...ps].sort((a, b) => b.score - a.score).slice(0, 2);
+    const rel = strong.length ? "" : `<li><em>No principle scored Broad-based yet — these are your strongest areas relative to the rest, and the right place to anchor early wins.</em></li>`;
+    document.getElementById("strengthsList").innerHTML = rel + shown.map(p =>
+      `<li><strong>${p.name} — ${formatScore(p.score)} (${PHASES[phaseIndexForScore(p.score)].name})</strong><br>${STRENGTH_NOTES[p.name]}</li>`
+    ).join("");
+
+    // 03 — Breakdown bars: scale 1–4.5, ticks at phase boundaries 2 / 3 / 4
+    const pct = s => ((s - 1) / 3.5) * 100;
+    document.getElementById("breakdownList").innerHTML = ps.map(p => `
+      <div class="bar-row">
+        <div class="bar-name">${p.name}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct(p.score)}%"></div>
+          <div class="bar-tick" style="left:${pct(2)}%"></div>
+          <div class="bar-tick" style="left:${pct(3)}%"></div>
+          <div class="bar-tick" style="left:${pct(4)}%"></div>
+        </div>
+        <div class="bar-score">${formatScore(p.score)} <em>— ${PHASES[phaseIndexForScore(p.score)].name}</em></div>
+      </div>`).join("");
+
+    // 04 — Insights: pattern-based (stored pattern wins; recompute as fallback)
+    const sorted = [...ps].sort((a, b) => a.score - b.score);
+    const pattern = PATTERNS[data.pattern] || PATTERNS[detectPattern(ps)];
+    document.getElementById("insightCard").innerHTML =
+      `<h3>${pattern.title}</h3>${pattern.body.replace("{WEAKEST}", sorted[0].name)}`;
+
+    // 05 — Action plan
+    document.getElementById("planList").innerHTML = buildPlan(ps).map(d =>
+      `<li class="plan-day"><span class="day-num">Day ${d.day}</span><span class="plan-body">${d.text}<span class="plan-tag">${d.tag}</span></span></li>`
+    ).join("");
+
+    initAccordions();
+  }
+
+  // ---------- Transformation curve graphic ----------
+  // LEAN Enterprise System implementation curve: Improvements (SQDCPS) vs
+  // Time, 4 phase columns with numbered stage titles above lowercase phase
+  // names, orange curve that starts flat and climbs steepest through
+  // broad-based, plus a "You are here" marker at the visitor's exact score.
+  const STAGES = [
+    ["Foundation &", "Org Alignment"],
+    ["Expansion &", "Discipline"],
+    ["Integration &", "Reinforcement"],
+    ["Sustaining", "Momentum"]
+  ];
+
+  function buildCurveSVG(activeIdx) {
+    const W = 700, H = 470;
+    const plot = { x0: 62, x1: 682, y0: 76, y1: 396 }; // plot area
+    const bandW = (plot.x1 - plot.x0) / 4;
+    // Slow flat start → gentle rise (localized) → steepest climb
+    // (broad-based) → continued climb (benchmark). Matches the slide.
+    const curvePath =
+      `M ${plot.x0},366 C 130,364 180,360 217,354 ` +
+      `C 280,344 330,330 372,312 ` +
+      `C 440,282 490,230 527,196 ` +
+      `C 580,148 640,128 ${plot.x1},112`;
+
+    let bands = "";
+    let headers = "";
+    let labels = "";
+    PHASES.forEach((p, i) => {
+      const bx = plot.x0 + bandW * i;
+      const cx = bx + bandW / 2;
+      const active = i === activeIdx;
+      bands += `<rect x="${bx}" y="${plot.y0}" width="${bandW}" height="${plot.y1 - plot.y0}"
+        fill="${active ? "rgba(21,149,211,0.13)" : (i % 2 ? "rgba(44,62,80,0.035)" : "transparent")}" />`;
+      if (i > 0) {
+        bands += `<line x1="${bx}" y1="${plot.y0}" x2="${bx}" y2="${plot.y1}" stroke="#dfe3e6" stroke-dasharray="4 4"/>`;
+      }
+      // Numbered stage titles above the plot, e.g. [1] Foundation & Org Alignment
+      headers += `<text x="${cx}" y="${plot.y0 - 44}" text-anchor="middle" font-size="13"
+        font-weight="700" fill="${active ? "#1595D3" : "#2c3e50"}">[${i + 1}] ${STAGES[i][0]}</text>`;
+      headers += `<text x="${cx}" y="${plot.y0 - 28}" text-anchor="middle" font-size="13"
+        font-weight="700" fill="${active ? "#1595D3" : "#2c3e50"}">${STAGES[i][1]}</text>`;
+      // Lowercase phase names just inside the top of the plot (as on the slide)
+      labels += `<text x="${cx}" y="${plot.y0 + 22}" text-anchor="middle"
+        font-size="15" font-weight="${active ? "700" : "500"}"
+        fill="${active ? "#1595D3" : "#7f8c95"}">${p.name.toLowerCase()}</text>`;
+    });
+
+    // Marker placed after render via getPointAtLength (see positionMarker)
+    return `
+    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" id="curveSvg" role="img"
+         aria-label="LEAN Enterprise System implementation curve showing improvements over time across four phases">
+      ${headers}
+      <!-- Axes -->
+      <line x1="${plot.x0}" y1="${plot.y0}" x2="${plot.x0}" y2="${plot.y1}" stroke="#2c3e50" stroke-width="2"/>
+      <line x1="${plot.x0}" y1="${plot.y1}" x2="${plot.x1}" y2="${plot.y1}" stroke="#2c3e50" stroke-width="2"/>
+      <!-- Axis labels -->
+      <text x="${plot.x0 - 14}" y="${(plot.y0 + plot.y1) / 2}" text-anchor="middle" font-size="14" fill="#2c3e50"
+        transform="rotate(-90 ${plot.x0 - 14} ${(plot.y0 + plot.y1) / 2})">Improvements (SQDCPS) →</text>
+      <text x="${(plot.x0 + plot.x1) / 2}" y="${plot.y1 + 34}" text-anchor="middle" font-size="14" fill="#2c3e50">Time →</text>
+      ${bands}
+      ${labels}
+      <!-- Tools-only trajectory: quick metric boost that fades without culture -->
+      <path d="M 155,384 C 200,160 320,120 368,200 C 390,238 398,290 400,340" fill="none"
+        stroke="#1595D3" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.75"/>
+      <path d="M 400,340 l -7,-12 l 14,0 z" fill="#1595D3" opacity="0.75"/>
+      <text x="290" y="118" text-anchor="middle" font-size="12.5" font-style="italic" fill="#1595D3">"Tools only" — quick boost,</text>
+      <text x="290" y="134" text-anchor="middle" font-size="12.5" font-style="italic" fill="#1595D3">fades without culture</text>
+      <!-- The implementation curve (orange, as on the slide) -->
+      <path id="curvePathEl" d="${curvePath}" fill="none" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+      <!-- You-are-here marker (positioned by JS) -->
+      <g id="hereMarker" style="display:none">
+        <circle id="hereDot" r="9" fill="#1595D3" stroke="#fff" stroke-width="3"/>
+        <g id="hereLabelGroup">
+          <rect id="hereLabelBg" rx="5" height="26" fill="#2c3e50"/>
+          <text id="hereLabel" font-size="13" font-weight="600" fill="#fff">You are here</text>
+        </g>
+      </g>
+    </svg>`;
+  }
+
+  // Pin the marker to the curve at the exact score position: each band spans
+  // one whole point (Formative 1–2, Localized 2–3, Broad-based 3–4) except
+  // Benchmark, which spans 4–4.5, so its fraction is scaled by 0.5.
+  function positionMarker(score) {
+    const svg = document.getElementById("curveSvg");
+    const path = document.getElementById("curvePathEl");
+    if (!svg || !path) return;
+    const plot = { x0: 62, x1: 682 };
+    const bandW = (plot.x1 - plot.x0) / 4;
+    const activeIdx = phaseIndexForScore(score);
+    const fraction = activeIdx === 3 ? (score - 4) / 0.5 : score - Math.floor(score);
+    // Keep the dot visually inside its band, off the exact edges
+    const inset = 0.08 + fraction * 0.84;
+    const targetX = plot.x0 + bandW * (activeIdx + inset);
+
+    const total = path.getTotalLength();
+    let pt = path.getPointAtLength(0);
+    for (let l = 0; l <= total; l += 2) {
+      pt = path.getPointAtLength(l);
+      if (pt.x >= targetX) break;
+    }
+
+    const marker = document.getElementById("hereMarker");
+    document.getElementById("hereDot").setAttribute("cx", pt.x);
+    document.getElementById("hereDot").setAttribute("cy", pt.y);
+
+    const label = document.getElementById("hereLabel");
+    const labelBg = document.getElementById("hereLabelBg");
+    // Place label above-left of dot; flip to right side for early phases
+    const flip = activeIdx < 2;
+    const textW = 92;
+    const lx = flip ? pt.x + 16 : pt.x - 16 - textW;
+    const ly = pt.y - 34;
+    labelBg.setAttribute("x", lx);
+    labelBg.setAttribute("y", ly);
+    labelBg.setAttribute("width", textW);
+    label.setAttribute("x", lx + textW / 2);
+    label.setAttribute("y", ly + 17);
+    label.setAttribute("text-anchor", "middle");
+    marker.style.display = "";
+  }
+
+  // ---------- Accordion sections ----------
+  // Heights are set inline (not via CSS class) so the transition animates to
+  // the exact content height.
+  function setAccOpen(sec, open) {
+    const body = sec.querySelector(".acc-body");
+    sec.classList.toggle("open", open);
+    sec.querySelector(".section-head").setAttribute("aria-expanded", open);
+    body.style.maxHeight = open ? body.scrollHeight + "px" : "0px";
+  }
+
+  function toggleAcc(sec) {
+    setAccOpen(sec, !sec.classList.contains("open"));
+  }
+
+  // Apply each accordion's initial state (e.g. Strengths starts open) once
+  // results content has been rendered.
+  function initAccordions() {
+    document.querySelectorAll(".acc").forEach(sec => setAccOpen(sec, sec.classList.contains("open")));
+  }
+
+  // Nav pills auto-expand the section they jump to
+  document.querySelectorAll(".result-nav a").forEach(a => {
+    a.addEventListener("click", () => {
+      const sec = document.querySelector(a.getAttribute("href"));
+      if (sec && sec.classList.contains("acc") && !sec.classList.contains("open")) setAccOpen(sec, true);
+    });
+  });
+
+  function resetQuiz() {
+    clearTimeout(gateTimer);
+    current = 0;
+    advancing = false;
+    answers.length = 0;
+    document.getElementById("firstName").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("gateScreen").style.display = "none";
+    document.getElementById("resultsScreen").style.display = "none";
+    document.getElementById("quizScreen").style.display = "none";
+    document.getElementById("landingScreen").style.display = "block";
+    try { history.replaceState({}, "", "/"); } catch (e) { /* file:// etc. */ }
+  }
+
+  // ---------- Shareable report URLs (/r/pl-XXXX) ----------
+  // On the live host, /r/<id> serves this same page (catch-all); the id in
+  // the path pulls the stored report and renders it directly.
+  (async function loadReportFromUrl() {
+    const m = location.pathname.match(/\/r\/(pl-[A-Fa-f0-9]{8})$/);
+    if (!m) return;
+    document.getElementById("landingScreen").style.display = "none";
+    try {
+      const res = await fetch(`${API_BASE}/report?id=${encodeURIComponent(m[1])}`);
+      const out = await res.json();
+      if (out.ok) {
+        renderReport(out);
+        return;
+      }
+    } catch (err) {
+      console.error("Report load failed:", err);
+    }
+    document.getElementById("landingScreen").style.display = "block";
+  })();
+</script>
+</body>
+</html>

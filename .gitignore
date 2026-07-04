@@ -1,0 +1,9 @@
+# Secrets — deploy-time env for DigitalOcean Functions (never commit)
+do-functions/.env
+
+# doctl deploy bookkeeping
+do-functions/.deployed/
+
+# Local editor/OS noise
+Thumbs.db
+.DS_Store
