@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transformation Readiness Scorecard — planet LEAN</title>
+<title>Rapid Plant Assessment — planet LEAN</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,69 +21,101 @@
     --pl-border: #dfe3e6;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--pl-bg-soft);
+    background: var(--pl-bg);
     color: var(--pl-text);
     min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 24px;
-  }
-  .wrap {
-    width: 100%;
-    max-width: 720px;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 16px 0 6px;
-  }
-  .brand img.lockup { height: 48px; width: auto; }
-  .brand-sub {
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--pl-text-muted);
-    margin-bottom: 20px;
-  }
-  .card {
-    background: var(--pl-bg);
-    border: 1px solid #e8ebee;
-    border-radius: 14px;
-    padding: 48px 44px;
-    box-shadow: 0 1px 3px rgba(16,24,40,0.06), 0 10px 28px rgba(16,24,40,0.05);
   }
 
-  /* ---------- Landing screen ---------- */
-  .landing { text-align: center; }
-  .landing h1 {
-    font-size: 33px;
-    font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: -0.5px;
-    color: var(--pl-accent-dark);
-    margin: 4px 0 14px;
+  /* ---------- Top header bar (all views) ---------- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 22px;
+    height: 56px;
+    background: var(--pl-bg);
+    border-bottom: 1px solid var(--pl-border);
   }
-  .landing .sub {
-    font-size: 16.5px;
-    line-height: 1.6;
+  .topbar-left, .topbar-center, .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .topbar-left { flex: 1; }
+  .topbar-center { flex: 0 0 auto; justify-content: center; }
+  .topbar-right { flex: 1; justify-content: flex-end; }
+  .rpa-name {
+    font-size: 15.5px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    color: var(--pl-accent-dark);
+  }
+  .rpa-badge {
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--pl-accent);
+    border-radius: 5px;
+    padding: 2px 7px;
+    letter-spacing: 0.5px;
+  }
+  .topbar .builtby {
+    font-size: 13px;
     color: var(--pl-text-muted);
-    max-width: 520px;
-    margin: 0 auto 26px;
+    font-weight: 500;
+  }
+  .topbar img.lockup { height: 26px; width: auto; display: block; }
+  .report-id {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pl-text-muted);
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+  .report-id strong { color: var(--pl-accent-dark); font-weight: 700; }
+
+  /* ---------- Landing (full width) ---------- */
+  .landing { display: block; }
+  .hero {
+    text-align: center;
+    padding: 72px 24px 40px;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .hero h1 {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -1px;
+    color: var(--pl-accent-dark);
+    margin: 0 0 18px;
+  }
+  .hero h1 em { font-style: normal; color: var(--pl-accent); }
+  .hero .sub {
+    font-size: 18px;
+    line-height: 1.65;
+    color: var(--pl-text-muted);
+    max-width: 620px;
+    margin: 0 auto 28px;
   }
   .chip-row {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 30px;
+    margin-bottom: 32px;
   }
   .chip {
     font-size: 13.5px;
@@ -102,17 +134,91 @@
     border: none;
     border-radius: 10px;
     font-family: inherit;
-    font-size: 17px;
+    font-size: 17.5px;
     font-weight: 700;
-    padding: 17px 42px;
+    padding: 18px 46px;
     cursor: pointer;
     transition: background 0.15s ease, transform 0.1s ease;
   }
   .start-btn:hover { background: #0F7DB3; transform: translateY(-1px); }
-  .trust-line {
+  .hero .microline {
     font-size: 13px;
     color: var(--pl-text-muted);
-    margin-top: 18px;
+    margin-top: 14px;
+  }
+
+  .landing-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    max-width: 980px;
+    margin: 24px auto 0;
+    padding: 0 24px;
+  }
+  .landing-card {
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 12px;
+    padding: 24px 22px;
+    text-align: left;
+  }
+  .landing-card .num {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--pl-accent);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .landing-card h3 {
+    margin: 0 0 8px;
+    font-size: 16.5px;
+    font-weight: 700;
+    color: var(--pl-accent-dark);
+  }
+  .landing-card p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--pl-text-muted);
+  }
+  .builtby-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    max-width: 780px;
+    margin: 48px auto 0;
+    padding: 26px 24px;
+    border-top: 1px solid var(--pl-border);
+  }
+  .builtby-strip img { height: 40px; width: auto; }
+  .builtby-strip p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--pl-text-muted);
+    max-width: 460px;
+  }
+  .footer {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--pl-text-muted);
+    padding: 28px 24px 36px;
+  }
+  .footer a { color: var(--pl-accent); text-decoration: none; }
+
+  /* ---------- Quiz & gate (centered card) ---------- */
+  .card-wrap {
+    max-width: 760px;
+    margin: 36px auto;
+    padding: 0 20px;
+  }
+  .card {
+    background: var(--pl-bg);
+    border: 1px solid #e8ebee;
+    border-radius: 14px;
+    padding: 48px 44px;
+    box-shadow: 0 1px 3px rgba(16,24,40,0.06), 0 10px 28px rgba(16,24,40,0.05);
   }
   .progress-track {
     height: 6px;
@@ -132,7 +238,7 @@
     text-align: right;
     font-size: 13px;
     color: var(--pl-text-muted);
-    margin-bottom: 28px;
+    margin-bottom: 26px;
   }
   .q-principle {
     font-size: 12px;
@@ -142,13 +248,18 @@
     color: var(--pl-accent);
     margin-bottom: 10px;
   }
-  .question {
-    font-size: 25px;
+  .statement {
+    font-size: 23px;
     font-weight: 700;
     color: var(--pl-accent-dark);
-    margin-bottom: 26px;
-    line-height: 1.3;
+    margin-bottom: 10px;
+    line-height: 1.35;
     letter-spacing: -0.3px;
+  }
+  .statement-prompt {
+    font-size: 14px;
+    color: var(--pl-text-muted);
+    margin-bottom: 22px;
   }
   .quiz-anim { animation: qfade 0.25s ease; }
   @keyframes qfade {
@@ -186,10 +297,7 @@
     border-radius: 6px;
     transition: all 0.12s ease;
   }
-  .option:hover {
-    border-color: var(--pl-accent);
-    transform: translateY(-1px);
-  }
+  .option:hover { border-color: var(--pl-accent); transform: translateY(-1px); }
   .option:hover .key { color: var(--pl-accent); border-color: var(--pl-accent); }
   .option.selected {
     border-color: var(--pl-accent);
@@ -213,6 +321,7 @@
     padding: 4px 2px;
   }
   .back-link:hover { color: var(--pl-accent); }
+
   .gate { display: none; text-align: center; }
   .gate h2 {
     font-size: 26px;
@@ -227,16 +336,11 @@
     font-size: 15px;
     line-height: 1.55;
   }
-  .gate .privacy {
-    font-size: 12.5px;
-    color: var(--pl-text-muted);
-    margin: 14px 0 0;
-  }
   .gate input {
     width: 100%;
     padding: 14px 16px;
     border: 1px solid var(--pl-border);
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 16px;
     margin-bottom: 12px;
     font-family: inherit;
@@ -248,20 +352,106 @@
     background: var(--pl-accent);
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
   }
-  .gate button:hover { background: var(--pl-accent-dark); }
-
-  /* ---------- Results ---------- */
-  .results { display: none; }
-  .results-header {
-    text-align: center;
-    margin-bottom: 8px;
+  .gate button:hover { background: #0F7DB3; }
+  .gate .privacy {
+    font-size: 12.5px;
+    color: var(--pl-text-muted);
+    margin: 14px 0 0;
   }
+
+  /* ---------- Report: two-column layout with TOC ---------- */
+  .results { display: none; }
+  .report-layout {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 36px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 30px 24px 60px;
+    align-items: start;
+  }
+  .toc {
+    position: sticky;
+    top: 76px;
+  }
+  .toc-title {
+    font-size: 11.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--pl-text-muted);
+    margin: 4px 0 10px 12px;
+  }
+  .toc a {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--pl-text);
+  }
+  .toc a .toc-num {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--pl-text-muted);
+  }
+  .toc a:hover { background: var(--pl-bg-soft); }
+  .toc a.active { background: rgba(21,149,211,0.1); color: var(--pl-accent); }
+  .toc a.active .toc-num { color: var(--pl-accent); }
+
+  .report-main { min-width: 0; }
+  .section { margin-bottom: 30px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 2px solid var(--pl-border);
+    padding-bottom: 8px;
+    margin-bottom: 18px;
+  }
+  button.section-head {
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 2px solid var(--pl-border);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    padding: 0 0 8px;
+    margin-bottom: 0;
+  }
+  button.section-head:hover .section-title { color: var(--pl-accent); }
+  .section-num {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--pl-accent);
+    letter-spacing: 1px;
+  }
+  .section-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--pl-accent-dark);
+  }
+  .chev {
+    margin-left: auto;
+    font-size: 15px;
+    color: var(--pl-text-muted);
+    transition: transform 0.25s ease;
+  }
+  .acc:not(.open) .chev { transform: rotate(-90deg); }
+  .acc-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .acc-inner { padding-top: 18px; }
+
+  .results-header { text-align: center; margin-bottom: 8px; }
   .results-header .eyebrow {
     font-size: 13px;
     text-transform: uppercase;
@@ -274,7 +464,17 @@
     color: var(--pl-accent-dark);
     margin: 0 0 6px;
     line-height: 1.25;
+    letter-spacing: -0.4px;
   }
+  .hero-date { font-size: 13px; color: var(--pl-text-muted); margin-bottom: 14px; }
+  .big-score {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--pl-accent-dark);
+    margin: 12px 0 2px;
+  }
+  .big-score span { font-size: 20px; font-weight: 600; color: var(--pl-text-muted); }
   .phase-badge {
     display: inline-block;
     background: var(--pl-orange);
@@ -286,11 +486,7 @@
     border-radius: 999px;
     margin: 10px 0 4px;
   }
-  .phase-tagline {
-    color: var(--pl-text-muted);
-    font-size: 15px;
-    margin-bottom: 24px;
-  }
+  .phase-tagline { color: var(--pl-text-muted); font-size: 15px; margin-bottom: 24px; }
   .curve-box { margin: 8px 0 0; }
   .curve-box svg { width: 100%; height: auto; display: block; }
   .curve-caption {
@@ -308,92 +504,8 @@
     line-height: 1.6;
     margin-bottom: 24px;
   }
-  .narrative h3 {
-    margin: 0 0 10px;
-    font-size: 17px;
-    color: var(--pl-accent-dark);
-  }
-  /* ---------- Numbered report sections ---------- */
-  .result-nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin: 4px 0 30px;
-  }
-  .result-nav a {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--pl-accent);
-    text-decoration: none;
-    border: 1px solid var(--pl-border);
-    padding: 5px 12px;
-    border-radius: 999px;
-  }
-  .result-nav a:hover { background: var(--pl-bg-soft); }
-  .section { margin-bottom: 30px; }
-  .section-head {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    border-bottom: 2px solid var(--pl-border);
-    padding-bottom: 8px;
-    margin-bottom: 18px;
-  }
-  /* Accordion sections (02–05) */
-  button.section-head {
-    width: 100%;
-    background: none;
-    border: none;
-    border-bottom: 2px solid var(--pl-border);
-    font-family: inherit;
-    text-align: left;
-    cursor: pointer;
-    padding: 0 0 8px;
-    margin-bottom: 0;
-  }
-  button.section-head:hover .section-title { color: var(--pl-accent); }
-  .chev {
-    margin-left: auto;
-    font-size: 15px;
-    color: var(--pl-text-muted);
-    transition: transform 0.25s ease;
-  }
-  .acc:not(.open) .chev { transform: rotate(-90deg); }
-  .acc-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.35s ease;
-  }
-  .acc-inner { padding-top: 18px; }
-  .section-num {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--pl-accent);
-    letter-spacing: 1px;
-  }
-  .section-title {
-    font-size: 19px;
-    font-weight: 700;
-    color: var(--pl-accent-dark);
-  }
-  .hero-date {
-    font-size: 13px;
-    color: var(--pl-text-muted);
-    margin-bottom: 14px;
-  }
-  .big-score {
-    font-size: 52px;
-    font-weight: 800;
-    line-height: 1;
-    color: var(--pl-accent-dark);
-    margin: 12px 0 2px;
-  }
-  .big-score span {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--pl-text-muted);
-  }
+  .narrative h3 { margin: 0 0 10px; font-size: 17px; color: var(--pl-accent-dark); }
+
   .strength-list { margin: 0; padding-left: 0; list-style: none; }
   .strength-list li {
     background: var(--pl-bg-soft);
@@ -426,12 +538,7 @@
     background: var(--pl-accent);
     border-radius: 999px;
   }
-  .bar-tick {
-    position: absolute;
-    top: -3px; bottom: -3px;
-    width: 1px;
-    background: #c3cad0;
-  }
+  .bar-tick { position: absolute; top: -3px; bottom: -3px; width: 1px; background: #c3cad0; }
   .bar-score { font-size: 13.5px; font-weight: 700; color: var(--pl-accent-dark); text-align: right; }
   .bar-score em { font-style: normal; font-weight: 500; color: var(--pl-text-muted); }
   .bar-legend { font-size: 12px; color: var(--pl-text-muted); margin-top: 6px; text-align: right; }
@@ -479,18 +586,14 @@
   .cta-row button {
     flex: 1;
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
   }
-  .cta-primary {
-    background: var(--pl-accent);
-    color: #fff;
-    border: none;
-  }
-  .cta-primary:hover { background: var(--pl-accent-dark); }
+  .cta-primary { background: var(--pl-accent); color: #fff; border: none; }
+  .cta-primary:hover { background: #0F7DB3; }
   .cta-secondary {
     background: var(--pl-bg);
     color: var(--pl-accent);
@@ -508,54 +611,117 @@
   }
   .reset {
     display: block;
-    margin: 20px auto 0;
+    margin: 8px auto 24px;
     background: none;
     border: none;
     color: var(--pl-text-muted);
-    font-size: 13px;
+    font-size: 12.5px;
     cursor: pointer;
     text-decoration: underline;
+    font-family: inherit;
+  }
+
+  @media (max-width: 900px) {
+    .report-layout { grid-template-columns: 1fr; gap: 18px; }
+    .toc {
+      position: static;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .toc-title { display: none; }
+    .toc a { flex: 0 0 auto; border: 1px solid var(--pl-border); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; }
+    .landing-cards { grid-template-columns: 1fr; }
+    .hero { padding-top: 44px; }
+    .hero h1 { font-size: 30px; }
+    .topbar { padding: 0 14px; }
+    .topbar-center { display: none; }
+    .rpa-name { font-size: 13.5px; }
   }
   @media (max-width: 560px) {
     .card { padding: 28px 20px; }
-    .question { font-size: 21px; }
-    .score-strip { flex-direction: column; }
+    .statement { font-size: 19px; }
     .cta-row { flex-direction: column; }
+    .bar-row { grid-template-columns: 1fr; gap: 6px; }
+    .bar-score { text-align: left; }
+    .builtby-strip { flex-direction: column; text-align: center; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="brand">
+
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="rpa-name">Rapid Plant Assessment</span>
+    <span class="rpa-badge">rpa</span>
+  </div>
+  <div class="topbar-center" id="topbarCenter"></div>
+  <div class="topbar-right" id="topbarRight">
+    <span class="builtby">built by</span>
     <img class="lockup" src="logo-full.png" alt="planet LEAN">
   </div>
-  <div class="brand-sub">Transformation Readiness Scorecard</div>
+</header>
+
+<!-- ---------- Landing (full width) ---------- -->
+<div class="landing" id="landingScreen">
+  <section class="hero">
+    <h1>How lean is your plant, <em>really</em>?</h1>
+    <div class="sub">15 plain-language statements about how your plant actually runs — not how the binder says it should. Get an instant, personalized report showing where you are on the transformation curve and what to fix first.</div>
+    <div class="chip-row">
+      <span class="chip">Under 5 minutes</span>
+      <span class="chip">No cost</span>
+      <span class="chip">Instant personalized report</span>
+    </div>
+    <button class="start-btn" onclick="startQuiz()">Start the Assessment&nbsp;&nbsp;→</button>
+    <div class="microline">15 statements · 5 principles · no credit card, no sales call required</div>
+  </section>
+
+  <section class="landing-cards">
+    <div class="landing-card">
+      <div class="num">01</div>
+      <h3>Your phase on the curve</h3>
+      <p>See exactly where your plant sits on the lean implementation curve — Formative, Localized, Broad-based, or Benchmark — with your overall score out of 4.5.</p>
+    </div>
+    <div class="landing-card">
+      <div class="num">02</div>
+      <h3>Principle-by-principle breakdown</h3>
+      <p>Scores across the 5 principles of the LEAN Enterprise System: Standardization, People Involvement, Short Lead Time, Built-In Quality, and Continuous Improvement.</p>
+    </div>
+    <div class="landing-card">
+      <div class="num">03</div>
+      <h3>A 7-day action plan</h3>
+      <p>One concrete action per day targeted at your weakest principles — things you can do on the floor next week, not someday.</p>
+    </div>
+  </section>
+
+  <section class="builtby-strip">
+    <img src="logo-full.png" alt="planet LEAN">
+    <p>Built by planet LEAN on the same principle framework we use in full plant assessments. Answer honestly — the report is only as useful as your answers. [PLACEHOLDER — Jim refines blurb]</p>
+  </section>
+
+  <div class="footer">© planet LEAN · <a href="https://www.planetlean.com" target="_blank" rel="noopener">planetlean.com</a></div>
+</div>
+
+<!-- ---------- Quiz ---------- -->
+<div class="card-wrap" id="quizScreen" style="display:none">
   <div class="card">
-
-    <div class="landing" id="landingScreen">
-      <h1>How ready is your plant for a lean transformation?</h1>
-      <div class="sub">Answer a few questions about how your plant actually runs — not how the binder says it should. Get a personalized report showing where you are on the transformation curve and what to fix first.</div>
-      <div class="chip-row">
-        <span class="chip">Under 5 minutes</span>
-        <span class="chip">No cost</span>
-        <span class="chip">Instant personalized report</span>
-      </div>
-      <button class="start-btn" onclick="startQuiz()">Get My Scorecard&nbsp;&nbsp;→</button>
-      <div class="trust-line">Built on the LEAN Enterprise System — the same model behind our full plant assessments. [PLACEHOLDER — Jim refines trust line]</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">Statement 1 of 15</div>
+    <div class="quiz-anim" id="quizBody">
+      <div class="q-principle" id="questionPrinciple"></div>
+      <div class="statement" id="questionText"></div>
+      <div class="statement-prompt">How true is this in your plant today?</div>
+      <div class="options" id="optionsList"></div>
+      <button class="back-link" id="backLink" onclick="goBack()" style="visibility:hidden">← Back</button>
     </div>
+  </div>
+</div>
 
-    <div id="quizScreen" style="display:none">
-      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="progress-label" id="progressLabel">Question 1 of 3</div>
-      <div class="quiz-anim" id="quizBody">
-        <div class="q-principle" id="questionPrinciple"></div>
-        <div class="question" id="questionText"></div>
-        <div class="options" id="optionsList"></div>
-        <button class="back-link" id="backLink" onclick="goBack()" style="visibility:hidden">← Back</button>
-      </div>
-    </div>
-
-    <div class="gate" id="gateScreen">
+<!-- ---------- Email gate ---------- -->
+<div class="card-wrap" id="gateWrap" style="display:none">
+  <div class="card">
+    <div class="gate" id="gateScreen" style="display:block">
       <h2>Your report is ready</h2>
       <p>Tell us where to send it — your personalized results appear instantly, right here.</p>
       <input type="text" id="firstName" placeholder="First name">
@@ -564,20 +730,26 @@
       <button onclick="submitGate()">Show My Results&nbsp;&nbsp;→</button>
       <div class="privacy">One report, no spam. We never share your email. [PLACEHOLDER — Jim refines privacy line]</div>
     </div>
+  </div>
+</div>
 
-    <div class="results" id="resultsScreen">
-      <nav class="result-nav">
-        <a href="#sec-overview">01 Overview</a>
-        <a href="#sec-strengths">02 Strengths</a>
-        <a href="#sec-breakdown">03 Breakdown</a>
-        <a href="#sec-insights">04 Insights</a>
-        <a href="#sec-plan">05 Action Plan</a>
-        <a href="#sec-download">06 Download</a>
-      </nav>
+<!-- ---------- Report (two columns: TOC + content) ---------- -->
+<div class="results" id="resultsScreen">
+  <div class="report-layout">
+    <aside class="toc" id="reportToc">
+      <div class="toc-title">Report Contents</div>
+      <a href="#sec-overview" class="active"><span class="toc-num">01</span>Overview</a>
+      <a href="#sec-strengths"><span class="toc-num">02</span>Strengths</a>
+      <a href="#sec-breakdown"><span class="toc-num">03</span>Breakdown</a>
+      <a href="#sec-insights"><span class="toc-num">04</span>Insights</a>
+      <a href="#sec-plan"><span class="toc-num">05</span>Action Plan</a>
+      <a href="#sec-download"><span class="toc-num">06</span>Download</a>
+    </aside>
 
+    <main class="report-main">
       <section class="section" id="sec-overview">
         <div class="results-header">
-          <div class="eyebrow">Your Transformation Readiness Result</div>
+          <div class="eyebrow">Your Rapid Plant Assessment Result</div>
           <h2 id="resultsTitle"></h2>
           <div class="hero-date" id="resultsDate"></div>
           <div class="big-score" id="bigScore"></div>
@@ -632,20 +804,17 @@
           <button class="cta-primary" onclick="alert('PDF generation comes in the next build step.')">Download PDF Report</button>
           <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
         </div>
-        <div class="placeholder-note">Prototype note: narrative, strengths, insights, and action-plan copy are placeholders — Jim supplies real content later. PDF + Kartra sync are the next build steps.</div>
+        <div class="placeholder-note">Prototype note: narrative, strengths, insights, and action-plan copy are placeholders — Jim supplies real content later. PDF is the next build step.</div>
       </section>
-    </div>
-
+    </main>
   </div>
-  <button class="reset" onclick="resetQuiz()">Reset demo</button>
 </div>
 
-<!-- planet LEAN chat widget (same one as planetlean.com) -->
-<script src="https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-ff1b984d-dbbe-4147-97b1-81aea98278a6/widget/serve" defer></script>
+<button class="reset" onclick="resetQuiz()">Reset demo</button>
 
 <script>
   // ---------- Phase model ----------
-  // Index order matters: 0 → 3 = low → high maturity. Scoring averages these.
+  // Index order matters: 0 → 3 = low → high maturity.
   const PHASES = [
     {
       key: "formative",
@@ -673,89 +842,69 @@
     }
   ];
 
-  // ---------- Principles & questions (placeholder content) ----------
-  // Transformation progress is measured across the 5 principles of the LEAN
-  // Enterprise System. Each principle can hold multiple questions (the paid
-  // plant assessment uses the same structure) — principle score = average of
-  // its questions, overall score = average of the principle scores.
-  // Scoring scale: 1 to 4.5. Answer values low → high: 1, 2, 3, 4.5.
-  // Top answer is 4.5 (not 4) so a Benchmark average is actually reachable.
+  // ---------- Statements (Jim's Question Draft, green = included) ----------
+  // 15 statements, 3 per principle. Each is a STATEMENT the visitor rates on
+  // a 4-point scale. Scale values: 1, 2, 3, 4.5 (top = 4.5 so a Benchmark
+  // average is reachable; no zero). Scales vary per statement.
+  const SCALES = {
+    freq: ["Never", "Sometimes", "Most of the time", "Always"],
+    amount: ["None", "Some", "Most", "All"],
+    leaders: ["No leaders", "Some leaders", "Most leaders", "All leaders"],
+    employees: ["No employees", "Some employees", "Most employees", "All employees"],
+    stations: ["No stations", "Some stations", "Most stations", "All stations"]
+  };
+  const SCORE_VALUES = [1, 2, 3, 4.5];
+
   const PRINCIPLES = [
     {
       name: "Standardization",
-      questions: [
-        {
-          text: "How would you describe your plant's use of standard work?",
-          options: [
-            { label: "We don't have standardized work documented", score: 1 },
-            { label: "A few areas have standard work, but it's inconsistent", score: 2 },
-            { label: "Standard work is documented and followed across most departments", score: 3 },
-            { label: "Standard work is the default, continuously improved, and audited", score: 4.5 }
-          ]
-        }
+      statements: [
+        { text: "Standardized work is documented, posted, and followed at the operator workstation.", scale: "freq" },
+        { text: "Anyone walking through a work area can tell at a glance whether conditions are normal or abnormal.", scale: "freq" },
+        { text: "Operators perform routine equipment care — cleaning, inspection, basic maintenance — as part of their daily work.", scale: "freq" }
       ]
     },
     {
       name: "People Involvement",
-      questions: [
-        {
-          text: "How engaged is your workforce in improving their own work?",
-          options: [
-            { label: "Improvement ideas come from management, if at all", score: 1 },
-            { label: "Some operators suggest ideas, but follow-through is spotty", score: 2 },
-            { label: "Most teams regularly surface and implement their own improvements", score: 3 },
-            { label: "Every employee improves their work as part of the daily routine", score: 4.5 }
-          ]
-        }
+      statements: [
+        { text: "Production operators participate in team-based problem solving using a standard form/process available for review in their area.", scale: "freq" },
+        { text: "Leaders spend time on the floor coaching and teaching — including formal teaching of the company's production system and participation in a daily dashboard review.", scale: "leaders" },
+        { text: "Employees submit improvement ideas at least monthly through a structured process.", scale: "employees" }
       ]
     },
     {
       name: "Short Lead Time",
-      questions: [
-        {
-          text: "How does material and information flow through your plant?",
-          options: [
-            { label: "Large batches, long queues — expediting is a way of life", score: 1 },
-            { label: "Flow is improved in a few cells, but most of the plant runs in batches", score: 2 },
-            { label: "Most value streams flow with managed WIP and predictable lead times", score: 3 },
-            { label: "Pull systems and rapid changeovers keep lead times short plant-wide", score: 4.5 }
-          ]
-        }
+      statements: [
+        { text: "Material flows directly from one operation to the next without interim staging or double handling.", scale: "freq" },
+        { text: "Inventory (raw, WIP, finished) is labeled with visible min/max limits clearly displayed and followed at the floor location.", scale: "amount" },
+        { text: "Material replenishment is triggered by actual consumption, not by pushing to a schedule.", scale: "freq" }
       ]
     },
     {
       name: "Built-In Quality",
-      questions: [
-        {
-          text: "How is quality assured in your processes?",
-          options: [
-            { label: "Quality is checked at the end — inspection catches what it catches", score: 1 },
-            { label: "Some processes have in-station checks, but escapes still reach customers", score: 2 },
-            { label: "Most processes detect and contain defects at the source", score: 3 },
-            { label: "Error-proofing and andon are standard — defects are stopped, not passed", score: 4.5 }
-          ]
-        }
+      statements: [
+        { text: "Quality standards are clear for each workstation with quality confirmation checks built into standardized work.", scale: "stations" },
+        { text: "Defects are prevented or contained at the point of origin, not discovered downstream.", scale: "freq" },
+        { text: "High-risk operations are protected by error proofing that is verified on a shift/daily/weekly schedule.", scale: "amount" }
       ]
     },
     {
       name: "Continuous Improvement",
-      questions: [
-        {
-          text: "How does your team identify and solve problems?",
-          options: [
-            { label: "Whoever notices a problem fixes it, with no consistent method", score: 1 },
-            { label: "A few trained leaders use root-cause tools in select areas", score: 2 },
-            { label: "Structured problem-solving (A3, 5-Why) is used broadly across the plant", score: 3 },
-            { label: "Problem-solving is a daily habit at every level, and other plants study our approach", score: 4.5 }
-          ]
-        }
+      statements: [
+        { text: "Problems are solved with the PDCA approach — from informal quick fix to formal root cause analysis.", scale: "freq" },
+        { text: "Performance metrics are updated in real time, visible, and reviewed at least daily by the teams that influence them.", scale: "freq" },
+        { text: "Off-target metrics trigger countermeasures posted in the area with a clear owner and due date.", scale: "freq" }
       ]
     }
   ];
 
-  // Flattened question list drives the quiz flow; each remembers its principle.
+  // Flattened statement list drives the quiz flow.
   const questions = PRINCIPLES.flatMap(p =>
-    p.questions.map(q => ({ ...q, principle: p.name }))
+    p.statements.map(q => ({
+      principle: p.name,
+      text: q.text,
+      options: SCALES[q.scale].map((label, i) => ({ label, score: SCORE_VALUES[i] }))
+    }))
   );
 
   let current = 0;
@@ -767,13 +916,14 @@
     document.getElementById("landingScreen").style.display = "none";
     document.getElementById("quizScreen").style.display = "block";
     renderQuestion();
+    window.scrollTo(0, 0);
   }
 
   function renderQuestion() {
     const q = questions[current];
     document.getElementById("questionPrinciple").textContent = q.principle;
     document.getElementById("questionText").textContent = q.text;
-    document.getElementById("progressLabel").textContent = `Question ${current + 1} of ${questions.length}`;
+    document.getElementById("progressLabel").textContent = `Statement ${current + 1} of ${questions.length}`;
     document.getElementById("progressFill").style.width = `${(current / questions.length) * 100}%`;
 
     const list = document.getElementById("optionsList");
@@ -788,7 +938,6 @@
 
     document.getElementById("backLink").style.visibility = current > 0 ? "visible" : "hidden";
 
-    // Replay the entrance animation on each question
     const body = document.getElementById("quizBody");
     body.classList.remove("quiz-anim");
     void body.offsetWidth;
@@ -800,7 +949,6 @@
     if (advancing || answers.length >= questions.length) return;
     advancing = true;
     if (btn) btn.classList.add("selected");
-    // Brief pause so the visitor sees their selection register
     setTimeout(() => {
       advancing = false;
       answers.push(opt);
@@ -824,11 +972,11 @@
   function showGate() {
     if (document.getElementById("resultsScreen").style.display === "block") return;
     document.getElementById("quizScreen").style.display = "none";
-    document.getElementById("gateScreen").style.display = "block";
+    document.getElementById("gateWrap").style.display = "block";
+    window.scrollTo(0, 0);
   }
 
-  // Backend: stores each report under a unique id (shareable /r/pl-XXXX URL)
-  // and pushes the lead to Kartra. Results render instantly either way.
+  // ---------- Backend ----------
   const API_BASE = "https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-ff1b984d-dbbe-4147-97b1-81aea98278a6/scorecard";
 
   function submitGate() {
@@ -843,7 +991,8 @@
   }
 
   // Fire-and-forget: the visitor never waits on the network. On success the
-  // address bar silently upgrades to the permanent report URL.
+  // address bar silently upgrades to the permanent report URL and the header
+  // shows the report id.
   async function syncToServer(name, email) {
     try {
       const ps = computePrincipleScores();
@@ -864,6 +1013,7 @@
       });
       const out = await res.json();
       if (out.ok && out.id) {
+        setReportId(out.id);
         try { history.replaceState({}, "", `/r/${out.id}`); } catch (e) { /* file:// etc. */ }
       }
     } catch (err) {
@@ -875,7 +1025,6 @@
   // Principle score = raw average of that principle's answers. Overall score =
   // raw average of the principle scores, NOT rounded. Phase boundaries:
   // 1 to <2 Formative, 2 to <3 Localized, 3 to <4 Broad-based, >=4 Benchmark.
-  // No zero scoring — floor is 1.
   function computePrincipleScores() {
     return PRINCIPLES.map(p => {
       const vals = answers
@@ -904,8 +1053,6 @@
   }
 
   // ---------- Pattern engine ----------
-  // Reads the SHAPE of the 5 principle scores, not just the average. Rules are
-  // checked in priority order; the first match wins. All copy is placeholder.
   const PATTERNS = {
     "calibration": {
       title: "Strong across the board — now the question is calibration",
@@ -946,8 +1093,6 @@
     return "focus-weakest";
   }
 
-  // Placeholder strength blurbs per principle (shown for the visitor's
-  // strongest areas). Jim replaces with real voice later.
   const STRENGTH_NOTES = {
     "Standardization": "Standard work and visual management give your improvements something to hold onto — this is the foundation many plants never lay properly.",
     "People Involvement": "An engaged workforce is the single hardest thing to build and the most valuable — improvements here compound everywhere else.",
@@ -973,8 +1118,6 @@
   }
 
   // ---------- Results ----------
-  // A live quiz completion renders from in-memory answers; a /r/<id> visit
-  // renders the same report from stored data — both go through renderReport.
   function showResults(name) {
     const ps = computePrincipleScores();
     renderReport({
@@ -986,6 +1129,19 @@
     });
   }
 
+  function setReportId(id) {
+    const right = document.getElementById("topbarRight");
+    right.innerHTML = `<span class="report-id">Report ID — <strong>${id}</strong></span>`;
+  }
+
+  function setReportHeader(id) {
+    document.getElementById("topbarCenter").innerHTML =
+      `<img class="lockup" src="logo-full.png" alt="planet LEAN">`;
+    if (id) setReportId(id);
+    else document.getElementById("topbarRight").innerHTML =
+      `<span class="report-id">Report ID — <strong>pending…</strong></span>`;
+  }
+
   function renderReport(data) {
     const score = data.score;
     const phaseIdx = phaseIndexForScore(score);
@@ -995,8 +1151,10 @@
     clearTimeout(gateTimer);
     document.getElementById("landingScreen").style.display = "none";
     document.getElementById("quizScreen").style.display = "none";
-    document.getElementById("gateScreen").style.display = "none";
+    document.getElementById("gateWrap").style.display = "none";
     document.getElementById("resultsScreen").style.display = "block";
+    setReportHeader(data.id || null);
+    window.scrollTo(0, 0);
 
     // 01 — Overview
     document.getElementById("resultsTitle").textContent = `${data.firstName}, your plant is in the`;
@@ -1008,7 +1166,7 @@
     document.getElementById("curveBox").innerHTML = buildCurveSVG(phaseIdx);
     positionMarker(score);
 
-    // 02 — Strengths: principles at Broad-based or better; if none, top 2 framed as relative
+    // 02 — Strengths
     const strong = ps.filter(p => p.score >= 3).sort((a, b) => b.score - a.score);
     const shown = strong.length ? strong : [...ps].sort((a, b) => b.score - a.score).slice(0, 2);
     const rel = strong.length ? "" : `<li><em>No principle scored Broad-based yet — these are your strongest areas relative to the rest, and the right place to anchor early wins.</em></li>`;
@@ -1058,10 +1216,8 @@
 
   function buildCurveSVG(activeIdx) {
     const W = 700, H = 470;
-    const plot = { x0: 62, x1: 682, y0: 76, y1: 396 }; // plot area
+    const plot = { x0: 62, x1: 682, y0: 76, y1: 396 };
     const bandW = (plot.x1 - plot.x0) / 4;
-    // Slow flat start → gentle rise (localized) → steepest climb
-    // (broad-based) → continued climb (benchmark). Matches the slide.
     const curvePath =
       `M ${plot.x0},366 C 130,364 180,360 217,354 ` +
       `C 280,344 330,330 372,312 ` +
@@ -1080,26 +1236,21 @@
       if (i > 0) {
         bands += `<line x1="${bx}" y1="${plot.y0}" x2="${bx}" y2="${plot.y1}" stroke="#dfe3e6" stroke-dasharray="4 4"/>`;
       }
-      // Numbered stage titles above the plot, e.g. [1] Foundation & Org Alignment
       headers += `<text x="${cx}" y="${plot.y0 - 44}" text-anchor="middle" font-size="13"
         font-weight="700" fill="${active ? "#1595D3" : "#2c3e50"}">[${i + 1}] ${STAGES[i][0]}</text>`;
       headers += `<text x="${cx}" y="${plot.y0 - 28}" text-anchor="middle" font-size="13"
         font-weight="700" fill="${active ? "#1595D3" : "#2c3e50"}">${STAGES[i][1]}</text>`;
-      // Lowercase phase names just inside the top of the plot (as on the slide)
       labels += `<text x="${cx}" y="${plot.y0 + 22}" text-anchor="middle"
         font-size="15" font-weight="${active ? "700" : "500"}"
         fill="${active ? "#1595D3" : "#7f8c95"}">${p.name.toLowerCase()}</text>`;
     });
 
-    // Marker placed after render via getPointAtLength (see positionMarker)
     return `
     <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" id="curveSvg" role="img"
          aria-label="LEAN Enterprise System implementation curve showing improvements over time across four phases">
       ${headers}
-      <!-- Axes -->
       <line x1="${plot.x0}" y1="${plot.y0}" x2="${plot.x0}" y2="${plot.y1}" stroke="#2c3e50" stroke-width="2"/>
       <line x1="${plot.x0}" y1="${plot.y1}" x2="${plot.x1}" y2="${plot.y1}" stroke="#2c3e50" stroke-width="2"/>
-      <!-- Axis labels -->
       <text x="${plot.x0 - 14}" y="${(plot.y0 + plot.y1) / 2}" text-anchor="middle" font-size="14" fill="#2c3e50"
         transform="rotate(-90 ${plot.x0 - 14} ${(plot.y0 + plot.y1) / 2})">Improvements (SQDCPS) →</text>
       <text x="${(plot.x0 + plot.x1) / 2}" y="${plot.y1 + 34}" text-anchor="middle" font-size="14" fill="#2c3e50">Time →</text>
@@ -1113,7 +1264,6 @@
       <text x="290" y="134" text-anchor="middle" font-size="12.5" font-style="italic" fill="#1595D3">fades without culture</text>
       <!-- The implementation curve (orange, as on the slide) -->
       <path id="curvePathEl" d="${curvePath}" fill="none" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
-      <!-- You-are-here marker (positioned by JS) -->
       <g id="hereMarker" style="display:none">
         <circle id="hereDot" r="9" fill="#1595D3" stroke="#fff" stroke-width="3"/>
         <g id="hereLabelGroup">
@@ -1125,8 +1275,7 @@
   }
 
   // Pin the marker to the curve at the exact score position: each band spans
-  // one whole point (Formative 1–2, Localized 2–3, Broad-based 3–4) except
-  // Benchmark, which spans 4–4.5, so its fraction is scaled by 0.5.
+  // one whole point except Benchmark (4–4.5), whose fraction is scaled by 0.5.
   function positionMarker(score) {
     const svg = document.getElementById("curveSvg");
     const path = document.getElementById("curvePathEl");
@@ -1135,7 +1284,6 @@
     const bandW = (plot.x1 - plot.x0) / 4;
     const activeIdx = phaseIndexForScore(score);
     const fraction = activeIdx === 3 ? (score - 4) / 0.5 : score - Math.floor(score);
-    // Keep the dot visually inside its band, off the exact edges
     const inset = 0.08 + fraction * 0.84;
     const targetX = plot.x0 + bandW * (activeIdx + inset);
 
@@ -1152,7 +1300,6 @@
 
     const label = document.getElementById("hereLabel");
     const labelBg = document.getElementById("hereLabelBg");
-    // Place label above-left of dot; flip to right side for early phases
     const flip = activeIdx < 2;
     const textW = 92;
     const lx = flip ? pt.x + 16 : pt.x - 16 - textW;
@@ -1180,15 +1327,15 @@
     setAccOpen(sec, !sec.classList.contains("open"));
   }
 
-  // Apply each accordion's initial state (e.g. Strengths starts open) once
-  // results content has been rendered.
   function initAccordions() {
     document.querySelectorAll(".acc").forEach(sec => setAccOpen(sec, sec.classList.contains("open")));
   }
 
-  // Nav pills auto-expand the section they jump to
-  document.querySelectorAll(".result-nav a").forEach(a => {
+  // TOC: clicking a link expands its section (if accordion) and marks active
+  document.querySelectorAll("#reportToc a").forEach(a => {
     a.addEventListener("click", () => {
+      document.querySelectorAll("#reportToc a").forEach(x => x.classList.remove("active"));
+      a.classList.add("active");
       const sec = document.querySelector(a.getAttribute("href"));
       if (sec && sec.classList.contains("acc") && !sec.classList.contains("open")) setAccOpen(sec, true);
     });
@@ -1201,18 +1348,19 @@
     answers.length = 0;
     document.getElementById("firstName").value = "";
     document.getElementById("email").value = "";
-    document.getElementById("gateScreen").style.display = "none";
+    document.getElementById("gateWrap").style.display = "none";
     document.getElementById("resultsScreen").style.display = "none";
     document.getElementById("quizScreen").style.display = "none";
     document.getElementById("landingScreen").style.display = "block";
+    document.getElementById("topbarCenter").innerHTML = "";
+    document.getElementById("topbarRight").innerHTML =
+      `<span class="builtby">built by</span><img class="lockup" src="logo-full.png" alt="planet LEAN">`;
     try { history.replaceState({}, "", "/"); } catch (e) { /* file:// etc. */ }
   }
 
-  // ---------- Shareable report URLs (/r/pl-XXXX) ----------
-  // On the live host, /r/<id> serves this same page (catch-all); the id in
-  // the path pulls the stored report and renders it directly.
+  // ---------- Shareable report URLs (/r/rpa-XXXX, legacy /r/pl-XXXX) ----------
   (async function loadReportFromUrl() {
-    const m = location.pathname.match(/\/r\/(pl-[A-Fa-f0-9]{8})$/);
+    const m = location.pathname.match(/\/r\/((?:rpa|pl)-[A-Fa-f0-9]{8})$/);
     if (!m) return;
     document.getElementById("landingScreen").style.display = "none";
     try {

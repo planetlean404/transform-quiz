@@ -175,7 +175,7 @@ async function main(event) {
 
   // Honeypot: bots that fill the hidden "website" field get a fake success.
   if (event.website) {
-    return { statusCode: 200, headers: corsHeaders(), body: { ok: true, id: 'pl-' + crypto.randomBytes(4).toString('hex').toUpperCase() } };
+    return { statusCode: 200, headers: corsHeaders(), body: { ok: true, id: 'rpa-' + crypto.randomBytes(4).toString('hex').toUpperCase() } };
   }
 
   const v = validate(event);
@@ -183,7 +183,7 @@ async function main(event) {
     return { statusCode: 400, headers: corsHeaders(), body: { ok: false, errors: v.errors } };
   }
 
-  const id = 'pl-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+  const id = 'rpa-' + crypto.randomBytes(4).toString('hex').toUpperCase();
 
   let kartraStatus = 'kartra-error';
   try {

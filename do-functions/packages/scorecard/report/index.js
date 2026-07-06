@@ -65,7 +65,9 @@ async function main(event) {
   if (method === 'options') return { statusCode: 200, headers: corsHeaders() };
 
   const id = String(event.id || '').trim();
-  if (!/^pl-[A-F0-9]{8}$/i.test(id)) {
+  // rpa- is the current Rapid Plant Assessment prefix; pl- kept for reports
+  // stored before the rebrand so old links keep working.
+  if (!/^(?:rpa|pl)-[A-F0-9]{8}$/i.test(id)) {
     return { statusCode: 400, headers: corsHeaders(), body: { ok: false, error: 'bad-id' } };
   }
 
