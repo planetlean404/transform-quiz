@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rapid Plant Assessment — planet LEAN</title>
-<link rel="icon" type="image/png" href="favicon.png">
-<link rel="apple-touch-icon" href="favicon.png">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -240,14 +240,6 @@
     color: var(--pl-text-muted);
     margin-bottom: 26px;
   }
-  .q-principle {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.4px;
-    color: var(--pl-accent);
-    margin-bottom: 10px;
-  }
   .statement {
     font-size: 23px;
     font-weight: 700;
@@ -322,7 +314,7 @@
   }
   .back-link:hover { color: var(--pl-accent); }
 
-  .gate { display: none; text-align: center; }
+  .gate { text-align: center; }
   .gate h2 {
     font-size: 26px;
     font-weight: 800;
@@ -472,7 +464,7 @@
     font-weight: 800;
     line-height: 1;
     color: var(--pl-accent-dark);
-    margin: 12px 0 2px;
+    margin: 12px 0 24px;
   }
   .big-score span { font-size: 20px; font-weight: 600; color: var(--pl-text-muted); }
   .phase-badge {
@@ -487,6 +479,14 @@
     margin: 10px 0 4px;
   }
   .phase-tagline { color: var(--pl-text-muted); font-size: 15px; margin-bottom: 24px; }
+  .roadmap-lead {
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 4px;
+  }
+  .roadmap-lead strong { color: var(--pl-accent-dark); }
+  .roadmap-head { text-align: center; }
   .curve-box { margin: 8px 0 0; }
   .curve-box svg { width: 100%; height: auto; display: block; }
   .curve-caption {
@@ -502,12 +502,12 @@
     padding: 22px 24px;
     font-size: 15.5px;
     line-height: 1.6;
-    margin-bottom: 24px;
+    margin-bottom: 8px;
   }
   .narrative h3 { margin: 0 0 10px; font-size: 17px; color: var(--pl-accent-dark); }
 
-  .strength-list { margin: 0; padding-left: 0; list-style: none; }
-  .strength-list li {
+  .area-list { margin: 0; padding-left: 0; list-style: none; }
+  .area-list li {
     background: var(--pl-bg-soft);
     border: 1px solid var(--pl-border);
     border-radius: 8px;
@@ -516,10 +516,19 @@
     font-size: 15px;
     line-height: 1.55;
   }
-  .strength-list li strong { color: var(--pl-accent-dark); }
+  .area-list li strong { color: var(--pl-accent-dark); }
+  .area-list li .area-score {
+    float: right;
+    font-weight: 800;
+    color: var(--pl-accent);
+    font-size: 15px;
+  }
+  .area-list.opps li { border-left: 4px solid var(--pl-orange); }
+  .area-list.strengths li { border-left: 4px solid var(--pl-accent); }
+
   .bar-row {
     display: grid;
-    grid-template-columns: 180px 1fr 130px;
+    grid-template-columns: 120px 1fr 90px;
     gap: 12px;
     align-items: center;
     margin-bottom: 13px;
@@ -550,6 +559,7 @@
     padding: 20px 22px;
     font-size: 15.5px;
     line-height: 1.6;
+    margin-top: 16px;
   }
   .insight-card h3 { margin: 0 0 10px; font-size: 16.5px; color: var(--pl-accent-dark); }
   .plan-list { list-style: none; margin: 0; padding: 0; }
@@ -557,12 +567,12 @@
     display: flex;
     gap: 14px;
     align-items: flex-start;
-    padding: 12px 0;
+    padding: 14px 0;
     border-bottom: 1px solid var(--pl-border);
   }
   .plan-day:last-child { border-bottom: none; }
   .day-num {
-    flex: 0 0 52px;
+    flex: 0 0 66px;
     font-size: 12px;
     font-weight: 800;
     color: var(--pl-accent);
@@ -571,6 +581,7 @@
     padding-top: 2px;
   }
   .plan-body { font-size: 14.5px; line-height: 1.55; }
+  .plan-body strong { color: var(--pl-accent-dark); }
   .plan-tag {
     display: inline-block;
     font-size: 11px;
@@ -659,7 +670,7 @@
   <div class="topbar-center" id="topbarCenter"></div>
   <div class="topbar-right" id="topbarRight">
     <span class="builtby">built by</span>
-    <img class="lockup" src="logo-full.png" alt="planet LEAN">
+    <img class="lockup" src="/logo-full.png" alt="planet LEAN">
   </div>
 </header>
 
@@ -667,36 +678,36 @@
 <div class="landing" id="landingScreen">
   <section class="hero">
     <h1>How lean is your plant, <em>really</em>?</h1>
-    <div class="sub">15 plain-language statements about how your plant actually runs — not how the binder says it should. Get an instant, personalized report showing where you are on the transformation curve and what to fix first.</div>
+    <div class="sub">15 plain-language statements about how your plant actually runs — not how the binder says it should. Get an instant, personalized report with your plant's score, strengths, opportunities, and a 30-day plan.</div>
     <div class="chip-row">
       <span class="chip">Under 5 minutes</span>
       <span class="chip">No cost</span>
       <span class="chip">Instant personalized report</span>
     </div>
     <button class="start-btn" onclick="startQuiz()">Start the Assessment&nbsp;&nbsp;→</button>
-    <div class="microline">15 statements · 5 principles · no credit card, no sales call required</div>
+    <div class="microline">15 statements · no credit card, no sales call required</div>
   </section>
 
   <section class="landing-cards">
     <div class="landing-card">
       <div class="num">01</div>
-      <h3>Your phase on the curve</h3>
-      <p>See exactly where your plant sits on the lean implementation curve — Formative, Localized, Broad-based, or Benchmark — with your overall score out of 4.5.</p>
+      <h3>Your plant's score out of 100</h3>
+      <p>A single, honest number for how your plant runs today — built from your answers across Standards, Quality, People, Logistics, and Continuous Improvement.</p>
     </div>
     <div class="landing-card">
       <div class="num">02</div>
-      <h3>Principle-by-principle breakdown</h3>
-      <p>Scores across the 5 principles of the LEAN Enterprise System: Standardization, People Involvement, Short Lead Time, Built-In Quality, and Continuous Improvement.</p>
+      <h3>Strengths &amp; opportunities</h3>
+      <p>See which areas are carrying your plant and which are holding it back — each scored and explained, so you know exactly where the leverage is.</p>
     </div>
     <div class="landing-card">
       <div class="num">03</div>
-      <h3>A 7-day action plan</h3>
-      <p>One concrete action per day targeted at your weakest principles — things you can do on the floor next week, not someday.</p>
+      <h3>Your roadmap + 30-day plan</h3>
+      <p>See where you land on the lean implementation curve, and get a four-week action plan targeted at your biggest opportunities.</p>
     </div>
   </section>
 
   <section class="builtby-strip">
-    <img src="logo-full.png" alt="planet LEAN">
+    <img src="/logo-full.png" alt="planet LEAN">
     <p>Built by planet LEAN on the same principle framework we use in full plant assessments. Answer honestly — the report is only as useful as your answers. [PLACEHOLDER — Jim refines blurb]</p>
   </section>
 
@@ -709,7 +720,6 @@
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-label" id="progressLabel">Statement 1 of 15</div>
     <div class="quiz-anim" id="quizBody">
-      <div class="q-principle" id="questionPrinciple"></div>
       <div class="statement" id="questionText"></div>
       <div class="statement-prompt">How true is this in your plant today?</div>
       <div class="options" id="optionsList"></div>
@@ -721,7 +731,7 @@
 <!-- ---------- Email gate ---------- -->
 <div class="card-wrap" id="gateWrap" style="display:none">
   <div class="card">
-    <div class="gate" id="gateScreen" style="display:block">
+    <div class="gate" id="gateScreen">
       <h2>Your report is ready</h2>
       <p>Tell us where to send it — your personalized results appear instantly, right here.</p>
       <input type="text" id="firstName" placeholder="First name">
@@ -740,9 +750,9 @@
       <div class="toc-title">Report Contents</div>
       <a href="#sec-overview" class="active"><span class="toc-num">01</span>Overview</a>
       <a href="#sec-strengths"><span class="toc-num">02</span>Strengths</a>
-      <a href="#sec-breakdown"><span class="toc-num">03</span>Breakdown</a>
-      <a href="#sec-insights"><span class="toc-num">04</span>Insights</a>
-      <a href="#sec-plan"><span class="toc-num">05</span>Action Plan</a>
+      <a href="#sec-opps"><span class="toc-num">03</span>Opportunities</a>
+      <a href="#sec-roadmap"><span class="toc-num">04</span>Roadmap</a>
+      <a href="#sec-plan"><span class="toc-num">05</span>30-Day Plan</a>
       <a href="#sec-download"><span class="toc-num">06</span>Download</a>
     </aside>
 
@@ -753,12 +763,9 @@
           <h2 id="resultsTitle"></h2>
           <div class="hero-date" id="resultsDate"></div>
           <div class="big-score" id="bigScore"></div>
-          <div class="phase-badge" id="phaseBadge"></div>
-          <div class="phase-tagline" id="phaseTagline"></div>
         </div>
-        <div class="curve-box" id="curveBox"></div>
-        <div class="curve-caption">SQDCPS — Safety, Quality, Delivery, Cost, People, Sustainability</div>
-        <div class="narrative" id="narrative"></div>
+        <div id="breakdownList"></div>
+        <div class="bar-legend">Areas scoring 70+ are strengths; the tick marks 70.</div>
       </section>
 
       <section class="section acc open" id="sec-strengths">
@@ -766,32 +773,39 @@
           <span class="section-num">02</span><span class="section-title">Where You're Strong</span><span class="chev">▾</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
-          <ul class="strength-list" id="strengthsList"></ul>
+          <ul class="area-list strengths" id="strengthsList"></ul>
         </div></div>
       </section>
 
-      <section class="section acc" id="sec-breakdown">
-        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
-          <span class="section-num">03</span><span class="section-title">Score Breakdown by Principle</span><span class="chev">▾</span>
+      <section class="section acc open" id="sec-opps">
+        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="true">
+          <span class="section-num">03</span><span class="section-title">Your Biggest Opportunities</span><span class="chev">▾</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
-          <div id="breakdownList"></div>
-          <div class="bar-legend">Tick marks show phase boundaries: 2 Localized · 3 Broad-based · 4 Benchmark</div>
-        </div></div>
-      </section>
-
-      <section class="section acc" id="sec-insights">
-        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
-          <span class="section-num">04</span><span class="section-title">What Your Pattern Reveals</span><span class="chev">▾</span>
-        </button>
-        <div class="acc-body"><div class="acc-inner">
+          <ul class="area-list opps" id="oppsList"></ul>
           <div class="insight-card" id="insightCard"></div>
+        </div></div>
+      </section>
+
+      <section class="section acc" id="sec-roadmap">
+        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
+          <span class="section-num">04</span><span class="section-title">Your Transformation Roadmap</span><span class="chev">▾</span>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="roadmap-head">
+            <div class="roadmap-lead" id="roadmapLead"></div>
+            <div class="phase-badge" id="phaseBadge"></div>
+            <div class="phase-tagline" id="phaseTagline"></div>
+          </div>
+          <div class="curve-box" id="curveBox"></div>
+          <div class="curve-caption">SQDCPS — Safety, Quality, Delivery, Cost, People, Sustainability</div>
+          <div class="narrative" id="narrative"></div>
         </div></div>
       </section>
 
       <section class="section acc" id="sec-plan">
         <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
-          <span class="section-num">05</span><span class="section-title">Your 7-Day Action Plan</span><span class="chev">▾</span>
+          <span class="section-num">05</span><span class="section-title">Your 30-Day Plan</span><span class="chev">▾</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
           <ol class="plan-list" id="planList"></ol>
@@ -804,7 +818,7 @@
           <button class="cta-primary" onclick="alert('PDF generation comes in the next build step.')">Download PDF Report</button>
           <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
         </div>
-        <div class="placeholder-note">Prototype note: narrative, strengths, insights, and action-plan copy are placeholders — Jim supplies real content later. PDF is the next build step.</div>
+        <div class="placeholder-note">Prototype note: narrative, strengths/opportunities, insights, and plan copy are placeholders — Jim supplies real content later. PDF is the next build step.</div>
       </section>
     </main>
   </div>
@@ -813,8 +827,7 @@
 <button class="reset" onclick="resetQuiz()">Reset demo</button>
 
 <script>
-  // ---------- Phase model ----------
-  // Index order matters: 0 → 3 = low → high maturity.
+  // ---------- Phase model (used on the Roadmap curve) ----------
   const PHASES = [
     {
       key: "formative",
@@ -843,9 +856,13 @@
   ];
 
   // ---------- Statements (Jim's Question Draft, green = included) ----------
-  // 15 statements, 3 per principle. Each is a STATEMENT the visitor rates on
-  // a 4-point scale. Scale values: 1, 2, 3, 4.5 (top = 4.5 so a Benchmark
-  // average is reachable; no zero). Scales vary per statement.
+  // 15 statements, 3 per principle, presented in RANDOM order with no
+  // principle label — the report reassembles them into the 5 areas.
+  // Scoring (Jim's 10-point basis): option 1 = 1, option 2 = 5, option 3 = 7,
+  // option 4 = 9. Area score = avg ×10 → X/100 (max 90 — nobody gets 100).
+  // The Roadmap converts the 10-point average onto the 1–4.5 implementation
+  // curve: curve = 1 + (avg10 − 1) × 3.5 / 8. Storage/backend stays on the
+  // curve scale, so old reports remain valid.
   const SCALES = {
     freq: ["Never", "Sometimes", "Most of the time", "Always"],
     amount: ["None", "Some", "Most", "All"],
@@ -853,7 +870,16 @@
     employees: ["No employees", "Some employees", "Most employees", "All employees"],
     stations: ["No stations", "Some stations", "Most stations", "All stations"]
   };
-  const SCORE_VALUES = [1, 2, 3, 4.5];
+  const SCORE_VALUES = [1, 5, 7, 9];
+
+  // Display names for the 5 areas (Jim's report labels)
+  const AREA_LABELS = {
+    "Standardization": "Standards",
+    "People Involvement": "People",
+    "Short Lead Time": "Logistics",
+    "Built-In Quality": "Quality",
+    "Continuous Improvement": "CI"
+  };
 
   const PRINCIPLES = [
     {
@@ -898,7 +924,8 @@
     }
   ];
 
-  // Flattened statement list drives the quiz flow.
+  // Flattened statement list; shuffled at quiz start so the 15 statements
+  // appear in random order with no visible grouping.
   const questions = PRINCIPLES.flatMap(p =>
     p.statements.map(q => ({
       principle: p.name,
@@ -907,12 +934,20 @@
     }))
   );
 
+  function shuffleQuestions() {
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+  }
+
   let current = 0;
   let gateTimer = null;
   const answers = [];
 
   // ---------- Quiz flow ----------
   function startQuiz() {
+    shuffleQuestions();
     document.getElementById("landingScreen").style.display = "none";
     document.getElementById("quizScreen").style.display = "block";
     renderQuestion();
@@ -921,7 +956,6 @@
 
   function renderQuestion() {
     const q = questions[current];
-    document.getElementById("questionPrinciple").textContent = q.principle;
     document.getElementById("questionText").textContent = q.text;
     document.getElementById("progressLabel").textContent = `Statement ${current + 1} of ${questions.length}`;
     document.getElementById("progressFill").style.width = `${(current / questions.length) * 100}%`;
@@ -990,22 +1024,19 @@
     syncToServer(name, email);
   }
 
-  // Fire-and-forget: the visitor never waits on the network. On success the
-  // address bar silently upgrades to the permanent report URL and the header
-  // shows the report id.
   async function syncToServer(name, email) {
     try {
       const ps = computePrincipleScores();
-      const score = computeScore();
+      const curveScore = toCurve(overall10(ps));
       const res = await fetch(`${API_BASE}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName: name,
           email,
-          score,
-          phase: PHASES[phaseIndexForScore(score)].name,
-          principles: ps.map(p => ({ name: p.name, score: p.score })),
+          score: curveScore,
+          phase: PHASES[phaseIndexForScore(curveScore)].name,
+          principles: ps.map(p => ({ name: p.name, score: toCurve(p.score10) })),
           pattern: detectPattern(ps),
           answers: answers.map(a => a.score),
           website: document.getElementById("website").value
@@ -1022,68 +1053,80 @@
   }
 
   // ---------- Scoring ----------
-  // Principle score = raw average of that principle's answers. Overall score =
-  // raw average of the principle scores, NOT rounded. Phase boundaries:
-  // 1 to <2 Formative, 2 to <3 Localized, 3 to <4 Broad-based, >=4 Benchmark.
+  // Area score10 = raw average of that area's answers on the 10-point basis
+  // (1/5/7/9). Display score = ×10 (max 90/100). Curve scale (canonical
+  // storage + phases): curve = 1 + (score10 − 1) × 3.5 / 8, so 1→1, 9→4.5.
+  // Phase boundaries on the curve: 1–<2 Formative, 2–<3 Localized,
+  // 3–<4 Broad-based, ≥4 Benchmark.
   function computePrincipleScores() {
     return PRINCIPLES.map(p => {
       const vals = answers
         .filter((a, i) => questions[i].principle === p.name)
         .map(a => a.score);
       const avg = vals.reduce((acc, v) => acc + v, 0) / vals.length;
-      return { name: p.name, score: Math.min(4.5, Math.max(1, avg)) };
+      return { name: p.name, score10: Math.min(9, Math.max(1, avg)) };
     });
   }
 
-  function computeScore() {
-    const ps = computePrincipleScores();
-    const avg = ps.reduce((acc, p) => acc + p.score, 0) / ps.length;
-    return Math.min(4.5, Math.max(1, avg));
+  function overall10(ps) {
+    return ps.reduce((acc, p) => acc + p.score10, 0) / ps.length;
+  }
+
+  function toCurve(s10) {
+    return Math.min(4.5, Math.max(1, 1 + (s10 - 1) * 3.5 / 8));
+  }
+
+  function fromCurve(curve) {
+    return 1 + (curve - 1) * 8 / 3.5;
+  }
+
+  function to100(s10) {
+    return Math.round(s10 * 10);
   }
 
   function phaseIndexForScore(score) {
     return Math.min(3, Math.floor(score) - 1);
   }
 
-  // Display: truncate (not round) to 2 decimals so the shown score never
-  // crosses a phase boundary the raw average didn't cross.
+  // Display: truncate (not round) to 2 decimals so the shown curve score never
+  // crosses a phase boundary the raw value didn't cross.
   function formatScore(score) {
     const truncated = Math.floor(score * 100) / 100;
     return String(truncated);
   }
 
-  // ---------- Pattern engine ----------
+  // ---------- Pattern engine (thresholds on the curve scale) ----------
   const PATTERNS = {
     "calibration": {
       title: "Strong across the board — now the question is calibration",
-      body: "Your self-assessment puts every principle at or near Benchmark. That's either a genuinely exceptional plant — or optimistic self-scoring, which is the most common finding when we assess high-self-scoring plants in person. Either way, the next step is the same: an external calibration to confirm the level and find the gaps self-assessment can't see. [PLACEHOLDER — Jim refines calibration copy]"
+      body: "Your self-assessment puts every area at or near the top. That's either a genuinely exceptional plant — or optimistic self-scoring, which is the most common finding when we assess high-self-scoring plants in person. Either way, the next step is the same: an external calibration to confirm the level and find the gaps self-assessment can't see. [PLACEHOLDER — Jim refines calibration copy]"
     },
     "starting-line": {
       title: "You're at the starting line — don't boil the ocean",
-      body: "Every principle scored in the Formative range, which is honest and common. The mistake plants make here is launching everything at once. The proven path is one model area: prove standard work, daily management, and problem-solving in a single line or cell, then expand from strength. [PLACEHOLDER — Jim refines starting-line copy]"
+      body: "Every area scored in the earliest range, which is honest and common. The mistake plants make here is launching everything at once. The proven path is one model area: prove standard work, daily management, and problem-solving in a single line or cell, then expand from strength. [PLACEHOLDER — Jim refines starting-line copy]"
     },
     "fragile-foundation": {
       title: "Advanced tools on a weak foundation — your gains are at risk",
-      body: "You scored well in advanced areas, but Standardization — the foundation everything else stands on — lags behind. Without standard work as the baseline, improvements have nothing to hold onto and quietly erode. This is the classic setup for the dashed blue curve on your chart: a quick boost that fades. Stabilize the foundation first. [PLACEHOLDER — Jim refines fragile-foundation copy]"
+      body: "You scored well in advanced areas, but Standards — the foundation everything else stands on — lags behind. Without standard work as the baseline, improvements have nothing to hold onto and quietly erode. This is the classic setup for the dashed blue curve on your roadmap: a quick boost that fades. Stabilize the foundation first. [PLACEHOLDER — Jim refines fragile-foundation copy]"
     },
     "tools-without-culture": {
       title: "Strong tools, lagging people engagement — the classic trap",
-      body: "Your technical principles score well, but People Involvement lags. That's the exact profile of the \"tools only\" trajectory shown as the dashed blue arc on your chart: metrics jump, then fade, because the culture that sustains improvement never developed. The highest-leverage move now isn't another tool — it's leadership behavior and workforce engagement. [PLACEHOLDER — Jim refines tools-without-culture copy]"
+      body: "Your technical areas score well, but People lags. That's the exact profile of the \"tools only\" trajectory shown as the dashed blue arc on your roadmap: metrics jump, then fade, because the culture that sustains improvement never developed. The highest-leverage move now isn't another tool — it's leadership behavior and workforce engagement. [PLACEHOLDER — Jim refines tools-without-culture copy]"
     },
     "speed-over-quality": {
       title: "Flow is ahead of quality — speed amplifies defects",
-      body: "Your Short Lead Time score is ahead of Built-In Quality. Faster flow with weak quality-at-the-source means defects travel further, faster. Before tightening flow another notch, close the quality gap: error-proofing, in-station checks, and a working help chain. [PLACEHOLDER — Jim refines speed-over-quality copy]"
+      body: "Your Logistics score is ahead of Quality. Faster flow with weak quality-at-the-source means defects travel further, faster. Before tightening flow another notch, close the quality gap: error-proofing, in-station checks, and a working help chain. [PLACEHOLDER — Jim refines speed-over-quality copy]"
     },
     "focus-weakest": {
-      title: "One principle is holding the others back",
-      body: "Your profile is uneven — and in a lean system, the weakest principle sets the pace for the whole transformation. Concentrating your next 90 days on {WEAKEST} will do more for overall results than pushing your strong areas higher. [PLACEHOLDER — Jim refines focus-weakest copy]"
+      title: "One area is holding the others back",
+      body: "Your profile is uneven — and in a lean system, the weakest area sets the pace for the whole transformation. Concentrating your next 90 days on {WEAKEST} will do more for overall results than pushing your strong areas higher. [PLACEHOLDER — Jim refines focus-weakest copy]"
     }
   };
 
   function detectPattern(ps) {
     const by = {};
-    ps.forEach(p => by[p.name] = p.score);
-    const all = ps.map(p => p.score);
+    ps.forEach(p => by[p.name] = toCurve(p.score10));
+    const all = Object.values(by);
     if (all.every(s => s >= 3.5)) return "calibration";
     if (all.every(s => s < 2)) return "starting-line";
     if (by["Standardization"] < 2.5 && Math.max(...all) >= 3) return "fragile-foundation";
@@ -1094,26 +1137,34 @@
   }
 
   const STRENGTH_NOTES = {
-    "Standardization": "Standard work and visual management give your improvements something to hold onto — this is the foundation many plants never lay properly.",
-    "People Involvement": "An engaged workforce is the single hardest thing to build and the most valuable — improvements here compound everywhere else.",
-    "Short Lead Time": "Material and information flow with discipline — you're ahead of most plants on the mechanics of lean flow.",
-    "Built-In Quality": "Catching defects at the source instead of inspecting them out puts you in rare company.",
-    "Continuous Improvement": "Structured problem-solving as a habit — not an event — is what separates programs from transformations."
+    "Standardization": "Standard work and visual management give your improvements something to hold onto — this is the foundation many plants never lay properly. [PLACEHOLDER]",
+    "People Involvement": "An engaged workforce is the single hardest thing to build and the most valuable — improvements here compound everywhere else. [PLACEHOLDER]",
+    "Short Lead Time": "Material and information flow with discipline — you're ahead of most plants on the mechanics of lean flow. [PLACEHOLDER]",
+    "Built-In Quality": "Catching defects at the source instead of inspecting them out puts you in rare company. [PLACEHOLDER]",
+    "Continuous Improvement": "Structured problem-solving as a habit — not an event — is what separates programs from transformations. [PLACEHOLDER]"
   };
 
-  // 7-day action plan: days 1–3 attack the weakest principle, 4–5 the second
-  // weakest, 6 leverages the strongest, 7 sets the habit. Placeholder copy.
+  const OPP_NOTES = {
+    "Standardization": "Without standard work as the baseline, every other improvement is built on sand. Documented, followed, visual standards are the first fix — everything else depends on them. [PLACEHOLDER]",
+    "People Involvement": "Tools can be installed; culture has to be grown. Low engagement is the strongest predictor of backsliding — start with leaders on the floor, coaching daily. [PLACEHOLDER]",
+    "Short Lead Time": "Material that waits, travels, or gets double-handled is cost and lead time hiding in plain sight. Map the flow, expose the queues, pull don't push. [PLACEHOLDER]",
+    "Built-In Quality": "Defects found downstream cost multiples of defects stopped at the source. Build checks into the work itself and protect high-risk operations with verified error proofing. [PLACEHOLDER]",
+    "Continuous Improvement": "Without a daily improvement habit, problems get worked around instead of solved — and they come back. Visible metrics and owned countermeasures turn firefighting into progress. [PLACEHOLDER]"
+  };
+
+  // 30-day plan: four weekly segments. Weeks 1–2 attack the weakest area,
+  // week 3 spreads the strongest area's recipe to the second-weakest,
+  // week 4 locks in the habits. Placeholder copy.
   function buildPlan(ps) {
-    const sorted = [...ps].sort((a, b) => a.score - b.score);
-    const weakest = sorted[0], second = sorted[1], strongest = sorted[sorted.length - 1];
+    const sorted = [...ps].sort((a, b) => a.score10 - b.score10);
+    const weakest = AREA_LABELS[sorted[0].name];
+    const second = AREA_LABELS[sorted[1].name];
+    const strongest = AREA_LABELS[sorted[sorted.length - 1].name];
     return [
-      { day: 1, tag: weakest.name, text: `Go to the floor and observe your weakest area (${weakest.name.toLowerCase()}) for 30 uninterrupted minutes. Write down only what you see, not what you believe. [PLACEHOLDER]` },
-      { day: 2, tag: weakest.name, text: "Ask three operators how they know they're doing the job the right way. Their answers tell you whether standards live on paper or on the floor. [PLACEHOLDER]" },
-      { day: 3, tag: weakest.name, text: "Pick the single most obvious gap from days 1–2 and fix it visibly within 24 hours. Small, fast, and public beats big and slow. [PLACEHOLDER]" },
-      { day: 4, tag: second.name, text: `Repeat the 30-minute floor observation in your second-weakest area (${second.name.toLowerCase()}). [PLACEHOLDER]` },
-      { day: 5, tag: second.name, text: "Ask your team leaders what stops them from fixing problems themselves. Listen for system barriers, not people problems. [PLACEHOLDER]" },
-      { day: 6, tag: strongest.name, text: `Visit your strongest area (${strongest.name.toLowerCase()}) and identify what made it work. That recipe is your template for the weak areas. [PLACEHOLDER]` },
-      { day: 7, tag: "All", text: "Block 30 minutes on your calendar, same time every day next week, for floor observation. The habit matters more than the findings. [PLACEHOLDER]" }
+      { week: 1, tag: weakest, title: "See it clearly", text: `Spend 30 minutes a day on the floor in your weakest area (${weakest}). Write down only what you see, not what you believe. Ask operators how they know they're doing the job right. By Friday, you have a real baseline. [PLACEHOLDER]` },
+      { week: 2, tag: weakest, title: "Fix one thing, visibly", text: `Pick the single most obvious gap from week 1 and close it — fast, small, and public. Post the before/after where the team can see it. Credibility for the next 30 days is built this week. [PLACEHOLDER]` },
+      { week: 3, tag: second, title: "Spread what works", text: `Visit your strongest area (${strongest}) and write down the recipe — what made it work. Apply one element of that recipe to your second-weakest area (${second}) before the week is out. [PLACEHOLDER]` },
+      { week: 4, tag: "All", title: "Lock in the habit", text: `Make the floor time permanent: same 30 minutes, same time, every day, on your calendar. Review the month with your leadership team — what moved, what didn't — and pick the next area of focus. Then retake this assessment in 90 days. [PLACEHOLDER]` }
     ];
   }
 
@@ -1123,8 +1174,8 @@
     renderReport({
       firstName: name,
       date: new Date().toISOString(),
-      score: computeScore(),
-      principles: ps,
+      score: toCurve(overall10(ps)),
+      principles: ps.map(p => ({ name: p.name, score: toCurve(p.score10) })),
       pattern: detectPattern(ps)
     });
   }
@@ -1136,17 +1187,24 @@
 
   function setReportHeader(id) {
     document.getElementById("topbarCenter").innerHTML =
-      `<img class="lockup" src="logo-full.png" alt="planet LEAN">`;
+      `<img class="lockup" src="/logo-full.png" alt="planet LEAN">`;
     if (id) setReportId(id);
     else document.getElementById("topbarRight").innerHTML =
       `<span class="report-id">Report ID — <strong>pending…</strong></span>`;
   }
 
+  // renderReport always receives CURVE-scale data (1–4.5) — that's the
+  // canonical storage format — and derives the /100 display from it.
   function renderReport(data) {
-    const score = data.score;
-    const phaseIdx = phaseIndexForScore(score);
+    const curveScore = data.score;
+    const phaseIdx = phaseIndexForScore(curveScore);
     const phase = PHASES[phaseIdx];
-    const ps = data.principles;
+    // Per-area: curve scale in, 10-point + /100 derived
+    const areas = data.principles.map(p => {
+      const s10 = fromCurve(p.score);
+      return { name: p.name, label: AREA_LABELS[p.name] || p.name, score10: s10, score100: to100(s10) };
+    });
+    const total100 = to100(fromCurve(curveScore));
 
     clearTimeout(gateTimer);
     document.getElementById("landingScreen").style.display = "none";
@@ -1156,57 +1214,64 @@
     setReportHeader(data.id || null);
     window.scrollTo(0, 0);
 
-    // 01 — Overview
-    document.getElementById("resultsTitle").textContent = `${data.firstName}, your plant is in the`;
+    // 01 — Overview: name, date, big /100 score, area bars
+    document.getElementById("resultsTitle").textContent = `${data.firstName}, here's how your plant scored`;
     document.getElementById("resultsDate").textContent = new Date(data.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    document.getElementById("bigScore").innerHTML = `${formatScore(score)}<span> / 4.5</span>`;
+    document.getElementById("bigScore").innerHTML = `${total100}<span> / 100</span>`;
+    document.getElementById("breakdownList").innerHTML = areas.map(a => `
+      <div class="bar-row">
+        <div class="bar-name">${a.label}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${a.score100}%"></div>
+          <div class="bar-tick" style="left:70%"></div>
+        </div>
+        <div class="bar-score">${a.score100} <em>/ 100</em></div>
+      </div>`).join("");
+
+    // 02 — Strengths (70+) / 03 — Opportunities (<70)
+    const byScore = [...areas].sort((a, b) => b.score100 - a.score100);
+    let strengths = byScore.filter(a => a.score100 >= 70);
+    let opps = [...byScore].reverse().filter(a => a.score100 < 70);
+    let strengthsPreamble = "", oppsPreamble = "";
+    if (!strengths.length) {
+      strengths = byScore.slice(0, 2);
+      strengthsPreamble = `<li><em>No area reached 70 yet — these are your strongest areas relative to the rest, and the right place to anchor early wins.</em></li>`;
+    }
+    if (!opps.length) {
+      opps = [...byScore].reverse().slice(0, 2);
+      oppsPreamble = `<li><em>Every area cleared 70 — impressive. These are the two with the most room left to run.</em></li>`;
+    }
+    document.getElementById("strengthsList").innerHTML = strengthsPreamble + strengths.map(a =>
+      `<li><span class="area-score">${a.score100}</span><strong>${a.label}</strong><br>${STRENGTH_NOTES[a.name]}</li>`
+    ).join("");
+    document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(a =>
+      `<li><span class="area-score">${a.score100}</span><strong>${a.label}</strong><br>${OPP_NOTES[a.name]}</li>`
+    ).join("");
+
+    // Pattern insight lives with the opportunities
+    const sorted = [...areas].sort((a, b) => a.score100 - b.score100);
+    const pattern = PATTERNS[data.pattern] || PATTERNS[detectPattern(areas.map(a => ({ name: a.name, score10: a.score10 })))];
+    document.getElementById("insightCard").innerHTML =
+      `<h3>${pattern.title}</h3>${pattern.body.replace("{WEAKEST}", sorted[0].label)}`;
+
+    // 04 — Roadmap: /100 converted onto the 1–4.5 implementation curve
+    document.getElementById("roadmapLead").innerHTML =
+      `On the lean implementation curve, your <strong>${total100}/100</strong> converts to <strong>${formatScore(curveScore)} / 4.5</strong> — placing your plant in the`;
     document.getElementById("phaseBadge").textContent = `${phase.name} Phase`;
     document.getElementById("phaseTagline").textContent = phase.tagline;
     document.getElementById("narrative").innerHTML = `<h3>What this means</h3>${phase.narrative}`;
     document.getElementById("curveBox").innerHTML = buildCurveSVG(phaseIdx);
-    positionMarker(score);
+    positionMarker(curveScore);
 
-    // 02 — Strengths
-    const strong = ps.filter(p => p.score >= 3).sort((a, b) => b.score - a.score);
-    const shown = strong.length ? strong : [...ps].sort((a, b) => b.score - a.score).slice(0, 2);
-    const rel = strong.length ? "" : `<li><em>No principle scored Broad-based yet — these are your strongest areas relative to the rest, and the right place to anchor early wins.</em></li>`;
-    document.getElementById("strengthsList").innerHTML = rel + shown.map(p =>
-      `<li><strong>${p.name} — ${formatScore(p.score)} (${PHASES[phaseIndexForScore(p.score)].name})</strong><br>${STRENGTH_NOTES[p.name]}</li>`
-    ).join("");
-
-    // 03 — Breakdown bars: scale 1–4.5, ticks at phase boundaries 2 / 3 / 4
-    const pct = s => ((s - 1) / 3.5) * 100;
-    document.getElementById("breakdownList").innerHTML = ps.map(p => `
-      <div class="bar-row">
-        <div class="bar-name">${p.name}</div>
-        <div class="bar-track">
-          <div class="bar-fill" style="width:${pct(p.score)}%"></div>
-          <div class="bar-tick" style="left:${pct(2)}%"></div>
-          <div class="bar-tick" style="left:${pct(3)}%"></div>
-          <div class="bar-tick" style="left:${pct(4)}%"></div>
-        </div>
-        <div class="bar-score">${formatScore(p.score)} <em>— ${PHASES[phaseIndexForScore(p.score)].name}</em></div>
-      </div>`).join("");
-
-    // 04 — Insights: pattern-based (stored pattern wins; recompute as fallback)
-    const sorted = [...ps].sort((a, b) => a.score - b.score);
-    const pattern = PATTERNS[data.pattern] || PATTERNS[detectPattern(ps)];
-    document.getElementById("insightCard").innerHTML =
-      `<h3>${pattern.title}</h3>${pattern.body.replace("{WEAKEST}", sorted[0].name)}`;
-
-    // 05 — Action plan
-    document.getElementById("planList").innerHTML = buildPlan(ps).map(d =>
-      `<li class="plan-day"><span class="day-num">Day ${d.day}</span><span class="plan-body">${d.text}<span class="plan-tag">${d.tag}</span></span></li>`
+    // 05 — 30-day plan (four weekly segments)
+    document.getElementById("planList").innerHTML = buildPlan(areas.map(a => ({ name: a.name, score10: a.score10 }))).map(w =>
+      `<li class="plan-day"><span class="day-num">Week ${w.week}</span><span class="plan-body"><strong>${w.title}.</strong> ${w.text}<span class="plan-tag">${w.tag}</span></span></li>`
     ).join("");
 
     initAccordions();
   }
 
   // ---------- Transformation curve graphic ----------
-  // LEAN Enterprise System implementation curve: Improvements (SQDCPS) vs
-  // Time, 4 phase columns with numbered stage titles above lowercase phase
-  // names, orange curve that starts flat and climbs steepest through
-  // broad-based, plus a "You are here" marker at the visitor's exact score.
   const STAGES = [
     ["Foundation &", "Org Alignment"],
     ["Expansion &", "Discipline"],
@@ -1274,8 +1339,6 @@
     </svg>`;
   }
 
-  // Pin the marker to the curve at the exact score position: each band spans
-  // one whole point except Benchmark (4–4.5), whose fraction is scaled by 0.5.
   function positionMarker(score) {
     const svg = document.getElementById("curveSvg");
     const path = document.getElementById("curvePathEl");
@@ -1314,8 +1377,6 @@
   }
 
   // ---------- Accordion sections ----------
-  // Heights are set inline (not via CSS class) so the transition animates to
-  // the exact content height.
   function setAccOpen(sec, open) {
     const body = sec.querySelector(".acc-body");
     sec.classList.toggle("open", open);
@@ -1354,7 +1415,7 @@
     document.getElementById("landingScreen").style.display = "block";
     document.getElementById("topbarCenter").innerHTML = "";
     document.getElementById("topbarRight").innerHTML =
-      `<span class="builtby">built by</span><img class="lockup" src="logo-full.png" alt="planet LEAN">`;
+      `<span class="builtby">built by</span><img class="lockup" src="/logo-full.png" alt="planet LEAN">`;
     try { history.replaceState({}, "", "/"); } catch (e) { /* file:// etc. */ }
   }
 
