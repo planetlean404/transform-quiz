@@ -78,7 +78,13 @@
     color: var(--pl-text-muted);
     font-weight: 500;
   }
-  .topbar img.lockup { height: 26px; width: auto; display: block; }
+  .wordmark {
+    font-weight: 800;
+    color: var(--pl-text);
+    letter-spacing: -0.2px;
+  }
+  .wordmark .lean { color: var(--pl-accent); }
+  .topbar .wordmark { font-size: 15px; }
   .report-id {
     font-size: 12.5px;
     font-weight: 600;
@@ -323,7 +329,13 @@
     padding: 26px 24px;
     border-top: 1px solid var(--pl-border);
   }
-  .builtby-strip img { height: 40px; width: auto; }
+  .builtby-strip .strip-mark { white-space: nowrap; }
+  .builtby-strip .builtby {
+    font-size: 14px;
+    color: var(--pl-text-muted);
+    font-weight: 500;
+  }
+  .builtby-strip .wordmark { font-size: 20px; }
   .builtby-strip p {
     margin: 0;
     font-size: 14px;
@@ -805,7 +817,7 @@
   <div class="topbar-center" id="topbarCenter"></div>
   <div class="topbar-right" id="topbarRight">
     <span class="builtby">built by</span>
-    <img class="lockup" src="/logo-full.png" alt="planet LEAN">
+    <span class="wordmark">planet <span class="lean">LEAN</span></span>
   </div>
 </header>
 
@@ -891,7 +903,7 @@
   </div>
 
   <section class="builtby-strip">
-    <img src="/logo-full.png" alt="planet LEAN">
+    <span class="strip-mark"><span class="builtby">built by</span> <span class="wordmark">planet <span class="lean">LEAN</span></span></span>
     <p>Built by planet LEAN on the same principle framework we use in full plant assessments. Answer honestly — the report is only as useful as your answers. [PLACEHOLDER — Jim refines blurb]</p>
   </section>
 
@@ -1376,7 +1388,7 @@
 
   function setReportHeader(id) {
     document.getElementById("topbarCenter").innerHTML =
-      `<img class="lockup" src="/logo-full.png" alt="planet LEAN">`;
+      `<span class="wordmark">planet <span class="lean">LEAN</span></span>`;
     if (id) setReportId(id);
     else document.getElementById("topbarRight").innerHTML =
       `<span class="report-id">Report ID — <strong>pending…</strong></span>`;
@@ -1601,7 +1613,7 @@
     document.getElementById("landingScreen").style.display = "block";
     document.getElementById("topbarCenter").innerHTML = "";
     document.getElementById("topbarRight").innerHTML =
-      `<span class="builtby">built by</span><img class="lockup" src="/logo-full.png" alt="planet LEAN">`;
+      `<span class="builtby">built by</span><span class="wordmark">planet <span class="lean">LEAN</span></span>`;
     try { history.replaceState({}, "", "/"); } catch (e) { /* file:// etc. */ }
   }
 
