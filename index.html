@@ -19,6 +19,10 @@
     --pl-text: #2c3e50;
     --pl-text-muted: #7f8c95;
     --pl-border: #dfe3e6;
+    /* Score band colors (Jim's spec: <4 red, 4-<8 yellow, 8-10 green) */
+    --score-red: #e0433f;
+    --score-yellow: #f2b01e;
+    --score-green: #33a852;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -86,36 +90,37 @@
   }
   .report-id strong { color: var(--pl-accent-dark); font-weight: 700; }
 
-  /* ---------- Landing (full width) ---------- */
+  /* ---------- Landing (full width, PMB-style) ---------- */
   .landing { display: block; }
-  .hero {
-    text-align: center;
-    padding: 72px 24px 40px;
-    max-width: 780px;
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 44px;
+    align-items: center;
+    max-width: 1080px;
     margin: 0 auto;
+    padding: 60px 24px 30px;
   }
-  .hero h1 {
-    font-size: 42px;
+  .hero-copy h1 {
+    font-size: 40px;
     font-weight: 800;
     line-height: 1.15;
     letter-spacing: -1px;
     color: var(--pl-accent-dark);
-    margin: 0 0 18px;
+    margin: 0 0 16px;
   }
-  .hero h1 em { font-style: normal; color: var(--pl-accent); }
-  .hero .sub {
-    font-size: 18px;
+  .hero-copy h1 em { font-style: normal; color: var(--pl-accent); }
+  .hero-copy .sub {
+    font-size: 17px;
     line-height: 1.65;
     color: var(--pl-text-muted);
-    max-width: 620px;
-    margin: 0 auto 28px;
+    margin: 0 0 22px;
   }
   .chip-row {
     display: flex;
-    justify-content: center;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 32px;
+    margin-bottom: 26px;
   }
   .chip {
     font-size: 13.5px;
@@ -141,18 +146,144 @@
     transition: background 0.15s ease, transform 0.1s ease;
   }
   .start-btn:hover { background: #0F7DB3; transform: translateY(-1px); }
-  .hero .microline {
+  .hero-copy .microline {
     font-size: 13px;
     color: var(--pl-text-muted);
+    margin-top: 12px;
+  }
+
+  /* Sample report card (hero right) */
+  .sample-card {
+    background: var(--pl-bg);
+    border: 1px solid #e8ebee;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(16,24,40,0.06), 0 14px 34px rgba(16,24,40,0.09);
+    padding: 26px 26px 20px;
+    transform: rotate(1.5deg);
+  }
+  .sample-card .sample-tag {
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--pl-text-muted);
+    margin-bottom: 14px;
+  }
+  .sample-score-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .sample-score {
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--pl-accent-dark);
+  }
+  .sample-score span { font-size: 17px; font-weight: 600; color: var(--pl-text-muted); }
+  .sample-score-label {
+    font-size: 12.5px;
+    color: var(--pl-text-muted);
+    margin-bottom: 16px;
+  }
+  .mini-row {
+    display: grid;
+    grid-template-columns: 92px 1fr 30px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 9px;
+  }
+  .mini-name { font-size: 12px; font-weight: 600; color: var(--pl-accent-dark); white-space: nowrap; }
+  .mini-track {
+    height: 8px;
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 999px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mini-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; }
+  .mini-score { font-size: 11.5px; font-weight: 700; color: var(--pl-text-muted); text-align: right; }
+  .sample-caption {
+    font-size: 11.5px;
+    color: var(--pl-text-muted);
+    text-align: center;
     margin-top: 14px;
   }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    max-width: 980px;
+    margin: 28px auto 0;
+    padding: 0 24px;
+  }
+  .stat-card {
+    text-align: center;
+    padding: 22px 18px;
+    border: 1px solid var(--pl-border);
+    border-radius: 12px;
+    background: var(--pl-bg);
+  }
+  .stat-num {
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--pl-accent);
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .stat-text { font-size: 13.5px; line-height: 1.55; color: var(--pl-text); }
+  .stat-src { font-size: 11.5px; color: var(--pl-text-muted); margin-top: 8px; }
+
+  /* The 5 areas strip */
+  .areas-section {
+    max-width: 980px;
+    margin: 44px auto 0;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .areas-section h2 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: var(--pl-accent-dark);
+    margin: 0 0 6px;
+  }
+  .areas-section .areas-sub {
+    font-size: 15px;
+    color: var(--pl-text-muted);
+    margin-bottom: 22px;
+  }
+  .areas-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+  .area-card {
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 10px;
+    padding: 16px 12px;
+  }
+  .area-card .area-num {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--pl-accent);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .area-card h4 { margin: 0 0 6px; font-size: 14.5px; color: var(--pl-accent-dark); }
+  .area-card p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--pl-text-muted); }
 
   .landing-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 18px;
     max-width: 980px;
-    margin: 24px auto 0;
+    margin: 44px auto 0;
     padding: 0 24px;
   }
   .landing-card {
@@ -181,13 +312,14 @@
     line-height: 1.6;
     color: var(--pl-text-muted);
   }
+  .cta-repeat { text-align: center; margin: 40px 0 0; }
   .builtby-strip {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 18px;
     max-width: 780px;
-    margin: 48px auto 0;
+    margin: 44px auto 0;
     padding: 26px 24px;
     border-top: 1px solid var(--pl-border);
   }
@@ -520,7 +652,6 @@
   .area-list li .area-score {
     float: right;
     font-weight: 800;
-    color: var(--pl-accent);
     font-size: 15px;
   }
   .area-list.opps li { border-left: 4px solid var(--pl-orange); }
@@ -528,7 +659,7 @@
 
   .bar-row {
     display: grid;
-    grid-template-columns: 120px 1fr 90px;
+    grid-template-columns: 170px 1fr 90px;
     gap: 12px;
     align-items: center;
     margin-bottom: 13px;
@@ -544,7 +675,6 @@
   .bar-fill {
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    background: var(--pl-accent);
     border-radius: 999px;
   }
   .bar-tick { position: absolute; top: -3px; bottom: -3px; width: 1px; background: #c3cad0; }
@@ -633,6 +763,11 @@
   }
 
   @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 40px; text-align: center; }
+    .hero-copy .chip-row { justify-content: center; }
+    .sample-card { max-width: 380px; margin: 0 auto; transform: none; }
+    .stats-row { grid-template-columns: 1fr; }
+    .areas-grid { grid-template-columns: 1fr 1fr; }
     .report-layout { grid-template-columns: 1fr; gap: 18px; }
     .toc {
       position: static;
@@ -644,8 +779,7 @@
     .toc-title { display: none; }
     .toc a { flex: 0 0 auto; border: 1px solid var(--pl-border); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; }
     .landing-cards { grid-template-columns: 1fr; }
-    .hero { padding-top: 44px; }
-    .hero h1 { font-size: 30px; }
+    .hero-copy h1 { font-size: 30px; }
     .topbar { padding: 0 14px; }
     .topbar-center { display: none; }
     .rpa-name { font-size: 13.5px; }
@@ -657,6 +791,7 @@
     .bar-row { grid-template-columns: 1fr; gap: 6px; }
     .bar-score { text-align: left; }
     .builtby-strip { flex-direction: column; text-align: center; }
+    .areas-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -674,30 +809,75 @@
   </div>
 </header>
 
-<!-- ---------- Landing (full width) ---------- -->
+<!-- ---------- Landing (full width, PMB-style) ---------- -->
 <div class="landing" id="landingScreen">
-  <section class="hero">
-    <h1>How lean is your plant, <em>really</em>?</h1>
-    <div class="sub">15 plain-language statements about how your plant actually runs — not how the binder says it should. Get an instant, personalized report with your plant's score, strengths, opportunities, and a 30-day plan.</div>
-    <div class="chip-row">
-      <span class="chip">Under 5 minutes</span>
-      <span class="chip">No cost</span>
-      <span class="chip">Instant personalized report</span>
+  <section class="hero-grid">
+    <div class="hero-copy">
+      <h1>How lean is your plant, <em>really</em>?</h1>
+      <div class="sub">20 plain-language statements about how your plant actually runs — not how the binder says it should. Get an instant, personalized report with your plant's score, strengths, opportunities, and a 30-day plan.</div>
+      <div class="chip-row">
+        <span class="chip">Under 5 min</span>
+        <span class="chip">No credit card</span>
+        <span class="chip">Instant report</span>
+      </div>
+      <button class="start-btn" onclick="startQuiz()">Start the Assessment&nbsp;&nbsp;→</button>
+      <div class="microline">20 statements · pick the answer closest to how your plant runs today</div>
     </div>
-    <button class="start-btn" onclick="startQuiz()">Start the Assessment&nbsp;&nbsp;→</button>
-    <div class="microline">15 statements · no credit card, no sales call required</div>
+    <div class="sample-report">
+      <div class="sample-card">
+        <div class="sample-tag">Sample Report</div>
+        <div class="sample-score-row"><span class="sample-score">60<span> / 100</span></span></div>
+        <div class="sample-score-label">Overall Plant Score</div>
+        <div class="mini-row"><span class="mini-name">Standards</span><span class="mini-track"><span class="mini-fill" style="width:85%;background:var(--score-green)"></span></span><span class="mini-score">85</span></div>
+        <div class="mini-row"><span class="mini-name">Quality</span><span class="mini-track"><span class="mini-fill" style="width:74%;background:var(--score-yellow)"></span></span><span class="mini-score">74</span></div>
+        <div class="mini-row"><span class="mini-name">People</span><span class="mini-track"><span class="mini-fill" style="width:45%;background:var(--score-yellow)"></span></span><span class="mini-score">45</span></div>
+        <div class="mini-row"><span class="mini-name">Logistics</span><span class="mini-track"><span class="mini-fill" style="width:62%;background:var(--score-yellow)"></span></span><span class="mini-score">62</span></div>
+        <div class="mini-row"><span class="mini-name">CI</span><span class="mini-track"><span class="mini-fill" style="width:35%;background:var(--score-red)"></span></span><span class="mini-score">35</span></div>
+        <div class="sample-caption">Your personalized report — instant, shareable, yours to keep.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">30 min</div>
+      <div class="stat-text">A trained assessor can read whether a plant is truly lean in about 30 minutes — the research behind the Rapid Plant Assessment approach.</div>
+      <div class="stat-src">Harvard Business Review, "Read a Plant — Fast"</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">70–90%</div>
+      <div class="stat-text">Typical reduction in production lead times reported from lean implementations.</div>
+      <div class="stat-src">Lean Enterprise Research Centre</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">25–30%</div>
+      <div class="stat-text">Typical reduction in manufacturing costs attributed to sustained lean practices.</div>
+      <div class="stat-src">McKinsey &amp; Company</div>
+    </div>
+  </section>
+
+  <section class="areas-section">
+    <h2>Five areas that make or break a plant</h2>
+    <div class="areas-sub">Every statement maps to one of the five areas we use to assess plants in the field.</div>
+    <div class="areas-grid">
+      <div class="area-card"><div class="area-num">01</div><h4>Standards</h4><p>Standard work, workplace organization, and daily equipment care.</p></div>
+      <div class="area-card"><div class="area-num">02</div><h4>Quality</h4><p>Defects prevented at the point of cause, not found downstream.</p></div>
+      <div class="area-card"><div class="area-num">03</div><h4>People</h4><p>Problem-solving teams, coaching leaders, and clear roles.</p></div>
+      <div class="area-card"><div class="area-num">04</div><h4>Logistics</h4><p>Material that flows — pull systems, min/max, short changeovers.</p></div>
+      <div class="area-card"><div class="area-num">05</div><h4>Continuous Improvement</h4><p>PDCA problem-solving, live metrics, and owned countermeasures.</p></div>
+    </div>
   </section>
 
   <section class="landing-cards">
     <div class="landing-card">
       <div class="num">01</div>
       <h3>Your plant's score out of 100</h3>
-      <p>A single, honest number for how your plant runs today — built from your answers across Standards, Quality, People, Logistics, and Continuous Improvement.</p>
+      <p>A single, honest number for how your plant runs today — with color-coded scores for each of the five areas.</p>
     </div>
     <div class="landing-card">
       <div class="num">02</div>
       <h3>Strengths &amp; opportunities</h3>
-      <p>See which areas are carrying your plant and which are holding it back — each scored and explained, so you know exactly where the leverage is.</p>
+      <p>See which areas are carrying your plant and which are holding it back — anything under 70 is an opportunity, and we tell you why it matters.</p>
     </div>
     <div class="landing-card">
       <div class="num">03</div>
@@ -705,6 +885,10 @@
       <p>See where you land on the lean implementation curve, and get a four-week action plan targeted at your biggest opportunities.</p>
     </div>
   </section>
+
+  <div class="cta-repeat">
+    <button class="start-btn" onclick="startQuiz()">Get My Plant Score&nbsp;&nbsp;→</button>
+  </div>
 
   <section class="builtby-strip">
     <img src="/logo-full.png" alt="planet LEAN">
@@ -718,7 +902,7 @@
 <div class="card-wrap" id="quizScreen" style="display:none">
   <div class="card">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-    <div class="progress-label" id="progressLabel">Statement 1 of 15</div>
+    <div class="progress-label" id="progressLabel">Statement 1 of 20</div>
     <div class="quiz-anim" id="quizBody">
       <div class="statement" id="questionText"></div>
       <div class="statement-prompt">How true is this in your plant today?</div>
@@ -765,7 +949,7 @@
           <div class="big-score" id="bigScore"></div>
         </div>
         <div id="breakdownList"></div>
-        <div class="bar-legend">Areas scoring 70+ are strengths; the tick marks 70.</div>
+        <div class="bar-legend">Green 80+ · Yellow 40–79 · Red below 40 — anything under 70 is an opportunity (tick marks 70).</div>
       </section>
 
       <section class="section acc open" id="sec-strengths">
@@ -818,7 +1002,7 @@
           <button class="cta-primary" onclick="alert('PDF generation comes in the next build step.')">Download PDF Report</button>
           <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
         </div>
-        <div class="placeholder-note">Prototype note: narrative, strengths/opportunities, insights, and plan copy are placeholders — Jim supplies real content later. PDF is the next build step.</div>
+        <div class="placeholder-note">Prototype note: narrative, strengths/opportunities, insights, and plan copy are placeholders — Jim supplies real content later. Two statements (Standards #4, Quality #4) are Pi's fills pending Jim's finals. PDF is the next build step.</div>
       </section>
     </main>
   </div>
@@ -855,14 +1039,14 @@
     }
   ];
 
-  // ---------- Statements (Jim's Question Draft, green = included) ----------
-  // 15 statements, 3 per principle, presented in RANDOM order with no
-  // principle label — the report reassembles them into the 5 areas.
-  // Scoring (Jim's 10-point basis): option 1 = 1, option 2 = 5, option 3 = 7,
-  // option 4 = 9. Area score = avg ×10 → X/100 (max 90 — nobody gets 100).
-  // The Roadmap converts the 10-point average onto the 1–4.5 implementation
-  // curve: curve = 1 + (avg10 − 1) × 3.5 / 8. Storage/backend stays on the
-  // curve scale, so old reports remain valid.
+  // ---------- Statements (Jim's updated set, 2026-07-07) ----------
+  // 20 statements, 4 per area, presented in RANDOM order with no area label.
+  // Scoring (Jim's spec): option 1 = 1, option 2 = 5, option 3 = 7,
+  // option 4 = 10. Area score = avg ×10 → X/100 (a perfect plant scores 100).
+  // Roadmap conversion onto the 1–4.5 implementation curve:
+  //   curve = 1 + (avg10 − 1) × 3.5 / 9   (1→1, 10→4.5)
+  // Storage/backend stays on the curve scale, so old reports remain valid.
+  // Colors: score10 <4 red, 4–<8 yellow, 8–10 green. Under 70 = opportunity.
   const SCALES = {
     freq: ["Never", "Sometimes", "Most of the time", "Always"],
     amount: ["None", "Some", "Most", "All"],
@@ -870,62 +1054,66 @@
     employees: ["No employees", "Some employees", "Most employees", "All employees"],
     stations: ["No stations", "Some stations", "Most stations", "All stations"]
   };
-  const SCORE_VALUES = [1, 5, 7, 9];
+  const SCORE_VALUES = [1, 5, 7, 10];
 
-  // Display names for the 5 areas (Jim's report labels)
   const AREA_LABELS = {
     "Standardization": "Standards",
     "People Involvement": "People",
     "Short Lead Time": "Logistics",
     "Built-In Quality": "Quality",
-    "Continuous Improvement": "CI"
+    "Continuous Improvement": "Continuous Improvement"
   };
 
   const PRINCIPLES = [
     {
       name: "Standardization",
       statements: [
-        { text: "Standardized work is documented, posted, and followed at the operator workstation.", scale: "freq" },
-        { text: "Anyone walking through a work area can tell at a glance whether conditions are normal or abnormal.", scale: "freq" },
-        { text: "Operators perform routine equipment care — cleaning, inspection, basic maintenance — as part of their daily work.", scale: "freq" }
+        { text: "Standardized work is documented, posted (workstation), and followed by the production operator.", scale: "freq" },
+        { text: "Work areas are clean / organized and properly marked / labeled with an audit process in place to score the condition and maintain the standard.", scale: "freq" },
+        { text: "Production Operators perform routine equipment care, including cleaning, inspecting, and basic maintenance, as part of their daily work.", scale: "freq" },
+        // PI'S FILL — pending Jim's final statement for Standards
+        { text: "Anyone walking through a work area can tell at a glance whether conditions are normal or abnormal.", scale: "freq" }
       ]
     },
     {
       name: "People Involvement",
       statements: [
-        { text: "Production operators participate in team-based problem solving using a standard form/process available for review in their area.", scale: "freq" },
-        { text: "Leaders spend time on the floor coaching and teaching — including formal teaching of the company's production system and participation in a daily dashboard review.", scale: "leaders" },
-        { text: "Employees submit improvement ideas at least monthly through a structured process.", scale: "employees" }
+        { text: "Production operators participate in team-based weekly problem solving using a standard form / process posted in their area.", scale: "freq" },
+        { text: "Leaders coach and teach through daily participation in dashboard reviews as well as formal instruction of the company's production / operating system.", scale: "leaders" },
+        { text: "Employees have a clearly defined help chain and a call for help mechanism along with an agreed escalation process and documented acceptable response times.", scale: "employees" },
+        { text: "Employees have clearly defined roles and responsibilities for their position, which includes the requirement to participate in continuous improvement of their job.", scale: "employees" }
       ]
     },
     {
       name: "Short Lead Time",
       statements: [
-        { text: "Material flows directly from one operation to the next without interim staging or double handling.", scale: "freq" },
-        { text: "Inventory (raw, WIP, finished) is labeled with visible min/max limits clearly displayed and followed at the floor location.", scale: "amount" },
-        { text: "Material replenishment is triggered by actual consumption, not by pushing to a schedule.", scale: "freq" }
+        { text: "Material flows directly from one operation to the next without interim staging or double handling with clearly defined and adhered to buffer min / max rules.", scale: "freq" },
+        { text: "Inventory locations (raw, WIP, finished) are clearly labeled (part number, min/max) with min/max limits followed and correct location used.", scale: "amount" },
+        { text: "Material replenishment is triggered by actual consumption via Electronic Pull System (EPS) or Kanban, not by pushing to a schedule.", scale: "freq" },
+        { text: "Production areas are actively (weekly progress) working to reduce tool / equipment changeover times and batch processing.", scale: "freq" }
       ]
     },
     {
       name: "Built-In Quality",
       statements: [
-        { text: "Quality standards are clear for each workstation with quality confirmation checks built into standardized work.", scale: "stations" },
-        { text: "Defects are prevented or contained at the point of origin, not discovered downstream.", scale: "freq" },
-        { text: "High-risk operations are protected by error proofing that is verified on a shift/daily/weekly schedule.", scale: "amount" }
+        { text: "Quality standards are clear for each workstation with quality confirmation checks built into the standardized work.", scale: "stations" },
+        { text: "Defects are prevented or contained at the point of cause with high-risk operations protected by error proofing that is verified on a shift/daily/weekly schedule.", scale: "freq" },
+        { text: "Work areas have a layered audit process used by leadership to confirm adherence to standardized work, process checks, business plan, and performance meeting cadence and content.", scale: "freq" },
+        // PI'S FILL — pending Jim's final statement for Quality
+        { text: "When a defect is found, production stops or the product is immediately contained — defects are never knowingly passed to the next operation.", scale: "freq" }
       ]
     },
     {
       name: "Continuous Improvement",
       statements: [
-        { text: "Problems are solved with the PDCA approach — from informal quick fix to formal root cause analysis.", scale: "freq" },
-        { text: "Performance metrics are updated in real time, visible, and reviewed at least daily by the teams that influence them.", scale: "freq" },
-        { text: "Off-target metrics trigger countermeasures posted in the area with a clear owner and due date.", scale: "freq" }
+        { text: "Problems are solved with the Plan Do Check Act (PDCA) approach, from informal quick fix to formal root cause analysis.", scale: "freq" },
+        { text: "Performance metrics are updated to a dashboard in real time (at least hourly), visible, and reviewed regularly (at least once per shift) by the teams that influence them.", scale: "freq" },
+        { text: "Missed-target metric performance triggers countermeasures posted in the area with a clear owner and due date.", scale: "freq" },
+        { text: "Employees submit improvement ideas at least monthly through a structured floor-based process reviewed on a weekly basis by leadership.", scale: "employees" }
       ]
     }
   ];
 
-  // Flattened statement list; shuffled at quiz start so the 15 statements
-  // appear in random order with no visible grouping.
   const questions = PRINCIPLES.flatMap(p =>
     p.statements.map(q => ({
       principle: p.name,
@@ -1053,18 +1241,16 @@
   }
 
   // ---------- Scoring ----------
-  // Area score10 = raw average of that area's answers on the 10-point basis
-  // (1/5/7/9). Display score = ×10 (max 90/100). Curve scale (canonical
-  // storage + phases): curve = 1 + (score10 − 1) × 3.5 / 8, so 1→1, 9→4.5.
-  // Phase boundaries on the curve: 1–<2 Formative, 2–<3 Localized,
-  // 3–<4 Broad-based, ≥4 Benchmark.
+  // Area score10 = raw average of that area's answers (values 1/5/7/10).
+  // Display = ×10 (X/100). Curve (canonical storage + phases):
+  //   curve = 1 + (score10 − 1) × 3.5 / 9   →   1→1, 10→4.5
   function computePrincipleScores() {
     return PRINCIPLES.map(p => {
       const vals = answers
         .filter((a, i) => questions[i].principle === p.name)
         .map(a => a.score);
       const avg = vals.reduce((acc, v) => acc + v, 0) / vals.length;
-      return { name: p.name, score10: Math.min(9, Math.max(1, avg)) };
+      return { name: p.name, score10: Math.min(10, Math.max(1, avg)) };
     });
   }
 
@@ -1073,23 +1259,29 @@
   }
 
   function toCurve(s10) {
-    return Math.min(4.5, Math.max(1, 1 + (s10 - 1) * 3.5 / 8));
+    return Math.min(4.5, Math.max(1, 1 + (s10 - 1) * 3.5 / 9));
   }
 
   function fromCurve(curve) {
-    return 1 + (curve - 1) * 8 / 3.5;
+    return 1 + (curve - 1) * 9 / 3.5;
   }
 
   function to100(s10) {
     return Math.round(s10 * 10);
   }
 
+  // Score band colors: score10 <4 red, 4–<8 yellow, 8–10 green (on the /100
+  // display that's <40 / 40–79 / 80+).
+  function bandColor(score100) {
+    if (score100 < 40) return "var(--score-red)";
+    if (score100 < 80) return "var(--score-yellow)";
+    return "var(--score-green)";
+  }
+
   function phaseIndexForScore(score) {
     return Math.min(3, Math.floor(score) - 1);
   }
 
-  // Display: truncate (not round) to 2 decimals so the shown curve score never
-  // crosses a phase boundary the raw value didn't cross.
   function formatScore(score) {
     const truncated = Math.floor(score * 100) / 100;
     return String(truncated);
@@ -1152,9 +1344,6 @@
     "Continuous Improvement": "Without a daily improvement habit, problems get worked around instead of solved — and they come back. Visible metrics and owned countermeasures turn firefighting into progress. [PLACEHOLDER]"
   };
 
-  // 30-day plan: four weekly segments. Weeks 1–2 attack the weakest area,
-  // week 3 spreads the strongest area's recipe to the second-weakest,
-  // week 4 locks in the habits. Placeholder copy.
   function buildPlan(ps) {
     const sorted = [...ps].sort((a, b) => a.score10 - b.score10);
     const weakest = AREA_LABELS[sorted[0].name];
@@ -1193,13 +1382,12 @@
       `<span class="report-id">Report ID — <strong>pending…</strong></span>`;
   }
 
-  // renderReport always receives CURVE-scale data (1–4.5) — that's the
-  // canonical storage format — and derives the /100 display from it.
+  // renderReport always receives CURVE-scale data (1–4.5, canonical storage)
+  // and derives the /100 display from it.
   function renderReport(data) {
     const curveScore = data.score;
     const phaseIdx = phaseIndexForScore(curveScore);
     const phase = PHASES[phaseIdx];
-    // Per-area: curve scale in, 10-point + /100 derived
     const areas = data.principles.map(p => {
       const s10 = fromCurve(p.score);
       return { name: p.name, label: AREA_LABELS[p.name] || p.name, score10: s10, score100: to100(s10) };
@@ -1214,7 +1402,7 @@
     setReportHeader(data.id || null);
     window.scrollTo(0, 0);
 
-    // 01 — Overview: name, date, big /100 score, area bars
+    // 01 — Overview
     document.getElementById("resultsTitle").textContent = `${data.firstName}, here's how your plant scored`;
     document.getElementById("resultsDate").textContent = new Date(data.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
     document.getElementById("bigScore").innerHTML = `${total100}<span> / 100</span>`;
@@ -1222,7 +1410,7 @@
       <div class="bar-row">
         <div class="bar-name">${a.label}</div>
         <div class="bar-track">
-          <div class="bar-fill" style="width:${a.score100}%"></div>
+          <div class="bar-fill" style="width:${a.score100}%;background:${bandColor(a.score100)}"></div>
           <div class="bar-tick" style="left:70%"></div>
         </div>
         <div class="bar-score">${a.score100} <em>/ 100</em></div>
@@ -1242,19 +1430,18 @@
       oppsPreamble = `<li><em>Every area cleared 70 — impressive. These are the two with the most room left to run.</em></li>`;
     }
     document.getElementById("strengthsList").innerHTML = strengthsPreamble + strengths.map(a =>
-      `<li><span class="area-score">${a.score100}</span><strong>${a.label}</strong><br>${STRENGTH_NOTES[a.name]}</li>`
+      `<li><span class="area-score" style="color:${bandColor(a.score100)}">${a.score100}</span><strong>${a.label}</strong><br>${STRENGTH_NOTES[a.name]}</li>`
     ).join("");
     document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(a =>
-      `<li><span class="area-score">${a.score100}</span><strong>${a.label}</strong><br>${OPP_NOTES[a.name]}</li>`
+      `<li><span class="area-score" style="color:${bandColor(a.score100)}">${a.score100}</span><strong>${a.label}</strong><br>${OPP_NOTES[a.name]}</li>`
     ).join("");
 
-    // Pattern insight lives with the opportunities
     const sorted = [...areas].sort((a, b) => a.score100 - b.score100);
     const pattern = PATTERNS[data.pattern] || PATTERNS[detectPattern(areas.map(a => ({ name: a.name, score10: a.score10 })))];
     document.getElementById("insightCard").innerHTML =
       `<h3>${pattern.title}</h3>${pattern.body.replace("{WEAKEST}", sorted[0].label)}`;
 
-    // 04 — Roadmap: /100 converted onto the 1–4.5 implementation curve
+    // 04 — Roadmap
     document.getElementById("roadmapLead").innerHTML =
       `On the lean implementation curve, your <strong>${total100}/100</strong> converts to <strong>${formatScore(curveScore)} / 4.5</strong> — placing your plant in the`;
     document.getElementById("phaseBadge").textContent = `${phase.name} Phase`;
@@ -1263,7 +1450,7 @@
     document.getElementById("curveBox").innerHTML = buildCurveSVG(phaseIdx);
     positionMarker(curveScore);
 
-    // 05 — 30-day plan (four weekly segments)
+    // 05 — 30-day plan
     document.getElementById("planList").innerHTML = buildPlan(areas.map(a => ({ name: a.name, score10: a.score10 }))).map(w =>
       `<li class="plan-day"><span class="day-num">Week ${w.week}</span><span class="plan-body"><strong>${w.title}.</strong> ${w.text}<span class="plan-tag">${w.tag}</span></span></li>`
     ).join("");
@@ -1392,7 +1579,6 @@
     document.querySelectorAll(".acc").forEach(sec => setAccOpen(sec, sec.classList.contains("open")));
   }
 
-  // TOC: clicking a link expands its section (if accordion) and marks active
   document.querySelectorAll("#reportToc a").forEach(a => {
     a.addEventListener("click", () => {
       document.querySelectorAll("#reportToc a").forEach(x => x.classList.remove("active"));
