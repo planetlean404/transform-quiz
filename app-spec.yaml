@@ -8,5 +8,5 @@ static_sites:
     source_dir: /
     catchall_document: index.html
 domains:
-  - domain: assessment.planetlean.com
+  - domain: rpa.planetlean.com
     type: PRIMARY
