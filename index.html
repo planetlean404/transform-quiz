@@ -132,22 +132,17 @@
     color: var(--pl-text-muted);
     margin: 0 0 22px;
   }
-  .chip-row {
+  .cta-row-hero {
     display: flex;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 26px;
+    gap: 14px;
+    margin-bottom: 12px;
   }
-  .chip {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--pl-accent-dark);
-    background: var(--pl-bg-soft);
-    border: 1px solid var(--pl-border);
-    border-radius: 999px;
-    padding: 7px 15px;
+  .cta-trust {
+    font-size: 13px;
+    color: var(--pl-text-muted);
   }
-  .chip::before { content: "✓ "; color: var(--pl-accent); font-weight: 800; }
   .start-btn {
     display: inline-block;
     background: var(--pl-accent);
@@ -155,9 +150,9 @@
     border: none;
     border-radius: 10px;
     font-family: inherit;
-    font-size: 17.5px;
+    font-size: 17px;
     font-weight: 700;
-    padding: 18px 46px;
+    padding: 17px 32px;
     cursor: pointer;
     transition: background 0.15s ease, transform 0.1s ease;
   }
@@ -232,6 +227,7 @@
     justify-content: space-between;
     border-bottom: 1px solid var(--pl-border);
   }
+  .sample-footer { padding: 22px 24px 26px; }
   .sample-header .sample-tag {
     font-size: 10.5px;
     font-weight: 800;
@@ -271,10 +267,13 @@
 
   .sample-footer { border-top: 1px solid var(--pl-border); }
   /* Each segment's fill width reflects that category's percentage score
-     (100% score = full segment, 50% = half), color = its score band. */
-  .mini-lines-row { display: flex; gap: 8px; }
+     (100% score = full segment, 50% = half), color = its score band. The
+     icon above each bar ties it back to its area in the five-areas section. */
+  .mini-lines-row { display: flex; gap: 10px; }
+  .mini-line-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .mini-line-icon { width: 20px; height: 20px; }
   .mini-line-track {
-    flex: 1;
+    width: 100%;
     height: 4px;
     border-radius: 999px;
     background: #c3cad0;
@@ -854,7 +853,7 @@
 
   @media (max-width: 900px) {
     .hero-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 40px; text-align: center; }
-    .hero-copy .chip-row { justify-content: center; }
+    .hero-copy .cta-row-hero { justify-content: center; }
     .sample-card { max-width: 380px; margin: 0 auto; transform: none; }
     .stats-row { grid-template-columns: 1fr; }
     .areas-grid { grid-template-columns: 1fr 1fr; }
@@ -908,15 +907,13 @@
 <div class="landing" id="landingScreen">
   <section class="hero-grid">
     <div class="hero-copy">
-      <div class="eyebrow-dash"><span class="dash">—</span> FOR OPS PROFESSIONALS</div>
+      <div class="eyebrow-dash all-blue"><span class="dash">—</span> FOR OPS PROFESSIONALS</div>
       <h1>How lean is your plant, <em>really</em>?</h1>
       <div class="sub">20 plain-language statements about how your plant actually runs — not how the binder says it should. Get an instant, personalized report with your plant's score, strengths, opportunities, and a 30-day plan.</div>
-      <div class="chip-row">
-        <span class="chip">Under 5 min</span>
-        <span class="chip">No credit card</span>
-        <span class="chip">Instant report</span>
+      <div class="cta-row-hero">
+        <button class="start-btn" onclick="startQuiz()">Start the Assessment&nbsp;&nbsp;→</button>
+        <div class="cta-trust">Under 5 min &bull; No credit card &bull; Instant report</div>
       </div>
-      <button class="start-btn" onclick="startQuiz()">Start the Assessment&nbsp;&nbsp;→</button>
       <div class="microline">20 statements · pick the answer closest to how your plant runs today</div>
     </div>
     <div class="sample-report">
@@ -1755,10 +1752,15 @@
     document.getElementById("samplePillRow").innerHTML =
       `<span class="score-pill" style="background:${pill.color}">${pill.label}</span>`;
     // Same 5 demo category scores as before (Standards/Quality/People/
-    // Logistics/CI) — segment length = score%, color = its band.
+    // Logistics/CI) — segment length = score%, color = its band, icon
+    // above each bar ties it to that category.
     const areaScores = [85, 74, 45, 62, 35];
-    document.getElementById("sampleMiniLines").innerHTML = areaScores.map(s => `
-      <span class="mini-line-track"><span class="mini-line-fill" style="width:${s}%;background:${bandColor(s)}"></span></span>`
+    const areaIcons = ["/icon-std.png", "/icon-quality.png", "/icon-people.png", "/icon-logistics.png", "/icon-ci.png"];
+    document.getElementById("sampleMiniLines").innerHTML = areaScores.map((s, i) => `
+      <div class="mini-line-col">
+        <img class="mini-line-icon" src="${areaIcons[i]}" alt="">
+        <span class="mini-line-track"><span class="mini-line-fill" style="width:${s}%;background:${bandColor(s)}"></span></span>
+      </div>`
     ).join("");
   })();
 
