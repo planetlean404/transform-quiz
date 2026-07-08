@@ -65,6 +65,31 @@ async function appendRow(sheetId, accessToken, row) {
   if (!res.ok) throw new Error(`Sheets append error: ${JSON.stringify(data)}`);
 }
 
+// ─── Email verification (ZeroBounce) ─────────────────────────────────────────
+// Runs before the Kartra push only — never blocks or delays the visitor's
+// results, which render from the submitted answers before this even starts.
+// Goal: only real, deliverable addresses ever reach Kartra. "catch-all" and
+// "unknown" (e.g. a verification timeout) are let through on purpose — both
+// are common for legitimate corporate mail servers, and blocking them would
+// silently drop real plant-manager leads. Only confirmed-bad statuses skip
+// the Kartra push. If ZeroBounce itself errors (bad key, out of credits,
+// network), we fail OPEN (still push to Kartra) so an infra hiccup on our
+// side never costs Jim a real lead — the error is recorded either way.
+const ZB_BLOCK_STATUSES = ['invalid', 'spamtrap', 'abuse', 'do_not_mail'];
+
+async function verifyEmail(email) {
+  const key = process.env.ZEROBOUNCE_API_KEY;
+  if (!key || key === 'unset') return { status: 'skipped-no-key', good: true };
+
+  const url = `https://api.zerobounce.net/v2/validate?api_key=${encodeURIComponent(key)}&email=${encodeURIComponent(email)}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.error) return { status: `zb-error: ${String(data.error).slice(0, 80)}`, good: true };
+
+  const status = String(data.status || 'unknown');
+  return { status, good: !ZB_BLOCK_STATUSES.includes(status) };
+}
+
 // ─── Kartra lead push ─────────────────────────────────────────────────────────
 // Form-encoded POST to https://app.kartra.com/api, PHP-style bracket encoding:
 //   lead[email]=...&actions[0][cmd]=create_lead&actions[1][cmd]=assign_tag...
@@ -185,13 +210,26 @@ async function main(event) {
 
   const id = 'rpa-' + crypto.randomBytes(4).toString('hex').toUpperCase();
 
-  let kartraStatus = 'kartra-error';
+  let emailCheck = { status: 'not-run', good: true };
   try {
-    kartraStatus = await pushToKartra(v);
+    emailCheck = await verifyEmail(v.email);
   } catch (err) {
-    console.error('Kartra push failed (non-fatal):', err.message);
-    kartraStatus = 'kartra-error: ' + err.message.slice(0, 120);
+    console.error('Email verification failed (non-fatal, failing open):', err.message);
+    emailCheck = { status: 'zb-error: ' + err.message.slice(0, 80), good: true };
   }
+
+  let kartraStatus;
+  if (emailCheck.good) {
+    try {
+      kartraStatus = await pushToKartra(v);
+    } catch (err) {
+      console.error('Kartra push failed (non-fatal):', err.message);
+      kartraStatus = 'kartra-error: ' + err.message.slice(0, 120);
+    }
+  } else {
+    kartraStatus = `kartra-skipped-bad-email(${emailCheck.status})`;
+  }
+  kartraStatus += ` | zb:${emailCheck.status}`;
 
   try {
     const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
