@@ -247,11 +247,22 @@
     font-size: 13px;
     font-weight: 700;
     color: #000;
+    white-space: nowrap;
   }
 
   .sample-footer { border-top: 1px solid var(--pl-border); }
+  /* Each segment's fill width reflects that category's percentage score
+     (100% score = full segment, 50% = half), color = its score band. */
   .mini-lines-row { display: flex; gap: 8px; }
-  .mini-line { flex: 1; height: 4px; border-radius: 999px; }
+  .mini-line-track {
+    flex: 1;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--pl-bg-soft);
+    position: relative;
+    overflow: hidden;
+  }
+  .mini-line-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; }
 
   /* Stats row */
   .stats-row {
@@ -1687,7 +1698,7 @@
   function pillForScore100(score100) {
     const curve = toCurve(score100 / 10);
     const idx = phaseIndexForScore(curve);
-    return { label: `${PHASES[idx].name} system`, color: PILL_COLORS[idx] };
+    return { label: `LEAN implementation: ${PHASES[idx].name}`, color: PILL_COLORS[idx] };
   }
 
   // Landing page's static sample report preview (fixed demo values).
@@ -1697,9 +1708,12 @@
     const pill = pillForScore100(sampleScore);
     document.getElementById("samplePillRow").innerHTML =
       `<span class="score-pill" style="background:${pill.color}">${pill.label}</span>`;
-    const lineColors = ["var(--score-green)", "var(--score-yellow)", "var(--score-yellow)", "var(--score-yellow)", "var(--score-red)"];
-    document.getElementById("sampleMiniLines").innerHTML =
-      lineColors.map(c => `<span class="mini-line" style="background:${c}"></span>`).join("");
+    // Same 5 demo category scores as before (Standards/Quality/People/
+    // Logistics/CI) — segment length = score%, color = its band.
+    const areaScores = [85, 74, 45, 62, 35];
+    document.getElementById("sampleMiniLines").innerHTML = areaScores.map(s => `
+      <span class="mini-line-track"><span class="mini-line-fill" style="width:${s}%;background:${bandColor(s)}"></span></span>`
+    ).join("");
   })();
 
   // ---------- Shareable report URLs (/r/rpa-XXXX, legacy /r/pl-XXXX) ----------
