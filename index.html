@@ -158,6 +158,39 @@
     margin-top: 12px;
   }
 
+  /* Dot-grid background (matches the PMB reference score cards) */
+  .grid-bg {
+    background-color: var(--pl-bg);
+    background-image: radial-gradient(circle, #dbe1e5 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  /* Circular score dial — reusable on the landing sample card and the
+     live report's Overview score. Ring is SVG; the score number is plain
+     HTML overlaid centered, so it keeps the page's normal font rendering
+     instead of SVG text. */
+  .dial-row { display: flex; justify-content: center; margin: 2px 0 14px; }
+  .dial { position: relative; width: 148px; height: 148px; flex: 0 0 auto; }
+  .dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .dial-track { fill: none; stroke: var(--pl-border); stroke-width: 11; }
+  .dial-fill {
+    fill: none;
+    stroke: var(--pl-accent);
+    stroke-width: 11;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+  .dial-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .dial-text .dial-score { font-size: 40px; font-weight: 800; line-height: 1; color: var(--pl-accent-dark); }
+  .dial-text .dial-of { font-size: 12.5px; color: var(--pl-text-muted); margin-top: 4px; }
+
   /* Sample report card (hero right) */
   .sample-card {
     background: var(--pl-bg);
@@ -174,24 +207,6 @@
     text-transform: uppercase;
     color: var(--pl-text-muted);
     margin-bottom: 14px;
-  }
-  .sample-score-row {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 4px;
-  }
-  .sample-score {
-    font-size: 44px;
-    font-weight: 800;
-    line-height: 1;
-    color: var(--pl-accent-dark);
-  }
-  .sample-score span { font-size: 17px; font-weight: 600; color: var(--pl-text-muted); }
-  .sample-score-label {
-    font-size: 12.5px;
-    color: var(--pl-text-muted);
-    margin-bottom: 16px;
   }
   .mini-row {
     display: grid;
@@ -603,14 +618,14 @@
     letter-spacing: -0.4px;
   }
   .hero-date { font-size: 13px; color: var(--pl-text-muted); margin-bottom: 14px; }
-  .big-score {
-    font-size: 52px;
-    font-weight: 800;
-    line-height: 1;
-    color: var(--pl-accent-dark);
-    margin: 12px 0 24px;
+  /* Overview score card (dot-grid background + circular dial, matching the
+     landing sample card treatment) */
+  .score-card {
+    border: 1px solid #e8ebee;
+    border-radius: 14px;
+    padding: 26px 24px 22px;
+    margin: 16px 0 24px;
   }
-  .big-score span { font-size: 20px; font-weight: 600; color: var(--pl-text-muted); }
   .phase-badge {
     display: inline-block;
     background: var(--pl-orange);
@@ -836,10 +851,9 @@
       <div class="microline">20 statements · pick the answer closest to how your plant runs today</div>
     </div>
     <div class="sample-report">
-      <div class="sample-card">
+      <div class="sample-card grid-bg">
         <div class="sample-tag">Sample Report</div>
-        <div class="sample-score-row"><span class="sample-score">60<span> / 100</span></span></div>
-        <div class="sample-score-label">Overall Plant Score</div>
+        <div class="dial-row" id="sampleDialRow"></div>
         <div class="mini-row"><span class="mini-name">Standards</span><span class="mini-track"><span class="mini-fill" style="width:85%;background:var(--score-green)"></span></span><span class="mini-score">85</span></div>
         <div class="mini-row"><span class="mini-name">Quality</span><span class="mini-track"><span class="mini-fill" style="width:74%;background:var(--score-yellow)"></span></span><span class="mini-score">74</span></div>
         <div class="mini-row"><span class="mini-name">People</span><span class="mini-track"><span class="mini-fill" style="width:45%;background:var(--score-yellow)"></span></span><span class="mini-score">45</span></div>
@@ -958,7 +972,9 @@
           <div class="eyebrow">Your Rapid Plant Assessment Result</div>
           <h2 id="resultsTitle"></h2>
           <div class="hero-date" id="resultsDate"></div>
-          <div class="big-score" id="bigScore"></div>
+        </div>
+        <div class="score-card grid-bg">
+          <div class="dial-row" id="bigScore"></div>
         </div>
         <div id="breakdownList"></div>
         <div class="bar-legend">Green 80+ · Yellow 40–79 · Red below 40 — anything under 70 is an opportunity (tick marks 70).</div>
@@ -1023,6 +1039,34 @@
 <button class="reset" onclick="resetQuiz()">Reset demo</button>
 
 <script>
+  // ---------- Score dial (circular gauge, matches the PMB reference cards) ----------
+  // Ring is drawn as SVG (track circle + progress circle using
+  // stroke-dasharray/stroke-dashoffset); the score number is plain HTML
+  // overlaid centered on top, so it renders with the page's normal font
+  // instead of SVG text. Reusable for both the static landing sample and
+  // the live report's Overview score.
+  function buildScoreDialSVG(score100) {
+    const r = 62, cx = 74, cy = 74;
+    const circumference = 2 * Math.PI * r;
+    const pct = Math.max(0, Math.min(100, score100)) / 100;
+    const offset = circumference * (1 - pct);
+    return `
+      <div class="dial">
+        <svg viewBox="0 0 148 148">
+          <circle class="dial-track" cx="${cx}" cy="${cy}" r="${r}"></circle>
+          <circle class="dial-fill" cx="${cx}" cy="${cy}" r="${r}"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"></circle>
+        </svg>
+        <div class="dial-text">
+          <span class="dial-score">${score100}</span>
+          <span class="dial-of">of 100</span>
+        </div>
+      </div>`;
+  }
+
+  // Landing page's static sample report preview (fixed demo score of 60).
+  document.getElementById("sampleDialRow").innerHTML = buildScoreDialSVG(60);
+
   // ---------- Phase model (used on the Roadmap curve) ----------
   const PHASES = [
     {
@@ -1415,7 +1459,7 @@
     // 01 — Overview
     document.getElementById("resultsTitle").textContent = `${data.firstName}, here's how your plant scored`;
     document.getElementById("resultsDate").textContent = new Date(data.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    document.getElementById("bigScore").innerHTML = `${total100}<span> / 100</span>`;
+    document.getElementById("bigScore").innerHTML = buildScoreDialSVG(total100);
     document.getElementById("breakdownList").innerHTML = areas.map(a => `
       <div class="bar-row">
         <div class="bar-name">${a.label}</div>
