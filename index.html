@@ -1693,8 +1693,9 @@
   // ---------- Phase-status pill (Formative/Localized/Broad-based/Benchmark) ----------
   // Colors follow Jim's roadmap-status scheme (distinct from the area-score
   // red/40/yellow/80/green bands): 1–<2 red, 2–<3 yellow, 3–4.5 green — the
-  // top two phases (Broad-based, Benchmark) share green.
-  const PILL_COLORS = ["var(--score-red)", "var(--score-yellow)", "var(--score-green)", "var(--score-green)"];
+  // top two phases (Broad-based, Benchmark) share green. Translucent (light
+  // tint) rather than full-strength so the black text stays readable.
+  const PILL_COLORS = ["rgba(224,67,63,0.22)", "rgba(242,176,30,0.28)", "rgba(51,168,82,0.22)", "rgba(51,168,82,0.22)"];
   function pillForScore100(score100) {
     const curve = toCurve(score100 / 10);
     const idx = phaseIndexForScore(curve);
