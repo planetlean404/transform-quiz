@@ -158,10 +158,12 @@
     margin-top: 12px;
   }
 
-  /* Dot-grid background (matches the PMB reference score cards) */
+  /* Graph-paper grid background for score cards */
   .grid-bg {
     background-color: var(--pl-bg);
-    background-image: radial-gradient(circle, #dbe1e5 1px, transparent 1px);
+    background-image:
+      linear-gradient(to right, #e3e7ea 1px, transparent 1px),
+      linear-gradient(to bottom, #e3e7ea 1px, transparent 1px);
     background-size: 18px 18px;
   }
 
