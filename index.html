@@ -193,47 +193,65 @@
   .dial-text .dial-score { font-size: 40px; font-weight: 800; line-height: 1; color: var(--pl-accent-dark); }
   .dial-text .dial-of { font-size: 12.5px; color: var(--pl-text-muted); margin-top: 4px; }
 
-  /* Sample report card (hero right) */
+  /* Sample report card (hero right) — plain white header/footer, grid-bg
+     only in the body, matching the PMB reference card structure exactly. */
   .sample-card {
     background-color: var(--pl-bg);
     border: 1px solid #e8ebee;
     border-radius: 14px;
     box-shadow: 0 1px 3px rgba(16,24,40,0.06), 0 14px 34px rgba(16,24,40,0.09);
-    padding: 26px 26px 20px;
+    overflow: hidden;
     transform: rotate(1.5deg);
   }
-  .sample-card .sample-tag {
+  .sample-header, .sample-footer {
+    background-color: var(--pl-bg);
+    padding: 16px 24px;
+  }
+  .sample-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--pl-border);
+  }
+  .sample-header .sample-tag {
     font-size: 10.5px;
     font-weight: 800;
     letter-spacing: 1.4px;
     text-transform: uppercase;
     color: var(--pl-text-muted);
-    margin-bottom: 14px;
   }
-  .mini-row {
-    display: grid;
-    grid-template-columns: 92px 1fr 30px;
-    gap: 10px;
+  .live-preview {
+    display: flex;
     align-items: center;
-    margin-bottom: 9px;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pl-accent);
   }
-  .mini-name { font-size: 12px; font-weight: 600; color: var(--pl-accent-dark); white-space: nowrap; }
-  .mini-track {
-    height: 8px;
-    background: var(--pl-bg-soft);
-    border: 1px solid var(--pl-border);
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--pl-accent);
+    display: inline-block;
+  }
+  .sample-body { padding: 22px 24px 18px; }
+
+  /* Phase-status pill (Formative/Localized/Broad-based/Benchmark), shown
+     centered beneath the dial. */
+  .pill-row { display: flex; justify-content: center; margin: 2px 0 0; }
+  .score-pill {
+    display: inline-block;
+    padding: 6px 16px;
     border-radius: 999px;
-    position: relative;
-    overflow: hidden;
+    font-size: 13px;
+    font-weight: 700;
+    color: #000;
   }
-  .mini-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; }
-  .mini-score { font-size: 11.5px; font-weight: 700; color: var(--pl-text-muted); text-align: right; }
-  .sample-caption {
-    font-size: 11.5px;
-    color: var(--pl-text-muted);
-    text-align: center;
-    margin-top: 14px;
-  }
+
+  .sample-footer { border-top: 1px solid var(--pl-border); }
+  .mini-lines-row { display: flex; gap: 8px; }
+  .mini-line { flex: 1; height: 4px; border-radius: 999px; }
 
   /* Stats row */
   .stats-row {
@@ -853,15 +871,18 @@
       <div class="microline">20 statements · pick the answer closest to how your plant runs today</div>
     </div>
     <div class="sample-report">
-      <div class="sample-card grid-bg">
-        <div class="sample-tag">Sample Report</div>
-        <div class="dial-row" id="sampleDialRow"></div>
-        <div class="mini-row"><span class="mini-name">Standards</span><span class="mini-track"><span class="mini-fill" style="width:85%;background:var(--score-green)"></span></span><span class="mini-score">85</span></div>
-        <div class="mini-row"><span class="mini-name">Quality</span><span class="mini-track"><span class="mini-fill" style="width:74%;background:var(--score-yellow)"></span></span><span class="mini-score">74</span></div>
-        <div class="mini-row"><span class="mini-name">People</span><span class="mini-track"><span class="mini-fill" style="width:45%;background:var(--score-yellow)"></span></span><span class="mini-score">45</span></div>
-        <div class="mini-row"><span class="mini-name">Logistics</span><span class="mini-track"><span class="mini-fill" style="width:62%;background:var(--score-yellow)"></span></span><span class="mini-score">62</span></div>
-        <div class="mini-row"><span class="mini-name">CI</span><span class="mini-track"><span class="mini-fill" style="width:35%;background:var(--score-red)"></span></span><span class="mini-score">35</span></div>
-        <div class="sample-caption">Your personalized report — instant, shareable, yours to keep.</div>
+      <div class="sample-card">
+        <div class="sample-header">
+          <span class="sample-tag">Sample Report</span>
+          <span class="live-preview"><span class="live-dot"></span>Live preview</span>
+        </div>
+        <div class="sample-body grid-bg">
+          <div class="dial-row" id="sampleDialRow"></div>
+          <div class="pill-row" id="samplePillRow"></div>
+        </div>
+        <div class="sample-footer">
+          <div class="mini-lines-row" id="sampleMiniLines"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -1065,9 +1086,6 @@
         </div>
       </div>`;
   }
-
-  // Landing page's static sample report preview (fixed demo score of 60).
-  document.getElementById("sampleDialRow").innerHTML = buildScoreDialSVG(60);
 
   // ---------- Phase model (used on the Roadmap curve) ----------
   const PHASES = [
@@ -1660,6 +1678,29 @@
       `<span class="builtby">built by</span><span class="wordmark">planet <span class="lean">LEAN</span></span>`;
     try { history.replaceState({}, "", "/"); } catch (e) { /* file:// etc. */ }
   }
+
+  // ---------- Phase-status pill (Formative/Localized/Broad-based/Benchmark) ----------
+  // Colors follow Jim's roadmap-status scheme (distinct from the area-score
+  // red/40/yellow/80/green bands): 1–<2 red, 2–<3 yellow, 3–4.5 green — the
+  // top two phases (Broad-based, Benchmark) share green.
+  const PILL_COLORS = ["var(--score-red)", "var(--score-yellow)", "var(--score-green)", "var(--score-green)"];
+  function pillForScore100(score100) {
+    const curve = toCurve(score100 / 10);
+    const idx = phaseIndexForScore(curve);
+    return { label: `${PHASES[idx].name} system`, color: PILL_COLORS[idx] };
+  }
+
+  // Landing page's static sample report preview (fixed demo values).
+  (function initSampleCard() {
+    const sampleScore = 60;
+    document.getElementById("sampleDialRow").innerHTML = buildScoreDialSVG(sampleScore);
+    const pill = pillForScore100(sampleScore);
+    document.getElementById("samplePillRow").innerHTML =
+      `<span class="score-pill" style="background:${pill.color}">${pill.label}</span>`;
+    const lineColors = ["var(--score-green)", "var(--score-yellow)", "var(--score-yellow)", "var(--score-yellow)", "var(--score-red)"];
+    document.getElementById("sampleMiniLines").innerHTML =
+      lineColors.map(c => `<span class="mini-line" style="background:${c}"></span>`).join("");
+  })();
 
   // ---------- Shareable report URLs (/r/rpa-XXXX, legacy /r/pl-XXXX) ----------
   (async function loadReportFromUrl() {
