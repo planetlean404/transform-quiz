@@ -258,7 +258,7 @@
     flex: 1;
     height: 4px;
     border-radius: 999px;
-    background: var(--pl-bg-soft);
+    background: #c3cad0;
     position: relative;
     overflow: hidden;
   }
@@ -1698,12 +1698,12 @@
   function pillForScore100(score100) {
     const curve = toCurve(score100 / 10);
     const idx = phaseIndexForScore(curve);
-    return { label: `LEAN implementation: ${PHASES[idx].name}`, color: PILL_COLORS[idx] };
+    return { label: `LEAN maturity: ${PHASES[idx].name.toUpperCase()}`, color: PILL_COLORS[idx] };
   }
 
   // Landing page's static sample report preview (fixed demo values).
   (function initSampleCard() {
-    const sampleScore = 60;
+    const sampleScore = 32; // in the 30s, under the ~35.7 Formative/Localized boundary
     document.getElementById("sampleDialRow").innerHTML = buildScoreDialSVG(sampleScore);
     const pill = pillForScore100(sampleScore);
     document.getElementById("samplePillRow").innerHTML =
