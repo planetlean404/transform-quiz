@@ -153,6 +153,22 @@ async function appendRow(sheetId, accessToken, row) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(`Sheets append error: ${JSON.stringify(data)}`);
+  // updatedRange looks like "scorecard!A7:U7" — pull the row number out so a
+  // later best-effort update can target this exact row without a re-read.
+  const match = /![A-Z]+(\d+):/.exec(data.updates && data.updates.updatedRange || '');
+  return match ? Number(match[1]) : null;
+}
+
+async function updateCategoryTextCell(sheetId, accessToken, rowNumber, categoryText) {
+  const range = `${SHEET_TAB}%21U${rowNumber}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values: [[JSON.stringify(categoryText)]] })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(`Sheets cell update error: ${JSON.stringify(data)}`);
 }
 
 // ─── Email verification (ZeroBounce) ─────────────────────────────────────────
@@ -334,17 +350,17 @@ async function main(event) {
   }
   kartraStatus += ` | zb:${emailCheck.status}`;
 
-  let categoryText = {};
-  try {
-    categoryText = await generateCategoryText(event.answers);
-  } catch (err) {
-    console.error('Category text generation failed (non-fatal, frontend falls back to static copy):', err.message);
-  }
-
+  // The row lands with an empty categoryText cell first — lead capture must
+  // never wait on or be threatened by an AI call. generateCategoryText can
+  // legitimately take up to its own 20s timeout; if that (plus a retry or a
+  // slow day) ever ate into the function's total time budget before the
+  // sheet write ran, a real lead could be lost. Instead we write the row
+  // immediately, then best-effort patch just the categoryText cell after.
+  let rowNumber;
   try {
     const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
     const token = await getAccessToken(sa);
-    await appendRow(process.env.GOOGLE_SHEET_ID, token, [
+    rowNumber = await appendRow(process.env.GOOGLE_SHEET_ID, token, [
       id,
       new Date().toISOString(),
       v.firstName,
@@ -357,8 +373,19 @@ async function main(event) {
       kartraStatus,
       v.maturity,
       ...v.principleMaturity.map(p => Number(p.maturity)),
-      JSON.stringify(categoryText)
+      '{}'
     ]);
+
+    if (rowNumber) {
+      try {
+        const categoryText = await generateCategoryText(event.answers);
+        if (Object.keys(categoryText).length) {
+          await updateCategoryTextCell(process.env.GOOGLE_SHEET_ID, token, rowNumber, categoryText);
+        }
+      } catch (err) {
+        console.error('Category text generation/write failed (non-fatal, frontend falls back to static copy):', err.message);
+      }
+    }
   } catch (err) {
     console.error('Sheet write failed:', err.message);
     return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: 'storage-failed' } };
