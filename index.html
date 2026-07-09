@@ -214,6 +214,13 @@
   .dial-text .dial-score { font-size: 40px; font-weight: 800; line-height: 1; color: var(--pl-accent-dark); }
   .dial-text .dial-of { font-size: 12.5px; color: var(--pl-text-muted); margin-top: 4px; }
 
+  /* Report's Overview dial runs larger than the landing sample card's,
+     since the pill was removed and the dial is now the left column's only
+     content — scoped here so the sample card stays its original size. */
+  .overview-left .dial { width: 210px; height: 210px; }
+  .overview-left .dial-text .dial-score { font-size: 56px; }
+  .overview-left .dial-text .dial-of { font-size: 15px; }
+
   /* Sample report card (hero right) — plain white header/footer, grid-bg
      only in the body, matching the PMB reference card structure exactly. */
   .sample-card {
@@ -786,6 +793,7 @@
     padding: 14px 24px;
     font-size: 14px;
     color: var(--pl-text);
+    text-align: center;
   }
   .sc-footer strong { color: var(--pl-accent-dark); }
   .phase-badge {
@@ -1183,10 +1191,9 @@
         </div>
         <div class="score-card">
           <div class="sc-header-left">LEAN maturity score</div>
-          <div class="sc-header-right">Category scoring breakout</div>
+          <div class="sc-header-right">Category breakout</div>
           <div class="overview-left grid-bg">
             <div class="dial-row" id="bigScore"></div>
-            <div class="pill-row" id="reportPillRow"></div>
           </div>
           <div class="overview-bars" id="breakdownList"></div>
           <div class="sc-footer" id="scFooter"></div>
@@ -1720,14 +1727,11 @@
     setReportHeader(data.id || null);
     window.scrollTo(0, 0);
 
-    // 01 — Overview: maturity dial + phase pill left, proportional bars right.
+    // 01 — Overview: maturity dial left, proportional bars right.
     // The dial is the only number shown anywhere in the report.
     document.getElementById("resultsTitle").textContent = `${data.firstName}, here's how your plant scored`;
     document.getElementById("resultsDate").textContent = new Date(data.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
     document.getElementById("bigScore").innerHTML = buildScoreDialSVG(total100);
-    const pill = buildPill(curveScore);
-    document.getElementById("reportPillRow").innerHTML =
-      `<span class="score-pill" style="background:${pill.color}">${pill.label}</span>`;
     document.getElementById("breakdownList").innerHTML = areas.map(a => `
       <div class="bar-row">
         <img class="bar-icon" src="${AREA_ICONS[a.name]}" alt="">
