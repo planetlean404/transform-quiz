@@ -464,20 +464,6 @@
     color: var(--pl-text-muted);
     margin-bottom: 26px;
   }
-  .pill-btn {
-    display: inline-block;
-    background: var(--pl-accent);
-    color: #fff;
-    border: none;
-    border-radius: 999px;
-    font-family: inherit;
-    font-size: 17px;
-    font-weight: 700;
-    padding: 17px 34px;
-    cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-  }
-  .pill-btn:hover { background: #0F7DB3; transform: translateY(-1px); }
   .final-cta .microline {
     margin-top: 14px;
     font-size: 13px;
@@ -498,32 +484,8 @@
     color: var(--pl-text-muted);
   }
   .site-footer .foot-left { font-weight: 700; color: var(--pl-accent-dark); }
-  .site-footer .foot-right { font-size: 11.5px; letter-spacing: 0.6px; text-transform: uppercase; }
+  .site-footer .foot-right { font-size: 11.5px; letter-spacing: 0.6px; }
 
-  .builtby-strip {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-    max-width: 780px;
-    margin: 44px auto 0;
-    padding: 26px 24px;
-    border-top: 1px solid var(--pl-border);
-  }
-  .builtby-strip .strip-mark { white-space: nowrap; }
-  .builtby-strip .builtby {
-    font-size: 14px;
-    color: var(--pl-text-muted);
-    font-weight: 500;
-  }
-  .builtby-strip .wordmark { font-size: 20px; }
-  .builtby-strip p {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.6;
-    color: var(--pl-text-muted);
-    max-width: 460px;
-  }
   .footer {
     text-align: center;
     font-size: 12.5px;
@@ -990,7 +952,6 @@
     .cta-row { flex-direction: column; }
     .bar-row { grid-template-columns: 1fr; gap: 6px; }
     .bar-score { text-align: left; }
-    .builtby-strip { flex-direction: column; text-align: center; }
     .areas-grid { grid-template-columns: 1fr; }
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
     .area-card:last-child { border-bottom: none; }
@@ -1020,7 +981,7 @@
       <h1>How lean is your plant, <em>really</em>?<br>Get your score<br>in under 5 minutes.</h1>
       <div class="sub">20 plain-language statements about how your plant actually runs — not how the binder says it should. Get an instant, personalized report with your plant's score, strengths, opportunities, and a 30-day plan.</div>
       <div class="cta-row-hero">
-        <button class="start-btn" onclick="startQuiz()">Start the Assessment&nbsp;&nbsp;→</button>
+        <button class="start-btn" onclick="startQuiz()">Score your plant &mdash; free&nbsp;&nbsp;→</button>
         <div class="cta-trust">No credit card &bull; Instant report</div>
       </div>
     </div>
@@ -1104,18 +1065,13 @@
     <div class="eyebrow-dash all-blue"><span class="dash">—</span> READY WHEN YOU ARE</div>
     <h2>See how far your plant has progressed</h2>
     <div class="sub">20 statements. Under 5 minutes. A straightforward assessment of where you're at and where you need to go.</div>
-    <button class="pill-btn" onclick="startQuiz()">Score your plant &mdash; free&nbsp;&nbsp;→</button>
+    <button class="start-btn" onclick="startQuiz()">Score your plant &mdash; free&nbsp;&nbsp;→</button>
     <div class="microline">Built for ops managers</div>
-  </section>
-
-  <section class="builtby-strip">
-    <span class="strip-mark"><span class="builtby">built by</span> <span class="wordmark">planet <span class="lean">LEAN</span></span></span>
-    <p>Built by planet LEAN on the same principle framework we use in full plant assessments. Answer honestly — the report is only as useful as your answers. [PLACEHOLDER — Jim refines blurb]</p>
   </section>
 
   <div class="site-footer">
     <span class="foot-left">Rapid Plant Assessment</span>
-    <span class="foot-center">&copy; 2026 planet LEAN. All Rights Reserved.</span>
+    <span class="foot-center">built by planet LEAN &nbsp;&copy; 2026&nbsp; All Rights Reserved.</span>
     <span class="foot-right">rpa landing</span>
   </div>
 </div>
