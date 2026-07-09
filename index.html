@@ -860,6 +860,18 @@
   .area-list .area-icon-inline { width: 30px; height: 30px; flex: 0 0 auto; }
   .area-list .area-title-row strong { flex: 1; }
   .area-list .area-score-inline { font-weight: 800; font-size: 15px; color: var(--pl-accent-dark); }
+  /* Three labeled sub-sections inside every category box: Why It Matters
+     (static), Good (yellow/green statements), Opportunity (red statements). */
+  .cat-section { margin-top: 12px; }
+  .cat-section:first-of-type { margin-top: 4px; }
+  .cat-section-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .cat-section-label.why { color: var(--pl-text-muted); }
+  .cat-section-label.good { color: var(--score-green); }
+  .cat-section-label.opp { color: var(--score-red); }
+  .cat-section-body { font-size: 14px; line-height: 1.55; color: var(--pl-text); }
 
   /* Overview: dial + pill on the left, proportional area bars on the right. */
   .overview-left {
@@ -1740,6 +1752,17 @@
     "Continuous Improvement": "Without a structured method and a habit of reviewing metrics in real time, problems get worked around instead of solved — and they come back. Pick one recurring problem and force a simple PDCA cycle on it: plan a change, try it, check the result, adjust."
   };
 
+  // Static "Why It Matters" paragraph for each category — the same every
+  // report regardless of score. Summarized from the four statements' own
+  // "why it matters" content. Shown at the top of every category box.
+  const WHY_MATTERS = {
+    "Standardization": "Standardization is the load-bearing wall of a lean plant — the stable baseline everything else attaches to. Documented, followed standard work makes training consistent and lets anyone tell normal from abnormal; audited 5S, daily operator equipment care, and a visual dashboard turn that baseline into something visible and self-correcting. Skip it and every gain made elsewhere has to be re-won, because there's no fixed standard holding it in place.",
+    "People Involvement": "Tools can be installed overnight; a culture where the floor owns its own problems has to be grown — and it's the single strongest predictor of whether lean gains actually hold. This is about the people closest to the work surfacing and solving problems through a structured weekly process, leaders who coach through daily presence, a real help chain so no one pushes through a problem alone, and roles that make improvement part of the job rather than optional extra work.",
+    "Short Lead Time": "Every place material sits still is inventory tying up cash, hiding defects, and stretching lead time invisibly. This principle keeps material moving — direct flow with real buffer rules, clearly labeled inventory locations, consumption-based pull replenishment instead of pushing to a forecast, and ongoing changeover reduction so smaller batches become economical. Together they shrink lead time, free cash and floor space, and catch defects closer to where they're made.",
+    "Built-In Quality": "Quality caught at the source costs a fraction of quality caught downstream — or by a customer. This principle builds quality into the work rather than inspecting it in afterward: clear station-level standards with checks built into standard work, error proofing on high-risk operations that's actually verified on schedule, leadership audits that confirm the system is being lived, and confirmation stations that feed problems back fast enough to still matter.",
+    "Continuous Improvement": "Without a structured method, problem-solving defaults to whoever's loudest guessing at a fix — treating symptoms while the root cause survives to return. This principle makes improvement a daily discipline: PDCA from quick fix to formal root-cause work, real-time dashboards the team actually reviews each shift, required countermeasures with an owner and due date on every red metric, and a structured channel for floor-level ideas."
+  };
+
   // Follows the same Plan / Do / Check / Act shape as the RPA background
   // doc's master 30-day template, applied to this plant's actual weakest area.
   function buildPlan(ps) {
@@ -1830,8 +1853,19 @@
     // the static STRENGTH_NOTES/OPP_NOTES copy when absent (older report
     // links, or a failed generation) or when a field comes back empty.
     const aiText = data.categoryText || {};
-    const goodText = a => (aiText[a.name] && aiText[a.name].good) || STRENGTH_NOTES[a.name];
-    const oppText = a => (aiText[a.name] && aiText[a.name].opportunity) || OPP_NOTES[a.name];
+    // Good = strengths of this category's yellow/green statements; Opportunity
+    // = gap + cost of its red statements (no improvement steps — those live in
+    // the 30-day plan). When the AI text is present, trust its per-field value
+    // (an empty string means "no qualifying statements" — omit that section).
+    // When it's absent (older report links or a failed generation), fall back
+    // to the static band-based notes so a box is never left with only its
+    // Why It Matters.
+    const goodOf = a => aiText[a.name] ? (aiText[a.name].good || "") : (a.score100 >= 50 ? STRENGTH_NOTES[a.name] : "");
+    const oppOf  = a => aiText[a.name] ? (aiText[a.name].opportunity || "") : (a.score100 < 75 ? OPP_NOTES[a.name] : "");
+    // The Biggest Gap callout is a focused single-opportunity callout, so it
+    // always needs a line even if the lowest area happens to have no red
+    // statements — fall straight through to the static note there.
+    const gapText = a => (aiText[a.name] && aiText[a.name].opportunity) || OPP_NOTES[a.name];
 
     const gap = pickBiggestGap(areas);
     const gapCallout = document.getElementById("gapCallout");
@@ -1844,7 +1878,7 @@
         <div class="gap-title">${gap.label}</div>
         <span class="gap-score">${gap.score100}</span>
       </div>
-      <div class="gap-text">${oppText(gap)}</div>`;
+      <div class="gap-text">${gapText(gap)}</div>`;
 
     // 02 — Strengths: top two by score among yellow/green areas only (same
     // GAP_PRIORITY tie-break as Biggest Gap) — a red area never counts as a
@@ -1858,20 +1892,31 @@
       opps = [...byScore].reverse().slice(0, 2);
       oppsPreamble = `<li><em>Every area cleared 75 — impressive. These are the two with the most room left to run.</em></li>`;
     }
-    const categoryBox = (a, text) => `
+    // Every category box shows three labeled sections: Why It Matters (static,
+    // always), then Good and Opportunity only when that category actually has
+    // qualifying statements.
+    const catSection = (cls, label, body) =>
+      `<div class="cat-section"><div class="cat-section-label ${cls}">${label}</div><div class="cat-section-body">${body}</div></div>`;
+    const categoryBox = a => {
+      let sections = catSection("why", "Why It Matters", WHY_MATTERS[a.name]);
+      const good = goodOf(a);
+      const opp = oppOf(a);
+      if (good) sections += catSection("good", "Good", good);
+      if (opp) sections += catSection("opp", "Opportunity", opp);
+      return `
       <li style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
         <div class="area-title-row">
           <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
           <strong>${a.label}</strong>
           <span class="area-score-inline">${a.score100}</span>
         </div>
-        ${text}
+        ${sections}
       </li>`;
+    };
     document.getElementById("strengthsList").innerHTML = strengths.length
-      ? strengths.map(a => categoryBox(a, goodText(a))).join("")
+      ? strengths.map(categoryBox).join("")
       : `<li><em>Focus on your 30-day plan to improve the strength of your categories.</em></li>`;
-    document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(a => categoryBox(a, oppText(a))
-    ).join("");
+    document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(categoryBox).join("");
 
     const sorted = [...areas].sort((a, b) => a.roadmap4 - b.roadmap4);
     const patternKey = data.pattern && PATTERNS[data.pattern] ? data.pattern : detectPattern(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));

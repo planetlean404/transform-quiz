@@ -46,10 +46,14 @@ function buildCategoryPrompt(answers) {
 
   return PRINCIPLE_ORDER.map(name => {
     const lines = byPrinciple[name].map(({ stmt, status }) => {
+      // Red statements feed the Opportunity section (what's missing + its
+      // cost, from "why it matters"). The improvement steps in stmt.weakness
+      // are deliberately NOT sent — the category text names the gap only;
+      // action steps live in the 30-day plan and Deep Insights.
       if (status === 'red') {
-        return `- [RED] "${stmt.text}"\n  Why it matters: ${stmt.why}\n  First step if this is the gap: ${stmt.weakness}`;
+        return `- [RED] "${stmt.text}"\n  What's missing / what it costs: ${stmt.why}`;
       }
-      return `- [${status.toUpperCase()}] "${stmt.text}"\n  Payoff if this is a strength: ${stmt.strength}`;
+      return `- [${status.toUpperCase()}] "${stmt.text}"\n  Payoff being realized: ${stmt.strength}`;
     }).join('\n');
     return `## ${name}\n${lines || '(no answers recorded for this category)'}`;
   }).join('\n\n');
@@ -62,12 +66,14 @@ async function generateCategoryText(answers) {
   const system = `You write the "Good" and "Opportunity" sections of a lean-manufacturing plant assessment report, for a plant manager reading their own results.
 
 For each of the 5 categories provided, using ONLY the statement content given for that category, write:
-- "good": 2-3 sentences on the concrete benefits the plant is realizing, based only on statements marked GREEN or YELLOW. If there are none, use "".
-- "opportunity": 2-3 sentences naming the specific gap(s) from statements marked RED, the concrete cost of leaving them, ending with ONE clear first action. Base this only on RED statements. If there are none, write one short sentence encouraging them to keep pushing toward full consistency — do not invent a gap.
+- "good": 2-3 sentences on the concrete benefits the plant is realizing, based only on statements marked GREEN or YELLOW. If the category has NO green or yellow statements, use "" (empty string) — do not invent a strength.
+- "opportunity": 2-3 sentences naming the specific gap(s) from statements marked RED and the concrete cost of leaving them unaddressed. If the category has NO red statements, use "" (empty string) — do not invent a gap.
+
+CRITICAL: Do NOT include any "how to fix it" steps, action items, or next-move advice in the opportunity text — name the gap and its cost only. Improvement steps are handled elsewhere in the report.
 
 Tone: direct, concrete, specific to what was actually answered — never generic filler. Match this style exactly:
 Good example: "Standard work, 5S discipline, and a dashboard your team actually reviews mean your improvements have something to hold onto — this is the foundation most plants skip, and you haven't."
-Opportunity example: "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet. Start with one pilot station: document what your best operator actually does, post it, and hold the team to it for two weeks."
+Opportunity example (note: no fix steps): "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet, so every gain made elsewhere has to be re-won instead of holding on its own."
 
 Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape with all 5 category names as keys:
 {"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}`;
