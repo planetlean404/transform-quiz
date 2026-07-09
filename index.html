@@ -1198,7 +1198,7 @@
           <button class="cta-primary" onclick="alert('PDF generation comes in the next build step.')">Download PDF Report</button>
           <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
         </div>
-        <div class="placeholder-note">Prototype note: narrative, strengths/opportunities, insights, and plan copy are placeholders — Jim supplies real content later. Two statements (Standards #4, Quality #4) are Pi's fills pending Jim's finals. PDF is the next build step.</div>
+        <div class="placeholder-note">Prototype note: PDF generation is the next build step.</div>
       </section>
     </main>
   </div>
@@ -1238,25 +1238,25 @@
       key: "formative",
       name: "Formative",
       tagline: "Early days — lean practices are new or ad hoc",
-      narrative: "Your plant is at the starting line of its lean journey. Improvement happens, but it depends on individual heroics rather than systems. The biggest opportunity right now is establishing foundational routines — standard work, daily management, and structured problem-solving — in one model area to prove the approach. [PLACEHOLDER — Jim supplies real Formative copy]"
+      narrative: "Your plant is at the starting line of its lean journey — improvement still depends on individual effort rather than a system that runs on its own. The highest-leverage move right now is proving the model in one area: document real standard work, build in a basic quality check, and hold a short weekly problem-solving session before trying to scale anything plant-wide."
     },
     {
       key: "localized",
       name: "Localized",
       tagline: "Pockets of excellence — strong in places, not yet connected",
-      narrative: "You have real islands of lean success — a cell, a line, or a department that shows what's possible. The challenge now is spreading what works beyond those pockets before momentum stalls. Plants at this phase typically need to shift ownership from a few champions to line leadership. [PLACEHOLDER — Jim supplies real Localized copy]"
+      narrative: "You've got real islands of lean success — a cell, a line, or a shift that shows what's possible — but the practices haven't spread past those pockets yet. The next move is turning ownership over from wherever the early wins happened to line leadership itself, so the habits survive a shift change or a staffing swap."
     },
     {
       key: "broad-based",
       name: "Broad-based",
       tagline: "Plant-wide momentum — lean is how most of the plant runs",
-      narrative: "Lean thinking has crossed the tipping point in your plant — most departments run on standard work and structured problem-solving. The frontier now is consistency across shifts, deepening coaching capability, and connecting improvement directly to business results. [PLACEHOLDER — Jim supplies real Broad-based copy]"
+      narrative: "Lean thinking has crossed the tipping point here — most areas run on standard work and structured problem-solving as a matter of course. The frontier now is consistency: closing the gap between your best shift and your average one, and deepening how leaders coach rather than just what they inspect."
     },
     {
       key: "benchmark",
       name: "Benchmark",
       tagline: "An industry model — others study how you operate",
-      narrative: "Your plant operates at a level most facilities aspire to — improvement is a daily habit at every level, and results show it. The work at this phase is sustaining: developing the next generation of leaders, protecting the culture through turnover and growth, and extending lean upstream and downstream. [PLACEHOLDER — Jim supplies real Benchmark copy]"
+      narrative: "Your plant operates at a level most facilities aspire to — improvement is a daily habit at every level, not an initiative. The work from here is sustaining it: developing the next generation of leaders, protecting the culture through turnover and growth, and pushing the same discipline upstream and downstream into your supply chain."
     }
   ];
 
@@ -1518,30 +1518,33 @@
   }
 
   // ---------- Pattern engine (thresholds on the curve scale) ----------
+  // Five of these map directly to the Lean Maturity Profiles in the RPA
+  // background doc (The Believer / Firefighter / Cracked Foundation / Tool
+  // Show / Sprinter); focus-weakest is the generic catch-all.
   const PATTERNS = {
     "calibration": {
       title: "Strong across the board — now the question is calibration",
-      body: "Your self-assessment puts every area at or near the top. That's either a genuinely exceptional plant — or optimistic self-scoring, which is the most common finding when we assess high-self-scoring plants in person. Either way, the next step is the same: an external calibration to confirm the level and find the gaps self-assessment can't see. [PLACEHOLDER — Jim refines calibration copy]"
+      body: "Every category scores strong, which is either a genuinely excellent plant, or — far more often, in our experience calibrating self-assessments against on-site findings — a plant whose internal view has drifted ahead of what's actually happening on the floor. That's not a knock on the people scoring it; it's simply the most common finding when a strong self-assessment meets an outside pair of eyes. The next right step is the same either way: walk your two or three strongest statements personally, station by station, against the real scoring criteria, and bring in an outside set of eyes to confirm the level."
     },
     "starting-line": {
       title: "You're at the starting line — don't boil the ocean",
-      body: "Every area scored in the earliest range, which is honest and common. The mistake plants make here is launching everything at once. The proven path is one model area: prove standard work, daily management, and problem-solving in a single line or cell, then expand from strength. [PLACEHOLDER — Jim refines starting-line copy]"
+      body: "Nothing is documented yet, so nothing is repeatable — quality gets caught by inspection after the fact instead of prevented at the source, and every day is a fresh scramble to catch yesterday's problems. The good news: almost any structure is an upgrade from here, so early wins come fast. Pick one pilot area, document what your best operator actually does, post it, and hold the team to it for two weeks before expanding."
     },
     "fragile-foundation": {
       title: "Advanced tools on a weak foundation — your gains are at risk",
-      body: "You scored well in advanced areas, but Standards — the foundation everything else stands on — lags behind. Without standard work as the baseline, improvements have nothing to hold onto and quietly erode. This is the classic setup for the dashed blue curve on your roadmap: a quick boost that fades. Stabilize the foundation first. [PLACEHOLDER — Jim refines fragile-foundation copy]"
+      body: "You've got real, advanced capability somewhere — often Quality or Continuous Improvement — but it's built without standard work underneath it. Standards keep drifting, so gains made anywhere else don't hold: a great fix today gets undone by a shift-to-shift variation next week. Document actual current practice as real standard work in the area where that inconsistency shows up most, and reconcile it with what your stronger systems assume is happening."
     },
     "tools-without-culture": {
       title: "Strong tools, lagging people engagement — the classic trap",
-      body: "Your technical areas score well, but People lags. That's the exact profile of the \"tools only\" trajectory shown as the dashed blue arc on your roadmap: metrics jump, then fade, because the culture that sustains improvement never developed. The highest-leverage move now isn't another tool — it's leadership behavior and workforce engagement. [PLACEHOLDER — Jim refines tools-without-culture copy]"
+      body: "On paper this plant looks advanced — 5S is sharp, pull systems are running, error proofing is in place — but leaders aren't coaching daily, and problem-solving is done by a separate team rather than the floor. This is exactly the trajectory the roadmap graphic warns about: a fast early climb that fades once the initial push loses momentum, because the culture that sustains gains was never built alongside the tools. The highest-leverage move now isn't another tool — it's a leader on the floor daily, coaching instead of inspecting."
     },
     "speed-over-quality": {
       title: "Flow is ahead of quality — speed amplifies defects",
-      body: "Your Logistics score is ahead of Quality. Faster flow with weak quality-at-the-source means defects travel further, faster. Before tightening flow another notch, close the quality gap: error-proofing, in-station checks, and a working help chain. [PLACEHOLDER — Jim refines speed-over-quality copy]"
+      body: "Material moves fast here — flow is genuinely good, batches are small, changeovers are quick — but quality hasn't kept pace, and defects are still mostly caught by inspection rather than prevented at the source. The danger is specific: speed without built-in quality means defects travel through the plant, and reach the customer, faster too. You don't need to slow down; you need quality to catch up to the pace you've already set."
     },
     "focus-weakest": {
       title: "One area is holding the others back",
-      body: "Your profile is uneven — and in a lean system, the weakest area sets the pace for the whole transformation. Concentrating your next 90 days on {WEAKEST} will do more for overall results than pushing your strong areas higher. [PLACEHOLDER — Jim refines focus-weakest copy]"
+      body: "Your profile is uneven — and in a lean system, the weakest area sets the pace for the whole transformation, since the other four principles all depend on it in some way. Concentrating your next 30 days on {WEAKEST} will do more for your overall results than pushing an already-strong area higher."
     }
   };
 
@@ -1559,31 +1562,33 @@
   }
 
   const STRENGTH_NOTES = {
-    "Standardization": "Standard work and visual management give your improvements something to hold onto — this is the foundation many plants never lay properly. [PLACEHOLDER]",
-    "People Involvement": "An engaged workforce is the single hardest thing to build and the most valuable — improvements here compound everywhere else. [PLACEHOLDER]",
-    "Short Lead Time": "Material and information flow with discipline — you're ahead of most plants on the mechanics of lean flow. [PLACEHOLDER]",
-    "Built-In Quality": "Catching defects at the source instead of inspecting them out puts you in rare company. [PLACEHOLDER]",
-    "Continuous Improvement": "Structured problem-solving as a habit — not an event — is what separates programs from transformations. [PLACEHOLDER]"
+    "Standardization": "Standard work, 5S discipline, and a dashboard your team actually reviews mean your improvements have something to hold onto — this is the foundation most plants skip, and you haven't.",
+    "People Involvement": "Your team owns its own problems — weekly problem-solving, a leader who shows up daily, and a real help chain mean engagement isn't a program here, it's how the floor already runs.",
+    "Short Lead Time": "Material flows instead of sitting — direct flow, labeled locations, and a real pull system mean less cash tied up in inventory and defects caught closer to their source.",
+    "Built-In Quality": "Defects get stopped at their source, not found downstream — checks built into standard work, verified error proofing, and fast feedback put you in rare company most plants never reach.",
+    "Continuous Improvement": "Problem-solving is a daily habit here, not an event — PDCA discipline, dashboards reviewed in real time, and countermeasures with a name and date mean red never just sits there."
   };
 
   const OPP_NOTES = {
-    "Standardization": "Without standard work as the baseline, every other improvement is built on sand. Documented, followed, visual standards are the first fix — everything else depends on them. [PLACEHOLDER]",
-    "People Involvement": "Tools can be installed; culture has to be grown. Low engagement is the strongest predictor of backsliding — start with leaders on the floor, coaching daily. [PLACEHOLDER]",
-    "Short Lead Time": "Material that waits, travels, or gets double-handled is cost and lead time hiding in plain sight. Map the flow, expose the queues, pull don't push. [PLACEHOLDER]",
-    "Built-In Quality": "Defects found downstream cost multiples of defects stopped at the source. Build checks into the work itself and protect high-risk operations with verified error proofing. [PLACEHOLDER]",
-    "Continuous Improvement": "Without a daily improvement habit, problems get worked around instead of solved — and they come back. Visible metrics and owned countermeasures turn firefighting into progress. [PLACEHOLDER]"
+    "Standardization": "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet. Start with one pilot station: document what your best operator actually does, post it, and hold the team to it for two weeks.",
+    "People Involvement": "Tools can be installed overnight; a culture where the floor solves its own problems has to be grown, and it's the single strongest predictor of whether gains elsewhere actually hold. Start small: one leader, one area, a fixed 10-minute daily dashboard walk — consistency beats a big kickoff.",
+    "Short Lead Time": "Every staging point is inventory sitting still — cash tied up, defects hiding, and lead time growing invisibly. Pick one value stream, map the current flow, and eliminate the single biggest staging point first; you don't need to fix the whole plant to see the benefit.",
+    "Built-In Quality": "A defect caught downstream — or by a customer — costs a multiple of one stopped at the point of cause, and unverified error proofing can silently fail while giving false confidence. Pick your highest-risk station, add one explicit quality check directly into the standard work, and make it impossible to skip.",
+    "Continuous Improvement": "Without a structured method and a habit of reviewing metrics in real time, problems get worked around instead of solved — and they come back. Pick one recurring problem and force a simple PDCA cycle on it: plan a change, try it, check the result, adjust."
   };
 
+  // Follows the same Plan / Do / Check / Act shape as the RPA background
+  // doc's master 30-day template, applied to this plant's actual weakest area.
   function buildPlan(ps) {
     const sorted = [...ps].sort((a, b) => a.roadmap4 - b.roadmap4);
     const weakest = AREA_LABELS[sorted[0].name];
     const second = AREA_LABELS[sorted[1].name];
     const strongest = AREA_LABELS[sorted[sorted.length - 1].name];
     return [
-      { week: 1, tag: weakest, title: "See it clearly", text: `Spend 30 minutes a day on the floor in your weakest area (${weakest}). Write down only what you see, not what you believe. Ask operators how they know they're doing the job right. By Friday, you have a real baseline. [PLACEHOLDER]` },
-      { week: 2, tag: weakest, title: "Fix one thing, visibly", text: `Pick the single most obvious gap from week 1 and close it — fast, small, and public. Post the before/after where the team can see it. Credibility for the next 30 days is built this week. [PLACEHOLDER]` },
-      { week: 3, tag: second, title: "Spread what works", text: `Visit your strongest area (${strongest}) and write down the recipe — what made it work. Apply one element of that recipe to your second-weakest area (${second}) before the week is out. [PLACEHOLDER]` },
-      { week: 4, tag: "All", title: "Lock in the habit", text: `Make the floor time permanent: same 30 minutes, same time, every day, on your calendar. Review the month with your leadership team — what moved, what didn't — and pick the next area of focus. Then retake this assessment in 90 days. [PLACEHOLDER]` }
+      { week: 1, tag: weakest, title: "Plan", text: `Pick your weakest area (${weakest}) as this month's pilot. Spend real time on the floor there — watch what's actually happening, not what you assume is happening — and write down one specific gap worth closing first.` },
+      { week: 2, tag: weakest, title: "Do", text: `Close that gap directly: document the fix as real standard work, train the team to it, and post it somewhere visible. Make it a real change, not a demo — the kind that has to survive without you standing there.` },
+      { week: 3, tag: second, title: "Check", text: `Verify the change is actually holding — check it yourself, on the floor, rather than trusting a report. While you're there, visit your strongest area (${strongest}) and write down what makes it work, then apply one piece of that recipe to your second-weakest area (${second}).` },
+      { week: 4, tag: "All", title: "Act", text: `If the fix held, lock it in as the new standard and make the floor time itself permanent — same time, same place, on the calendar. If it didn't fully hold, use what you learned and run the cycle again. Either way, pick the next area and retake this assessment in 90 days to see the shift.` }
     ];
   }
 
