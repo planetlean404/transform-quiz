@@ -914,17 +914,13 @@
      Strengths/Opportunities list items, surfaced right under the score
      card so the single highest-priority area is visible before scrolling. */
   .gap-callout {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    background: var(--pl-bg-soft);
+    background: rgba(255, 145, 87, 0.14);
     border: 1px solid var(--pl-border);
     border-left: 4px solid var(--score-red);
     border-radius: 8px;
     padding: 16px 18px;
     margin-top: 16px;
   }
-  .gap-callout .gap-icon { width: 32px; height: 32px; flex: 0 0 auto; margin-top: 2px; }
   .gap-callout .gap-eyebrow {
     font-size: 11px;
     font-weight: 800;
@@ -933,7 +929,14 @@
     color: var(--pl-text-muted);
     margin-bottom: 4px;
   }
-  .gap-callout .gap-title { font-size: 15.5px; font-weight: 700; color: var(--pl-accent-dark); margin-bottom: 6px; }
+  .gap-callout .gap-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .gap-callout .gap-icon { width: 20px; height: 20px; flex: 0 0 auto; }
+  .gap-callout .gap-title { font-size: 15.5px; font-weight: 700; color: var(--score-red); margin: 0; }
   .gap-callout .gap-text { font-size: 14px; line-height: 1.6; color: var(--pl-text); }
   .insight-card {
     background: var(--pl-bg-soft);
@@ -1802,12 +1805,12 @@
     const gapCallout = document.getElementById("gapCallout");
     gapCallout.style.borderLeftColor = bandColor(gap.score100);
     gapCallout.innerHTML = `
-      <img class="gap-icon" src="${AREA_ICONS[gap.name]}" alt="">
-      <div class="gap-body">
-        <div class="gap-eyebrow">Biggest Gap</div>
+      <div class="gap-eyebrow">Biggest Gap</div>
+      <div class="gap-title-row">
+        <img class="gap-icon" src="${AREA_ICONS[gap.name]}" alt="">
         <div class="gap-title">${gap.label}</div>
-        <div class="gap-text">${OPP_NOTES[gap.name]}</div>
-      </div>`;
+      </div>
+      <div class="gap-text">${OPP_NOTES[gap.name]}</div>`;
 
     // 02 — Strengths (75+) / 03 — Opportunities (<75)
     const byScore = [...areas].sort((a, b) => b.score100 - a.score100);
