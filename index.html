@@ -252,6 +252,7 @@
     display: inline-block;
   }
   .sample-body { padding: 22px 24px 18px; }
+  .sample-body .dial-label { text-transform: none; }
 
   /* Phase-status pill (Formative/Localized/Broad-based/Benchmark), shown
      centered beneath the dial. */
@@ -397,6 +398,108 @@
     color: var(--pl-text-muted);
   }
   .cta-repeat { text-align: center; margin: 40px 0 0; }
+
+  /* How It Works — full-width gray band, connected step boxes */
+  .how-it-works {
+    background: var(--pl-bg-soft);
+    padding: 52px 24px;
+    margin-top: 44px;
+    border-top: 1px solid var(--pl-border);
+    border-bottom: 1px solid var(--pl-border);
+    text-align: center;
+  }
+  .how-it-works .eyebrow-dash { display: flex; justify-content: center; }
+  .how-it-works h2 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: var(--pl-accent-dark);
+    max-width: 620px;
+    margin: 0 auto 34px;
+  }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 980px;
+    margin: 0 auto;
+    border: 1px solid var(--pl-border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .step-card {
+    background: var(--pl-bg);
+    border-right: 1px solid var(--pl-border);
+    padding: 26px 22px;
+    text-align: left;
+  }
+  .step-card:last-child { border-right: none; }
+  .step-card .step-num {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--pl-accent);
+    margin-bottom: 12px;
+  }
+  .step-card h4 { margin: 0 0 8px; font-size: 16px; color: var(--pl-accent-dark); }
+  .step-card p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--pl-text-muted); }
+
+  /* Final CTA band */
+  .final-cta {
+    text-align: center;
+    max-width: 640px;
+    margin: 52px auto 0;
+    padding: 0 24px;
+  }
+  .final-cta .eyebrow-dash { display: flex; justify-content: center; }
+  .final-cta h2 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: var(--pl-accent-dark);
+    margin: 10px 0 10px;
+  }
+  .final-cta .sub {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--pl-text-muted);
+    margin-bottom: 26px;
+  }
+  .pill-btn {
+    display: inline-block;
+    background: var(--pl-accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 17px 34px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .pill-btn:hover { background: #0F7DB3; transform: translateY(-1px); }
+  .final-cta .microline {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--pl-text-muted);
+  }
+
+  /* Full-width site footer, bordered like the topbar */
+  .site-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 1180px;
+    margin: 60px auto 0;
+    padding: 20px 24px;
+    border-top: 1px solid var(--pl-border);
+    font-size: 13px;
+    color: var(--pl-text-muted);
+  }
+  .site-footer .foot-left { font-weight: 700; color: var(--pl-accent-dark); }
+  .site-footer .foot-right { font-size: 11.5px; letter-spacing: 0.6px; text-transform: uppercase; }
+
   .builtby-strip {
     display: flex;
     align-items: center;
@@ -872,6 +975,10 @@
     .toc-title { display: none; }
     .toc a { flex: 0 0 auto; border: 1px solid var(--pl-border); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; }
     .landing-cards { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .step-card { border-right: none; border-bottom: 1px solid var(--pl-border); }
+    .step-card:last-child { border-bottom: none; }
+    .site-footer { flex-direction: column; gap: 8px; text-align: center; }
     .hero-copy h1 { font-size: 24px; }
     .topbar { padding: 0 14px; }
     .topbar-center { display: none; }
@@ -887,6 +994,7 @@
     .areas-grid { grid-template-columns: 1fr; }
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
     .area-card:last-child { border-bottom: none; }
+    .how-it-works h2, .final-cta h2 { font-size: 21px; }
   }
 </style>
 </head>
@@ -970,34 +1078,46 @@
     </div>
   </section>
 
-  <section class="landing-cards">
-    <div class="landing-card">
-      <div class="num">01</div>
-      <h3>Your plant's score out of 100</h3>
-      <p>A single, honest number for how your plant runs today — with color-coded scores for each of the five areas.</p>
-    </div>
-    <div class="landing-card">
-      <div class="num">02</div>
-      <h3>Strengths &amp; opportunities</h3>
-      <p>See which areas are carrying your plant and which are holding it back — anything under 70 is an opportunity, and we tell you why it matters.</p>
-    </div>
-    <div class="landing-card">
-      <div class="num">03</div>
-      <h3>Your roadmap + 30-day plan</h3>
-      <p>See where you land on the lean implementation curve, and get a four-week action plan targeted at your biggest opportunities.</p>
+  <section class="how-it-works">
+    <div class="eyebrow-dash all-blue"><span class="dash">—</span> HOW IT WORKS</div>
+    <h2>Three steps. About five minutes. A report you can actually use.</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">STEP 01</div>
+        <h4>Read 20 statements</h4>
+        <p>Respond with the closest answer as to how your plant runs.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">STEP 02</div>
+        <h4>Get your results</h4>
+        <p>A detailed analysis of your responses across 5 key areas, including a downloadable PDF report.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">STEP 03</div>
+        <h4>Get your roadmap + 30-day plan</h4>
+        <p>See your location on the LEAN Implementation Roadmap along with a customized 4 week plan.</p>
+      </div>
     </div>
   </section>
 
-  <div class="cta-repeat">
-    <button class="start-btn" onclick="startQuiz()">Get My Plant Score&nbsp;&nbsp;→</button>
-  </div>
+  <section class="final-cta">
+    <div class="eyebrow-dash all-blue"><span class="dash">—</span> READY WHEN YOU ARE</div>
+    <h2>See how far your plant has progressed</h2>
+    <div class="sub">20 statements. Under 5 minutes. A straightforward assessment of where you're at and where you need to go.</div>
+    <button class="pill-btn" onclick="startQuiz()">Score your plant &mdash; free&nbsp;&nbsp;→</button>
+    <div class="microline">Built for ops managers</div>
+  </section>
 
   <section class="builtby-strip">
     <span class="strip-mark"><span class="builtby">built by</span> <span class="wordmark">planet <span class="lean">LEAN</span></span></span>
     <p>Built by planet LEAN on the same principle framework we use in full plant assessments. Answer honestly — the report is only as useful as your answers. [PLACEHOLDER — Jim refines blurb]</p>
   </section>
 
-  <div class="footer">© planet LEAN · <a href="https://www.planetlean.com" target="_blank" rel="noopener">planetlean.com</a></div>
+  <div class="site-footer">
+    <span class="foot-left">Rapid Plant Assessment</span>
+    <span class="foot-center">&copy; 2026 planet LEAN. All Rights Reserved.</span>
+    <span class="foot-right">rpa landing</span>
+  </div>
 </div>
 
 <!-- ---------- Quiz ---------- -->
