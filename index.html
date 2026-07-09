@@ -1247,7 +1247,7 @@
 
       <section class="section acc open" id="sec-strengths">
         <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="true">
-          <span class="section-num">02</span><span class="section-title">Where You're Strong</span><span class="chev">▾</span>
+          <span class="section-num">02</span><span class="section-title">Where You're Strongest</span><span class="chev">▾</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
           <ul class="area-list strengths" id="strengthsList"></ul>
@@ -1832,9 +1832,11 @@
       </div>
       <div class="gap-text">${OPP_NOTES[gap.name]}</div>`;
 
-    // 02 — Strengths: always the top two by score (same GAP_PRIORITY
-    // tie-break as Biggest Gap). 03 — Opportunities: every area under 75.
-    const strengths = pickByPriority(areas, 2, "highest");
+    // 02 — Strengths: top two by score among yellow/green areas only (same
+    // GAP_PRIORITY tie-break as Biggest Gap) — a red area never counts as a
+    // strength, even if it's relatively the plant's best. Can show 0, 1, or 2.
+    // 03 — Opportunities: every area under 75.
+    const strengths = pickByPriority(areas.filter(a => a.score100 >= 50), 2, "highest");
     const byScore = [...areas].sort((a, b) => b.score100 - a.score100);
     let opps = [...byScore].reverse().filter(a => a.score100 < 75);
     let oppsPreamble = "";
@@ -1851,7 +1853,9 @@
         </div>
         ${notes[a.name]}
       </li>`;
-    document.getElementById("strengthsList").innerHTML = strengths.map(a => categoryBox(a, STRENGTH_NOTES)).join("");
+    document.getElementById("strengthsList").innerHTML = strengths.length
+      ? strengths.map(a => categoryBox(a, STRENGTH_NOTES)).join("")
+      : `<li><em>Focus on your 30-day plan to improve the strength of your categories.</em></li>`;
     document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(a => categoryBox(a, OPP_NOTES)
     ).join("");
 
