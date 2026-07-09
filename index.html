@@ -39,14 +39,19 @@
     position: sticky;
     top: 0;
     z-index: 50;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
     padding: 0 22px;
     height: 56px;
     background: var(--pl-bg);
     border-bottom: 1px solid var(--pl-border);
+  }
+  .topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 980px;
+    height: 100%;
+    margin: 0 auto;
   }
   .topbar-left, .topbar-center, .topbar-right {
     display: flex;
@@ -964,6 +969,7 @@
 <body>
 
 <header class="topbar">
+ <div class="topbar-inner">
   <div class="topbar-left">
     <span class="rpa-name">Rapid Plant Assessment</span>
     <span class="rpa-badge">rpa</span>
@@ -973,6 +979,7 @@
     <span class="builtby">built by</span>
     <span class="wordmark">planet <span class="lean">LEAN</span></span>
   </div>
+ </div>
 </header>
 
 <!-- ---------- Landing (full width, PMB-style) ---------- -->
