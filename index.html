@@ -765,7 +765,29 @@
     border-radius: 14px;
     margin: 16px 0 24px;
     overflow: hidden;
+    display: grid;
+    grid-template-columns: auto 1fr;
   }
+  .sc-header-left, .sc-header-right {
+    background: var(--pl-bg-soft);
+    border-bottom: 1px solid var(--pl-border);
+    padding: 12px 24px;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--pl-text-muted);
+    text-align: center;
+  }
+  .sc-footer {
+    grid-column: 1 / -1;
+    background: var(--pl-bg-soft);
+    border-top: 1px solid var(--pl-border);
+    padding: 14px 24px;
+    font-size: 14px;
+    color: var(--pl-text);
+  }
+  .sc-footer strong { color: var(--pl-accent-dark); }
   .phase-badge {
     display: inline-block;
     background: var(--pl-orange);
@@ -828,11 +850,6 @@
      No numeric area scores anywhere — the maturity dial is the only number
      in the report (Jim's call: detail scores generate more questions than
      answers). Bar length + color carry the signal. */
-  .overview-grid {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: stretch;
-  }
   .overview-left {
     text-align: center;
     padding: 26px 34px;
@@ -986,7 +1003,8 @@
     .card { padding: 28px 20px; }
     .statement { font-size: 19px; }
     .cta-row { flex-direction: column; }
-    .overview-grid { grid-template-columns: 1fr; gap: 24px; }
+    .score-card { grid-template-columns: 1fr; }
+    .sc-header-right { border-top: 1px solid var(--pl-border); }
     .bar-row { grid-template-columns: 30px 92px 1fr 30px; gap: 8px; }
     .areas-grid { grid-template-columns: 1fr; }
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
@@ -1164,14 +1182,14 @@
           <div class="hero-date" id="resultsDate"></div>
         </div>
         <div class="score-card">
-          <div class="overview-grid">
-            <div class="overview-left grid-bg">
-              <div class="dial-label">LEAN maturity score</div>
-              <div class="dial-row" id="bigScore"></div>
-              <div class="pill-row" id="reportPillRow"></div>
-            </div>
-            <div class="overview-bars" id="breakdownList"></div>
+          <div class="sc-header-left">LEAN maturity score</div>
+          <div class="sc-header-right">Category scoring breakout</div>
+          <div class="overview-left grid-bg">
+            <div class="dial-row" id="bigScore"></div>
+            <div class="pill-row" id="reportPillRow"></div>
           </div>
+          <div class="overview-bars" id="breakdownList"></div>
+          <div class="sc-footer" id="scFooter"></div>
         </div>
       </section>
 
@@ -1594,6 +1612,30 @@
     return "focus-weakest";
   }
 
+  // ---------- Lean Maturity Profile best-fit (always one of the 5 named
+  // profiles, even for the "focus-weakest" catch-all pattern) ----------
+  const PROFILE_NAMES = {
+    "calibration": "The Believer",
+    "starting-line": "The Firefighter",
+    "fragile-foundation": "The Cracked Foundation",
+    "tools-without-culture": "The Tool Show",
+    "speed-over-quality": "The Sprinter"
+  };
+
+  function bestFitProfile(pattern, ps) {
+    if (PROFILE_NAMES[pattern]) return PROFILE_NAMES[pattern];
+    // focus-weakest has no direct profile mapping — pick the nearest of the
+    // 5 by overall level, then by which area is dragging the plant down.
+    const avg = ps.reduce((acc, p) => acc + p.roadmap4, 0) / ps.length;
+    if (avg >= 3) return "The Believer";
+    if (avg < 2) return "The Firefighter";
+    const weakest = [...ps].sort((a, b) => a.roadmap4 - b.roadmap4)[0].name;
+    if (weakest === "Standardization") return "The Cracked Foundation";
+    if (weakest === "People Involvement") return "The Tool Show";
+    if (weakest === "Built-In Quality") return "The Sprinter";
+    return "The Cracked Foundation";
+  }
+
   const STRENGTH_NOTES = {
     "Standardization": "Standard work, 5S discipline, and a dashboard your team actually reviews mean your improvements have something to hold onto — this is the foundation most plants skip, and you haven't.",
     "People Involvement": "Your team owns its own problems — weekly problem-solving, a leader who shows up daily, and a real help chain mean engagement isn't a program here, it's how the floor already runs.",
@@ -1717,9 +1759,12 @@
     ).join("");
 
     const sorted = [...areas].sort((a, b) => a.roadmap4 - b.roadmap4);
-    const pattern = PATTERNS[data.pattern] || PATTERNS[detectPattern(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })))];
+    const patternKey = data.pattern && PATTERNS[data.pattern] ? data.pattern : detectPattern(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
+    const pattern = PATTERNS[patternKey];
     document.getElementById("insightCard").innerHTML =
       `<h3>${pattern.title}</h3>${pattern.body.replace("{WEAKEST}", sorted[0].label)}`;
+    document.getElementById("scFooter").innerHTML =
+      `LEAN maturity profile best fit: <strong>${bestFitProfile(patternKey, areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })))}</strong>`;
 
     // 04 — Roadmap (no numeric score — the curve marker and phase carry it)
     document.getElementById("roadmapLead").innerHTML =
