@@ -763,8 +763,8 @@
   .score-card {
     border: 1px solid #e8ebee;
     border-radius: 14px;
-    padding: 26px 24px 22px;
     margin: 16px 0 24px;
+    overflow: hidden;
   }
   .phase-badge {
     display: inline-block;
@@ -831,13 +831,20 @@
   .overview-grid {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 38px;
-    align-items: center;
+    align-items: stretch;
   }
   .overview-left {
     text-align: center;
-    border-radius: 10px;
-    padding: 18px 22px;
+    padding: 26px 34px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .overview-bars {
+    padding: 26px 24px 22px 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   .bar-row {
     display: grid;
