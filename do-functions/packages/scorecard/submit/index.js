@@ -168,15 +168,18 @@ function validate(event) {
   if (!firstName) errors.push('firstName required');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('valid email required');
 
+  // Roadmap scores are stored on Jim's raw 0–4 scale (avg of per-statement
+  // values 0/2.25/3.25/4) — no curve conversion. Upper bound 4.5 tolerated
+  // for rows written under the old 1–4.5 curve scale.
   const score = Number(event.score);
-  if (!(score >= 1 && score <= 4.5)) errors.push('score out of range');
+  if (!(score >= 0 && score <= 4.5)) errors.push('score out of range');
   const phase = String(event.phase || '');
   if (!['Formative', 'Localized', 'Broad-based', 'Benchmark'].includes(phase)) errors.push('bad phase');
 
   const principles = event.principles;
   if (!Array.isArray(principles) || principles.length !== PRINCIPLE_ORDER.length ||
       !PRINCIPLE_ORDER.every((name, i) => principles[i] && principles[i].name === name &&
-        Number(principles[i].score) >= 1 && Number(principles[i].score) <= 4.5)) {
+        Number(principles[i].score) >= 0 && Number(principles[i].score) <= 4.5)) {
     errors.push('bad principles');
   }
 

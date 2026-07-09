@@ -1462,7 +1462,7 @@
   async function syncToServer(name, email) {
     try {
       const ps = computePrincipleScores();
-      const curveScore = roadmapToCurve(overallRoadmap4(ps));
+      const curveScore = overallRoadmap4(ps);
       const res = await fetch(`${API_BASE}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1471,7 +1471,7 @@
           email,
           score: curveScore,
           phase: PHASES[phaseIndexForScore(curveScore)].name,
-          principles: ps.map(p => ({ name: p.name, score: roadmapToCurve(p.roadmap4) })),
+          principles: ps.map(p => ({ name: p.name, score: p.roadmap4 })),
           maturity: to100(overallMaturity10(ps)),
           principleMaturity: ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) })),
           pattern: detectPattern(ps),
@@ -1512,16 +1512,6 @@
     return ps.reduce((acc, p) => acc + p.roadmap4, 0) / ps.length;
   }
 
-  // Roadmap curve (canonical storage + phases): 0–4 → 1–4.5, matching the
-  // implementation-curve graphic's four-phase span.
-  function roadmapToCurve(r4) {
-    return Math.min(4.5, Math.max(1, 1 + r4 * 0.875));
-  }
-
-  function curveToRoadmap(curve) {
-    return (curve - 1) / 0.875;
-  }
-
   function to100(x10) {
     return Math.round(x10 * 10);
   }
@@ -1534,8 +1524,13 @@
     return "var(--score-green)";
   }
 
-  function phaseIndexForScore(curve) {
-    return Math.min(3, Math.floor(curve) - 1);
+  // Phase buckets on the RAW 0–4 roadmap scale, aligned with Jim's roadmap
+  // status colors (<2 red, 2–<3 yellow, 3+ green): Formative <2,
+  // Localized 2–<3, Broad-based 3–<4, Benchmark 4 (all-"All" only).
+  // No conversion/inflation — the stored score IS the roadmap average.
+  function phaseIndexForScore(r4) {
+    if (r4 < 2) return 0;
+    return Math.min(3, Math.floor(r4) - 1);
   }
 
   function formatScore(score) {
@@ -1543,7 +1538,7 @@
     return String(truncated);
   }
 
-  // ---------- Pattern engine (thresholds on the curve scale) ----------
+  // ---------- Pattern engine (thresholds on the raw 0–4 roadmap scale) ----------
   // Five of these map directly to the Lean Maturity Profiles in the RPA
   // background doc (The Believer / Firefighter / Cracked Foundation / Tool
   // Show / Sprinter); focus-weakest is the generic catch-all.
@@ -1576,7 +1571,7 @@
 
   function detectPattern(ps) {
     const by = {};
-    ps.forEach(p => by[p.name] = roadmapToCurve(p.roadmap4));
+    ps.forEach(p => by[p.name] = p.roadmap4);
     const all = Object.values(by);
     if (all.every(s => s >= 3.5)) return "calibration";
     if (all.every(s => s < 2)) return "starting-line";
@@ -1624,8 +1619,8 @@
     renderReport({
       firstName: name,
       date: new Date().toISOString(),
-      score: roadmapToCurve(overallRoadmap4(ps)),
-      principles: ps.map(p => ({ name: p.name, score: roadmapToCurve(p.roadmap4) })),
+      score: overallRoadmap4(ps),
+      principles: ps.map(p => ({ name: p.name, score: p.roadmap4 })),
       maturity: to100(overallMaturity10(ps)),
       principleMaturity: ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) })),
       pattern: detectPattern(ps)
@@ -1645,7 +1640,7 @@
       `<span class="report-id">Report ID — <strong>pending…</strong></span>`;
   }
 
-  // renderReport receives roadmap data on the CURVE scale (1–4.5, canonical
+  // renderReport receives roadmap data on the RAW 0–4 scale (canonical
   // storage for phase/pattern/plan) plus maturity data already on the /100
   // scale (drives the dial, area bars, and Strengths/Opportunities).
   function renderReport(data) {
@@ -1657,7 +1652,7 @@
     const areas = data.principles.map(p => ({
       name: p.name,
       label: AREA_LABELS[p.name] || p.name,
-      roadmap4: curveToRoadmap(p.score),
+      roadmap4: p.score,
       score100: maturityByName[p.name] != null ? maturityByName[p.name] : 0
     }));
     const total100 = data.maturity != null ? data.maturity :
@@ -1805,7 +1800,12 @@
     const plot = { x0: 62, x1: 682 };
     const bandW = (plot.x1 - plot.x0) / 4;
     const activeIdx = phaseIndexForScore(score);
-    const fraction = activeIdx === 3 ? (score - 4) / 0.5 : score - Math.floor(score);
+    // How far into the active band the marker sits. Raw-scale band spans:
+    // Formative 0–2 (double width), Localized 2–3, Broad-based 3–4,
+    // Benchmark = exactly 4 (marker pinned at the band's start).
+    const fraction = activeIdx === 0 ? score / 2 :
+                     activeIdx === 3 ? 0 :
+                     score - Math.floor(score);
     const inset = 0.08 + fraction * 0.84;
     const targetX = plot.x0 + bandW * (activeIdx + inset);
 
@@ -1893,9 +1893,9 @@
   // are each a separate hardcoded demo value rather than derived from one another.
   (function initSampleCard() {
     const sampleScore = 32; // maturity dial demo value
-    const sampleRoadmapCurve = 1.86; // Formative-phase demo value
+    const sampleRoadmap4 = 1.4; // raw 0–4 roadmap demo value → Formative (<2)
     document.getElementById("sampleDialRow").innerHTML = buildScoreDialSVG(sampleScore);
-    const pill = buildPill(sampleRoadmapCurve);
+    const pill = buildPill(sampleRoadmap4);
     document.getElementById("samplePillRow").innerHTML =
       `<span class="score-pill" style="background:${pill.color}">${pill.label}</span>`;
     // Same 5 demo category scores as before (Standards/Quality/People/
