@@ -858,11 +858,10 @@
   .area-list li strong { color: var(--pl-accent-dark); }
   .area-list .area-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .area-list .area-icon-inline { width: 30px; height: 30px; flex: 0 0 auto; }
+  .area-list .area-title-row strong { flex: 1; }
+  .area-list .area-score-inline { font-weight: 800; font-size: 15px; color: var(--pl-accent-dark); }
 
-  /* Overview: dial + pill on the left, proportional area bars on the right.
-     No numeric area scores anywhere — the maturity dial is the only number
-     in the report (Jim's call: detail scores generate more questions than
-     answers). Bar length + color carry the signal. */
+  /* Overview: dial + pill on the left, proportional area bars on the right. */
   .overview-left {
     text-align: center;
     padding: 26px 34px;
@@ -905,8 +904,7 @@
     position: absolute;
     top: 0; bottom: 0;
     width: 1px;
-    background: #fff;
-    box-shadow: 0 0 0 1px rgba(44,62,80,0.18);
+    background: var(--pl-accent-dark);
     z-index: 1;
   }
   .bar-score { font-size: 13.5px; font-weight: 700; color: var(--pl-accent-dark); text-align: right; }
@@ -936,7 +934,8 @@
     margin-bottom: 6px;
   }
   .gap-callout .gap-icon { width: 30px; height: 30px; flex: 0 0 auto; }
-  .gap-callout .gap-title { font-size: 15.5px; font-weight: 700; color: var(--pl-accent-dark); margin: 0; }
+  .gap-callout .gap-title { font-size: 15.5px; font-weight: 700; color: var(--pl-accent-dark); margin: 0; flex: 1; }
+  .gap-callout .gap-score { font-weight: 800; font-size: 15.5px; color: var(--pl-accent-dark); }
   .gap-callout .gap-text { font-size: 14px; line-height: 1.6; color: var(--pl-text); }
   .insight-card {
     background: var(--pl-bg-soft);
@@ -1829,6 +1828,7 @@
       <div class="gap-title-row">
         <img class="gap-icon" src="${AREA_ICONS[gap.name]}" alt="">
         <div class="gap-title">${gap.label}</div>
+        <span class="gap-score">${gap.score100}</span>
       </div>
       <div class="gap-text">${OPP_NOTES[gap.name]}</div>`;
 
@@ -1847,6 +1847,7 @@
         <div class="area-title-row">
           <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
           <strong>${a.label}</strong>
+          <span class="area-score-inline">${a.score100}</span>
         </div>
         ${notes[a.name]}
       </li>`;
