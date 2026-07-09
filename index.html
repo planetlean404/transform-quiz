@@ -90,6 +90,8 @@
   }
   .wordmark .lean { color: var(--pl-accent); }
   .topbar .wordmark { font-size: 15px; }
+  .wordmark-link { text-decoration: none; cursor: pointer; }
+  .wordmark-link:hover { opacity: 0.8; }
   .report-id {
     font-size: 12.5px;
     font-weight: 600;
@@ -982,7 +984,7 @@
   <div class="topbar-center" id="topbarCenter"></div>
   <div class="topbar-right" id="topbarRight">
     <span class="builtby">built by</span>
-    <span class="wordmark">planet <span class="lean">LEAN</span></span>
+    <a class="wordmark wordmark-link" href="https://www.planetlean.com" target="_blank" rel="noopener">planet <span class="lean">LEAN</span></a>
   </div>
  </div>
 </header>
