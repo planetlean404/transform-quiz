@@ -824,13 +824,26 @@
   .area-list.opps li { border-left: 4px solid var(--pl-orange); }
   .area-list.strengths li { border-left: 4px solid var(--pl-accent); }
 
+  /* Overview: dial + pill on the left, proportional area bars on the right.
+     No numeric area scores anywhere — the maturity dial is the only number
+     in the report (Jim's call: detail scores generate more questions than
+     answers). Bar length + color carry the signal. */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 38px;
+    align-items: center;
+  }
+  .overview-left { text-align: center; }
   .bar-row {
     display: grid;
-    grid-template-columns: 170px 1fr 90px;
+    grid-template-columns: 30px 92px 1fr;
     gap: 12px;
     align-items: center;
-    margin-bottom: 13px;
+    margin-bottom: 16px;
   }
+  .bar-row:last-child { margin-bottom: 0; }
+  .bar-icon { width: 28px; height: 28px; display: block; }
   .bar-name { font-size: 14px; font-weight: 600; color: var(--pl-accent-dark); }
   .bar-track {
     position: relative;
@@ -838,16 +851,13 @@
     background: var(--pl-bg-soft);
     border: 1px solid var(--pl-border);
     border-radius: 999px;
+    overflow: hidden;
   }
   .bar-fill {
     position: absolute;
     left: 0; top: 0; bottom: 0;
     border-radius: 999px;
   }
-  .bar-tick { position: absolute; top: -3px; bottom: -3px; width: 1px; background: #c3cad0; }
-  .bar-score { font-size: 13.5px; font-weight: 700; color: var(--pl-accent-dark); text-align: right; }
-  .bar-score em { font-style: normal; font-weight: 500; color: var(--pl-text-muted); }
-  .bar-legend { font-size: 12px; color: var(--pl-text-muted); margin-top: 6px; text-align: right; }
   .insight-card {
     background: var(--pl-bg-soft);
     border: 1px solid var(--pl-border);
@@ -964,8 +974,8 @@
     .card { padding: 28px 20px; }
     .statement { font-size: 19px; }
     .cta-row { flex-direction: column; }
-    .bar-row { grid-template-columns: 1fr; gap: 6px; }
-    .bar-score { text-align: left; }
+    .overview-grid { grid-template-columns: 1fr; gap: 24px; }
+    .bar-row { grid-template-columns: 30px 92px 1fr; gap: 8px; }
     .areas-grid { grid-template-columns: 1fr; }
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
     .area-card:last-child { border-bottom: none; }
@@ -1142,10 +1152,15 @@
           <div class="hero-date" id="resultsDate"></div>
         </div>
         <div class="score-card grid-bg">
-          <div class="dial-row" id="bigScore"></div>
+          <div class="overview-grid">
+            <div class="overview-left">
+              <div class="dial-label">LEAN maturity score</div>
+              <div class="dial-row" id="bigScore"></div>
+              <div class="pill-row" id="reportPillRow"></div>
+            </div>
+            <div class="overview-bars" id="breakdownList"></div>
+          </div>
         </div>
-        <div id="breakdownList"></div>
-        <div class="bar-legend">Green 75+ · Yellow 50–74 · Red below 50 — anything under 75 is an opportunity (tick marks 75).</div>
       </section>
 
       <section class="section acc open" id="sec-strengths">
@@ -1285,6 +1300,17 @@
     "Short Lead Time": "Logistics",
     "Built-In Quality": "Quality",
     "Continuous Improvement": "Continuous Improvement"
+  };
+
+  // Compact labels + icons for the Overview bars (CI abbreviated to fit the
+  // narrow name column; icons match the landing page's five-areas section).
+  const BAR_LABELS = { ...AREA_LABELS, "Continuous Improvement": "CI" };
+  const AREA_ICONS = {
+    "Standardization": "/icon-std.png",
+    "People Involvement": "/icon-people.png",
+    "Short Lead Time": "/icon-logistics.png",
+    "Built-In Quality": "/icon-quality.png",
+    "Continuous Improvement": "/icon-ci.png"
   };
 
   const PRINCIPLES = [
@@ -1645,18 +1671,21 @@
     setReportHeader(data.id || null);
     window.scrollTo(0, 0);
 
-    // 01 — Overview
+    // 01 — Overview: maturity dial + phase pill left, proportional bars right.
+    // The dial is the only number shown anywhere in the report.
     document.getElementById("resultsTitle").textContent = `${data.firstName}, here's how your plant scored`;
     document.getElementById("resultsDate").textContent = new Date(data.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
     document.getElementById("bigScore").innerHTML = buildScoreDialSVG(total100);
+    const pill = buildPill(curveScore);
+    document.getElementById("reportPillRow").innerHTML =
+      `<span class="score-pill" style="background:${pill.color}">${pill.label}</span>`;
     document.getElementById("breakdownList").innerHTML = areas.map(a => `
       <div class="bar-row">
-        <div class="bar-name">${a.label}</div>
+        <img class="bar-icon" src="${AREA_ICONS[a.name]}" alt="">
+        <div class="bar-name">${BAR_LABELS[a.name] || a.label}</div>
         <div class="bar-track">
           <div class="bar-fill" style="width:${a.score100}%;background:${bandColor(a.score100)}"></div>
-          <div class="bar-tick" style="left:75%"></div>
         </div>
-        <div class="bar-score">${a.score100} <em>/ 100</em></div>
       </div>`).join("");
 
     // 02 — Strengths (75+) / 03 — Opportunities (<75)
@@ -1673,10 +1702,10 @@
       oppsPreamble = `<li><em>Every area cleared 75 — impressive. These are the two with the most room left to run.</em></li>`;
     }
     document.getElementById("strengthsList").innerHTML = strengthsPreamble + strengths.map(a =>
-      `<li><span class="area-score" style="color:${bandColor(a.score100)}">${a.score100}</span><strong>${a.label}</strong><br>${STRENGTH_NOTES[a.name]}</li>`
+      `<li><strong>${a.label}</strong><br>${STRENGTH_NOTES[a.name]}</li>`
     ).join("");
     document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(a =>
-      `<li><span class="area-score" style="color:${bandColor(a.score100)}">${a.score100}</span><strong>${a.label}</strong><br>${OPP_NOTES[a.name]}</li>`
+      `<li><strong>${a.label}</strong><br>${OPP_NOTES[a.name]}</li>`
     ).join("");
 
     const sorted = [...areas].sort((a, b) => a.roadmap4 - b.roadmap4);
@@ -1684,9 +1713,9 @@
     document.getElementById("insightCard").innerHTML =
       `<h3>${pattern.title}</h3>${pattern.body.replace("{WEAKEST}", sorted[0].label)}`;
 
-    // 04 — Roadmap
+    // 04 — Roadmap (no numeric score — the curve marker and phase carry it)
     document.getElementById("roadmapLead").innerHTML =
-      `Based on your Roadmap answers, your plant lands at <strong>${formatScore(curveScore)} / 4.5</strong> on the lean implementation curve — placing it in the`;
+      `Based on your answers, your plant's position on the lean implementation curve places it in the`;
     document.getElementById("phaseBadge").textContent = `${phase.name} Phase`;
     document.getElementById("phaseTagline").textContent = phase.tagline;
     document.getElementById("narrative").innerHTML = `<h3>What this means</h3>${phase.narrative}`;
