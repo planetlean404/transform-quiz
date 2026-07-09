@@ -899,7 +899,42 @@
     left: 0; top: 0; bottom: 0;
     border-radius: 999px;
   }
+  /* Status-transition tick marks at 50% and 75% — no values, just a marker
+     where red→yellow and yellow→green happen. */
+  .bar-tick {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: #fff;
+    box-shadow: 0 0 0 1px rgba(44,62,80,0.18);
+    z-index: 1;
+  }
   .bar-score { font-size: 13.5px; font-weight: 700; color: var(--pl-accent-dark); text-align: right; }
+  /* Biggest-gap callout: same gray-block-with-colored-edge language as the
+     Strengths/Opportunities list items, surfaced right under the score
+     card so the single highest-priority area is visible before scrolling. */
+  .gap-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-left: 4px solid var(--score-red);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-top: 16px;
+  }
+  .gap-callout .gap-icon { width: 32px; height: 32px; flex: 0 0 auto; margin-top: 2px; }
+  .gap-callout .gap-eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--pl-text-muted);
+    margin-bottom: 4px;
+  }
+  .gap-callout .gap-title { font-size: 15.5px; font-weight: 700; color: var(--pl-accent-dark); margin-bottom: 6px; }
+  .gap-callout .gap-text { font-size: 14px; line-height: 1.6; color: var(--pl-text); }
   .insight-card {
     background: var(--pl-bg-soft);
     border: 1px solid var(--pl-border);
@@ -1205,6 +1240,7 @@
           </div>
           <div class="sc-footer" id="scFooter"></div>
         </div>
+        <div class="gap-callout" id="gapCallout"></div>
       </section>
 
       <section class="section acc open" id="sec-strengths">
@@ -1356,6 +1392,17 @@
     "Built-In Quality": "/icon-quality.png",
     "Continuous Improvement": "/icon-ci.png"
   };
+
+  // Tie-break order for the "biggest gap" callout (Jim's spec: lowest score
+  // wins; if tied, most dependencies; if still tied, this fixed order —
+  // Standards, People, Quality, Logistics, then CI).
+  const GAP_PRIORITY = ["Standardization", "People Involvement", "Built-In Quality", "Short Lead Time", "Continuous Improvement"];
+  function pickBiggestGap(areas) {
+    const minScore = Math.min(...areas.map(a => a.score100));
+    const tied = areas.filter(a => a.score100 === minScore);
+    if (tied.length === 1) return tied[0];
+    return [...tied].sort((a, b) => GAP_PRIORITY.indexOf(a.name) - GAP_PRIORITY.indexOf(b.name))[0];
+  }
 
   const PRINCIPLES = [
     {
@@ -1745,9 +1792,22 @@
         <div class="bar-name">${BAR_LABELS[a.name] || a.label}</div>
         <div class="bar-track">
           <div class="bar-fill" style="width:${a.score100}%;background:${bandColor(a.score100)}"></div>
+          <div class="bar-tick" style="left:50%"></div>
+          <div class="bar-tick" style="left:75%"></div>
         </div>
         <div class="bar-score">${a.score100}</div>
       </div>`).join("");
+
+    const gap = pickBiggestGap(areas);
+    const gapCallout = document.getElementById("gapCallout");
+    gapCallout.style.borderLeftColor = bandColor(gap.score100);
+    gapCallout.innerHTML = `
+      <img class="gap-icon" src="${AREA_ICONS[gap.name]}" alt="">
+      <div class="gap-body">
+        <div class="gap-eyebrow">Biggest Gap</div>
+        <div class="gap-title">${gap.label}</div>
+        <div class="gap-text">${OPP_NOTES[gap.name]}</div>
+      </div>`;
 
     // 02 — Strengths (75+) / 03 — Opportunities (<75)
     const byScore = [...areas].sort((a, b) => b.score100 - a.score100);
