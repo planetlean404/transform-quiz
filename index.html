@@ -259,7 +259,7 @@
     display: inline-block;
   }
   .sample-body { padding: 22px 24px 18px; }
-  .sample-body .dial-label { text-transform: none; }
+  .sample-body .dial-label, .overview-left .dial-label { text-transform: none; }
 
   /* Phase-status pill (Formative/Localized/Broad-based/Benchmark), shown
      centered beneath the dial. */
@@ -834,10 +834,14 @@
     gap: 38px;
     align-items: center;
   }
-  .overview-left { text-align: center; }
+  .overview-left {
+    text-align: center;
+    border-radius: 10px;
+    padding: 18px 22px;
+  }
   .bar-row {
     display: grid;
-    grid-template-columns: 30px 92px 1fr;
+    grid-template-columns: 30px 92px 1fr 34px;
     gap: 12px;
     align-items: center;
     margin-bottom: 16px;
@@ -858,6 +862,7 @@
     left: 0; top: 0; bottom: 0;
     border-radius: 999px;
   }
+  .bar-score { font-size: 13.5px; font-weight: 700; color: var(--pl-accent-dark); text-align: right; }
   .insight-card {
     background: var(--pl-bg-soft);
     border: 1px solid var(--pl-border);
@@ -975,7 +980,7 @@
     .statement { font-size: 19px; }
     .cta-row { flex-direction: column; }
     .overview-grid { grid-template-columns: 1fr; gap: 24px; }
-    .bar-row { grid-template-columns: 30px 92px 1fr; gap: 8px; }
+    .bar-row { grid-template-columns: 30px 92px 1fr 30px; gap: 8px; }
     .areas-grid { grid-template-columns: 1fr; }
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
     .area-card:last-child { border-bottom: none; }
@@ -1151,9 +1156,9 @@
           <h2 id="resultsTitle"></h2>
           <div class="hero-date" id="resultsDate"></div>
         </div>
-        <div class="score-card grid-bg">
+        <div class="score-card">
           <div class="overview-grid">
-            <div class="overview-left">
+            <div class="overview-left grid-bg">
               <div class="dial-label">LEAN maturity score</div>
               <div class="dial-row" id="bigScore"></div>
               <div class="pill-row" id="reportPillRow"></div>
@@ -1681,6 +1686,7 @@
         <div class="bar-track">
           <div class="bar-fill" style="width:${a.score100}%;background:${bandColor(a.score100)}"></div>
         </div>
+        <div class="bar-score">${a.score100}</div>
       </div>`).join("");
 
     // 02 — Strengths (75+) / 03 — Opportunities (<75)
