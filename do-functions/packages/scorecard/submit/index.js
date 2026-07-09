@@ -7,6 +7,7 @@
 
 'use strict';
 const crypto = require('crypto');
+const { STATEMENTS } = require('./statements');
 
 const SHEET_TAB = 'scorecard';
 const PRINCIPLE_ORDER = [
@@ -16,6 +17,95 @@ const PRINCIPLE_ORDER = [
   'Built-In Quality',
   'Continuous Improvement'
 ];
+
+// ─── AI-generated category text (Good / Opportunity) ─────────────────────────
+// Runs once per submission, off the plant's actual per-statement answers, so
+// the report's Good/Opportunity boxes reflect which specific statements
+// scored well vs. poorly instead of one fixed paragraph per category. Non-
+// fatal on any failure — the frontend falls back to its static category
+// copy if categoryText comes back empty.
+
+const ANTHROPIC_MODEL = 'claude-opus-4-8';
+const ANTHROPIC_CALL_TIMEOUT_MS = 20000;
+
+function statementStatus(maturity) {
+  if (maturity >= 8) return 'green';
+  if (maturity >= 5) return 'yellow';
+  return 'red';
+}
+
+function buildCategoryPrompt(answers) {
+  const byPrinciple = {};
+  PRINCIPLE_ORDER.forEach(name => { byPrinciple[name] = []; });
+
+  answers.forEach(a => {
+    const stmt = STATEMENTS[a.si];
+    if (!stmt) return;
+    byPrinciple[stmt.principle].push({ stmt, status: statementStatus(Number(a.m)) });
+  });
+
+  return PRINCIPLE_ORDER.map(name => {
+    const lines = byPrinciple[name].map(({ stmt, status }) => {
+      if (status === 'red') {
+        return `- [RED] "${stmt.text}"\n  Why it matters: ${stmt.why}\n  First step if this is the gap: ${stmt.weakness}`;
+      }
+      return `- [${status.toUpperCase()}] "${stmt.text}"\n  Payoff if this is a strength: ${stmt.strength}`;
+    }).join('\n');
+    return `## ${name}\n${lines || '(no answers recorded for this category)'}`;
+  }).join('\n\n');
+}
+
+async function generateCategoryText(answers) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey || !Array.isArray(answers) || !answers.length) return {};
+
+  const system = `You write the "Good" and "Opportunity" sections of a lean-manufacturing plant assessment report, for a plant manager reading their own results.
+
+For each of the 5 categories provided, using ONLY the statement content given for that category, write:
+- "good": 2-3 sentences on the concrete benefits the plant is realizing, based only on statements marked GREEN or YELLOW. If there are none, use "".
+- "opportunity": 2-3 sentences naming the specific gap(s) from statements marked RED, the concrete cost of leaving them, ending with ONE clear first action. Base this only on RED statements. If there are none, write one short sentence encouraging them to keep pushing toward full consistency — do not invent a gap.
+
+Tone: direct, concrete, specific to what was actually answered — never generic filler. Match this style exactly:
+Good example: "Standard work, 5S discipline, and a dashboard your team actually reviews mean your improvements have something to hold onto — this is the foundation most plants skip, and you haven't."
+Opportunity example: "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet. Start with one pilot station: document what your best operator actually does, post it, and hold the team to it for two weeks."
+
+Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape with all 5 category names as keys:
+{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ANTHROPIC_CALL_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: ANTHROPIC_MODEL,
+        max_tokens: 1500,
+        system,
+        messages: [{ role: 'user', content: buildCategoryPrompt(answers) }]
+      }),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(`Anthropic error: ${JSON.stringify(data).slice(0, 200)}`);
+  const text = (data.content || []).map(b => b.text || '').join('');
+  const parsed = JSON.parse(text);
+
+  const out = {};
+  PRINCIPLE_ORDER.forEach(name => {
+    if (parsed[name]) out[name] = { good: String(parsed[name].good || ''), opportunity: String(parsed[name].opportunity || '') };
+  });
+  return out;
+}
 
 // ─── Google Sheets (JWT + append) ────────────────────────────────────────────
 
@@ -244,6 +334,13 @@ async function main(event) {
   }
   kartraStatus += ` | zb:${emailCheck.status}`;
 
+  let categoryText = {};
+  try {
+    categoryText = await generateCategoryText(event.answers);
+  } catch (err) {
+    console.error('Category text generation failed (non-fatal, frontend falls back to static copy):', err.message);
+  }
+
   try {
     const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
     const token = await getAccessToken(sa);
@@ -259,7 +356,8 @@ async function main(event) {
       JSON.stringify(event.answers || []),
       kartraStatus,
       v.maturity,
-      ...v.principleMaturity.map(p => Number(p.maturity))
+      ...v.principleMaturity.map(p => Number(p.maturity)),
+      JSON.stringify(categoryText)
     ]);
   } catch (err) {
     console.error('Sheet write failed:', err.message);

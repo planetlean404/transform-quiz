@@ -15,6 +15,7 @@ packages:
           KARTRA_API_PASSWORD: "${KARTRA_API_PASSWORD}"
           KARTRA_APP_ID: "${KARTRA_APP_ID}"
           ZEROBOUNCE_API_KEY: "${ZEROBOUNCE_API_KEY}"
+          ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
       - name: report
         runtime: 'nodejs:22'
         web: true

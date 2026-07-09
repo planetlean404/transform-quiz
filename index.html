@@ -1464,10 +1464,16 @@
     }
   ];
 
+  // si = stable statement index (0-19, this fixed PRINCIPLES order) — survives
+  // shuffleQuestions() below since it's baked into each object, not derived
+  // from array position. Sent with each answer so the backend can map a
+  // shuffled quiz back to the right statement for the AI category-text call.
+  let _si = 0;
   const questions = PRINCIPLES.flatMap(p =>
     p.statements.map(q => ({
       principle: p.name,
       text: q.text,
+      si: _si++,
       options: SCALES[q.scale].map((label, i) => ({ label, maturity: MATURITY_VALUES[i], roadmap: ROADMAP_VALUES[i] }))
     }))
   );
@@ -1523,7 +1529,7 @@
     if (btn) btn.classList.add("selected");
     setTimeout(() => {
       advancing = false;
-      answers.push(opt);
+      answers.push({ ...opt, si: questions[current].si });
       if (current < questions.length - 1) {
         current++;
         renderQuestion();
@@ -1578,7 +1584,7 @@
           maturity: to100(overallMaturity10(ps)),
           principleMaturity: ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) })),
           pattern: detectPattern(ps),
-          answers: answers.map(a => ({ m: a.maturity, r: a.roadmap })),
+          answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
           website: document.getElementById("website").value
         })
       });
@@ -1819,6 +1825,14 @@
         <div class="bar-score">${a.score100}</div>
       </div>`).join("");
 
+    // AI-generated per-report category text (Good/Opportunity), keyed by
+    // category name, from the live Claude call at submit time. Falls back to
+    // the static STRENGTH_NOTES/OPP_NOTES copy when absent (older report
+    // links, or a failed generation) or when a field comes back empty.
+    const aiText = data.categoryText || {};
+    const goodText = a => (aiText[a.name] && aiText[a.name].good) || STRENGTH_NOTES[a.name];
+    const oppText = a => (aiText[a.name] && aiText[a.name].opportunity) || OPP_NOTES[a.name];
+
     const gap = pickBiggestGap(areas);
     const gapCallout = document.getElementById("gapCallout");
     gapCallout.style.borderLeftColor = bandColor(gap.score100);
@@ -1830,7 +1844,7 @@
         <div class="gap-title">${gap.label}</div>
         <span class="gap-score">${gap.score100}</span>
       </div>
-      <div class="gap-text">${OPP_NOTES[gap.name]}</div>`;
+      <div class="gap-text">${oppText(gap)}</div>`;
 
     // 02 — Strengths: top two by score among yellow/green areas only (same
     // GAP_PRIORITY tie-break as Biggest Gap) — a red area never counts as a
@@ -1844,19 +1858,19 @@
       opps = [...byScore].reverse().slice(0, 2);
       oppsPreamble = `<li><em>Every area cleared 75 — impressive. These are the two with the most room left to run.</em></li>`;
     }
-    const categoryBox = (a, notes) => `
+    const categoryBox = (a, text) => `
       <li style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
         <div class="area-title-row">
           <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
           <strong>${a.label}</strong>
           <span class="area-score-inline">${a.score100}</span>
         </div>
-        ${notes[a.name]}
+        ${text}
       </li>`;
     document.getElementById("strengthsList").innerHTML = strengths.length
-      ? strengths.map(a => categoryBox(a, STRENGTH_NOTES)).join("")
+      ? strengths.map(a => categoryBox(a, goodText(a))).join("")
       : `<li><em>Focus on your 30-day plan to improve the strength of your categories.</em></li>`;
-    document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(a => categoryBox(a, OPP_NOTES)
+    document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(a => categoryBox(a, oppText(a))
     ).join("");
 
     const sorted = [...areas].sort((a, b) => a.roadmap4 - b.roadmap4);
