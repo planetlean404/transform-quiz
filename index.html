@@ -749,14 +749,7 @@
   .acc-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
   .acc-inner { padding-top: 18px; }
 
-  .results-header { text-align: center; margin-bottom: 8px; }
-  .results-header .eyebrow {
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--pl-text-muted);
-    margin-bottom: 10px;
-  }
+  .results-header { text-align: left; margin-bottom: 8px; }
   .results-header h2 {
     font-size: 28px;
     color: var(--pl-accent-dark);
@@ -775,11 +768,13 @@
     display: grid;
     grid-template-columns: auto 1fr;
   }
-  .sc-header-left, .sc-header-right {
+  .sc-header {
+    grid-column: 1 / -1;
     background: var(--pl-bg-soft);
     border-bottom: 1px solid var(--pl-border);
     padding: 12px 24px;
     font-size: 11.5px;
+    line-height: 16px;
     font-weight: 800;
     letter-spacing: 1.2px;
     text-transform: uppercase;
@@ -790,12 +785,22 @@
     grid-column: 1 / -1;
     background: var(--pl-bg-soft);
     border-top: 1px solid var(--pl-border);
-    padding: 14px 24px;
+    padding: 12px 24px;
     font-size: 14px;
+    line-height: 16px;
     color: var(--pl-text);
     text-align: center;
   }
   .sc-footer strong { color: var(--pl-accent-dark); }
+  .bars-title {
+    text-align: center;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--pl-text-muted);
+    margin-bottom: 14px;
+  }
   .phase-badge {
     display: inline-block;
     background: var(--pl-orange);
@@ -1012,7 +1017,6 @@
     .statement { font-size: 19px; }
     .cta-row { flex-direction: column; }
     .score-card { grid-template-columns: 1fr; }
-    .sc-header-right { border-top: 1px solid var(--pl-border); }
     .bar-row { grid-template-columns: 30px 92px 1fr 30px; gap: 8px; }
     .areas-grid { grid-template-columns: 1fr; }
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
@@ -1185,17 +1189,20 @@
     <main class="report-main">
       <section class="section" id="sec-overview">
         <div class="results-header">
-          <div class="eyebrow">Your Rapid Plant Assessment Result</div>
+          <div class="eyebrow-dash all-blue"><span class="dash">—</span> RAPID PLANT ASSESSMENT REPORT</div>
           <h2 id="resultsTitle"></h2>
           <div class="hero-date" id="resultsDate"></div>
         </div>
         <div class="score-card">
-          <div class="sc-header-left">LEAN maturity score</div>
-          <div class="sc-header-right">Category breakout</div>
+          <div class="sc-header">Scoring Overview</div>
           <div class="overview-left grid-bg">
+            <div class="dial-label">LEAN maturity score</div>
             <div class="dial-row" id="bigScore"></div>
           </div>
-          <div class="overview-bars" id="breakdownList"></div>
+          <div class="overview-bars">
+            <div class="bars-title">Category breakout</div>
+            <div id="breakdownList"></div>
+          </div>
           <div class="sc-footer" id="scFooter"></div>
         </div>
       </section>
