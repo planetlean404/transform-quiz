@@ -840,10 +840,15 @@
   }
   .narrative h3 { margin: 0 0 10px; font-size: 17px; color: var(--pl-accent-dark); }
 
+  /* Category box design rule: colored left edge + light tint of that same
+     status color for the background, icon + name inline at 30px — same
+     proportions as the Biggest Gap callout. Border/background colors are
+     set inline per item via bandColor()/bandBg() since each item's status
+     can differ. */
   .area-list { margin: 0; padding-left: 0; list-style: none; }
   .area-list li {
-    background: var(--pl-bg-soft);
     border: 1px solid var(--pl-border);
+    border-left: 4px solid var(--pl-border);
     border-radius: 8px;
     padding: 14px 16px;
     margin-bottom: 10px;
@@ -851,13 +856,8 @@
     line-height: 1.55;
   }
   .area-list li strong { color: var(--pl-accent-dark); }
-  .area-list li .area-score {
-    float: right;
-    font-weight: 800;
-    font-size: 15px;
-  }
-  .area-list.opps li { border-left: 4px solid var(--pl-orange); }
-  .area-list.strengths li { border-left: 4px solid var(--pl-accent); }
+  .area-list .area-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .area-list .area-icon-inline { width: 30px; height: 30px; flex: 0 0 auto; }
 
   /* Overview: dial + pill on the left, proportional area bars on the right.
      No numeric area scores anywhere — the maturity dial is the only number
@@ -1400,11 +1400,21 @@
   // wins; if tied, most dependencies; if still tied, this fixed order —
   // Standards, People, Quality, Logistics, then CI).
   const GAP_PRIORITY = ["Standardization", "People Involvement", "Built-In Quality", "Short Lead Time", "Continuous Improvement"];
+
+  // Ranks areas by score100, breaking every tie with GAP_PRIORITY, then
+  // returns the top `count`. direction "lowest" is used for the Biggest Gap
+  // callout; "highest" for the Strengths section's top two.
+  function pickByPriority(areas, count, direction) {
+    const sign = direction === "highest" ? -1 : 1;
+    return [...areas].sort((a, b) => {
+      const diff = sign * (a.score100 - b.score100);
+      if (diff !== 0) return diff;
+      return GAP_PRIORITY.indexOf(a.name) - GAP_PRIORITY.indexOf(b.name);
+    }).slice(0, count);
+  }
+
   function pickBiggestGap(areas) {
-    const minScore = Math.min(...areas.map(a => a.score100));
-    const tied = areas.filter(a => a.score100 === minScore);
-    if (tied.length === 1) return tied[0];
-    return [...tied].sort((a, b) => GAP_PRIORITY.indexOf(a.name) - GAP_PRIORITY.indexOf(b.name))[0];
+    return pickByPriority(areas, 1, "lowest")[0];
   }
 
   const PRINCIPLES = [
@@ -1618,6 +1628,15 @@
     return "var(--score-green)";
   }
 
+  // Light transparent tint of the same status color — used as the
+  // background on every category box (biggest gap, strengths, opportunities)
+  // per the design rule: colored left edge + light tint of that same color.
+  function bandBg(score100) {
+    if (score100 < 50) return "rgba(255,145,87,0.14)";
+    if (score100 < 75) return "rgba(242,176,30,0.14)";
+    return "rgba(51,168,82,0.12)";
+  }
+
   // Phase buckets on the RAW 0–4 roadmap scale, aligned with Jim's roadmap
   // status colors (<2 red, 2–<3 yellow, 3+ green): Formative <2,
   // Localized 2–<3, Broad-based 3–<4, Benchmark 4 (all-"All" only).
@@ -1804,6 +1823,7 @@
     const gap = pickBiggestGap(areas);
     const gapCallout = document.getElementById("gapCallout");
     gapCallout.style.borderLeftColor = bandColor(gap.score100);
+    gapCallout.style.background = bandBg(gap.score100);
     gapCallout.innerHTML = `
       <div class="gap-eyebrow">Biggest Gap</div>
       <div class="gap-title-row">
@@ -1812,24 +1832,26 @@
       </div>
       <div class="gap-text">${OPP_NOTES[gap.name]}</div>`;
 
-    // 02 — Strengths (75+) / 03 — Opportunities (<75)
+    // 02 — Strengths: always the top two by score (same GAP_PRIORITY
+    // tie-break as Biggest Gap). 03 — Opportunities: every area under 75.
+    const strengths = pickByPriority(areas, 2, "highest");
     const byScore = [...areas].sort((a, b) => b.score100 - a.score100);
-    let strengths = byScore.filter(a => a.score100 >= 75);
     let opps = [...byScore].reverse().filter(a => a.score100 < 75);
-    let strengthsPreamble = "", oppsPreamble = "";
-    if (!strengths.length) {
-      strengths = byScore.slice(0, 2);
-      strengthsPreamble = `<li><em>No area reached 75 yet — these are your strongest areas relative to the rest, and the right place to anchor early wins.</em></li>`;
-    }
+    let oppsPreamble = "";
     if (!opps.length) {
       opps = [...byScore].reverse().slice(0, 2);
       oppsPreamble = `<li><em>Every area cleared 75 — impressive. These are the two with the most room left to run.</em></li>`;
     }
-    document.getElementById("strengthsList").innerHTML = strengthsPreamble + strengths.map(a =>
-      `<li><strong>${a.label}</strong><br>${STRENGTH_NOTES[a.name]}</li>`
-    ).join("");
-    document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(a =>
-      `<li><strong>${a.label}</strong><br>${OPP_NOTES[a.name]}</li>`
+    const categoryBox = (a, notes) => `
+      <li style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
+        <div class="area-title-row">
+          <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
+          <strong>${a.label}</strong>
+        </div>
+        ${notes[a.name]}
+      </li>`;
+    document.getElementById("strengthsList").innerHTML = strengths.map(a => categoryBox(a, STRENGTH_NOTES)).join("");
+    document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(a => categoryBox(a, OPP_NOTES)
     ).join("");
 
     const sorted = [...areas].sort((a, b) => a.roadmap4 - b.roadmap4);
