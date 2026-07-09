@@ -179,9 +179,19 @@ function validate(event) {
         Number(principles[i].score) >= 1 && Number(principles[i].score) <= 4.5)) {
     errors.push('bad principles');
   }
+
+  const maturity = Number(event.maturity);
+  if (!(maturity >= 0 && maturity <= 100)) errors.push('maturity out of range');
+  const principleMaturity = event.principleMaturity;
+  if (!Array.isArray(principleMaturity) || principleMaturity.length !== PRINCIPLE_ORDER.length ||
+      !PRINCIPLE_ORDER.every((name, i) => principleMaturity[i] && principleMaturity[i].name === name &&
+        Number(principleMaturity[i].maturity) >= 0 && Number(principleMaturity[i].maturity) <= 100)) {
+    errors.push('bad principleMaturity');
+  }
+
   const pattern = String(event.pattern || '').slice(0, 40);
 
-  return { errors, firstName, email, score, phase, principles, pattern };
+  return { errors, firstName, email, score, phase, principles, maturity, principleMaturity, pattern };
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -244,7 +254,9 @@ async function main(event) {
       ...v.principles.map(p => Number(p.score)),
       v.pattern,
       JSON.stringify(event.answers || []),
-      kartraStatus
+      kartraStatus,
+      v.maturity,
+      ...v.principleMaturity.map(p => Number(p.maturity))
     ]);
   } catch (err) {
     console.error('Sheet write failed:', err.message);

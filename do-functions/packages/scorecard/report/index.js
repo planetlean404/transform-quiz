@@ -17,7 +17,8 @@ const PRINCIPLE_ORDER = [
 
 // Column layout written by scorecard/submit:
 // A id | B timestamp | C firstName | D email | E score | F phase |
-// G–K principle scores (order above) | L pattern | M answers JSON | N kartra
+// G–K principle scores (order above) | L pattern | M answers JSON | N kartra |
+// O maturity | P–T principle maturity scores (order above)
 
 function base64url(buffer) {
   return buffer.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -74,7 +75,7 @@ async function main(event) {
   try {
     const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
     const token = await getAccessToken(sa);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:L`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:T`;
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await res.json();
     if (!res.ok) throw new Error(JSON.stringify(data));
@@ -96,7 +97,15 @@ async function main(event) {
         score: Number(row[4]),
         phase: row[5],
         principles: PRINCIPLE_ORDER.map((name, i) => ({ name, score: Number(row[6 + i]) })),
-        pattern: row[11] || ''
+        pattern: row[11] || '',
+        // O–T (maturity + per-principle maturity) are absent on rows written
+        // before the dual-scoring model shipped — fall back to 0 so old
+        // report links still render instead of showing NaN.
+        maturity: row[14] != null && row[14] !== '' ? Number(row[14]) : 0,
+        principleMaturity: PRINCIPLE_ORDER.map((name, i) => ({
+          name,
+          maturity: row[15 + i] != null && row[15 + i] !== '' ? Number(row[15 + i]) : 0
+        }))
       }
     };
   } catch (err) {

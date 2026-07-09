@@ -1145,7 +1145,7 @@
           <div class="dial-row" id="bigScore"></div>
         </div>
         <div id="breakdownList"></div>
-        <div class="bar-legend">Green 80+ · Yellow 40–79 · Red below 40 — anything under 70 is an opportunity (tick marks 70).</div>
+        <div class="bar-legend">Green 75+ · Yellow 50–74 · Red below 50 — anything under 75 is an opportunity (tick marks 75).</div>
       </section>
 
       <section class="section acc open" id="sec-strengths">
@@ -1262,12 +1262,10 @@
 
   // ---------- Statements (Jim's updated set, 2026-07-07) ----------
   // 20 statements, 4 per area, presented in RANDOM order with no area label.
-  // Scoring (Jim's spec): option 1 = 1, option 2 = 5, option 3 = 7,
-  // option 4 = 10. Area score = avg ×10 → X/100 (a perfect plant scores 100).
-  // Roadmap conversion onto the 1–4.5 implementation curve:
-  //   curve = 1 + (avg10 − 1) × 3.5 / 9   (1→1, 10→4.5)
-  // Storage/backend stays on the curve scale, so old reports remain valid.
-  // Colors: score10 <4 red, 4–<8 yellow, 8–10 green. Under 70 = opportunity.
+  // Scoring (Jim's spec): each statement has two independent scores per
+  // option — Maturity (0/5/8/10, drives the /100 dial) and Roadmap
+  // (0/2.25/3.25/4, drives the phase pill and implementation curve).
+  // Maturity colors: <50 red, 50–<75 yellow, 75+ green. Under 75 = opportunity.
   const SCALES = {
     freq: ["Never", "Sometimes", "Most of the time", "Always"],
     amount: ["None", "Some", "Most", "All"],
@@ -1275,7 +1273,11 @@
     employees: ["No employees", "Some employees", "Most employees", "All employees"],
     stations: ["No stations", "Some stations", "Most stations", "All stations"]
   };
-  const SCORE_VALUES = [1, 5, 7, 10];
+  // Two independent per-statement scales (Jim's spec):
+  // Maturity drives the /100 dial and Strengths/Opportunities. Status: <5 red, 5-<7.5 yellow, >=7.5 green.
+  // Roadmap drives the phase pill, implementation curve, pattern engine, and 30-day plan.
+  const MATURITY_VALUES = [0, 5, 8, 10];
+  const ROADMAP_VALUES = [0, 2.25, 3.25, 4];
 
   const AREA_LABELS = {
     "Standardization": "Standards",
@@ -1337,7 +1339,7 @@
     p.statements.map(q => ({
       principle: p.name,
       text: q.text,
-      options: SCALES[q.scale].map((label, i) => ({ label, score: SCORE_VALUES[i] }))
+      options: SCALES[q.scale].map((label, i) => ({ label, maturity: MATURITY_VALUES[i], roadmap: ROADMAP_VALUES[i] }))
     }))
   );
 
@@ -1434,7 +1436,7 @@
   async function syncToServer(name, email) {
     try {
       const ps = computePrincipleScores();
-      const curveScore = toCurve(overall10(ps));
+      const curveScore = roadmapToCurve(overallRoadmap4(ps));
       const res = await fetch(`${API_BASE}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1443,9 +1445,11 @@
           email,
           score: curveScore,
           phase: PHASES[phaseIndexForScore(curveScore)].name,
-          principles: ps.map(p => ({ name: p.name, score: toCurve(p.score10) })),
+          principles: ps.map(p => ({ name: p.name, score: roadmapToCurve(p.roadmap4) })),
+          maturity: to100(overallMaturity10(ps)),
+          principleMaturity: ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) })),
           pattern: detectPattern(ps),
-          answers: answers.map(a => a.score),
+          answers: answers.map(a => ({ m: a.maturity, r: a.roadmap })),
           website: document.getElementById("website").value
         })
       });
@@ -1460,45 +1464,52 @@
   }
 
   // ---------- Scoring ----------
-  // Area score10 = raw average of that area's answers (values 1/5/7/10).
-  // Display = ×10 (X/100). Curve (canonical storage + phases):
-  //   curve = 1 + (score10 − 1) × 3.5 / 9   →   1→1, 10→4.5
+  // Two independent per-area averages, one per statement scale:
+  //   maturity10 = avg of that area's MATURITY_VALUES answers (0–10) → drives
+  //     the /100 dial, the area bars, and Strengths/Opportunities.
+  //   roadmap4 = avg of that area's ROADMAP_VALUES answers (0–4) → drives the
+  //     phase pill, the implementation curve, the pattern engine, and the plan.
   function computePrincipleScores() {
     return PRINCIPLES.map(p => {
-      const vals = answers
-        .filter((a, i) => questions[i].principle === p.name)
-        .map(a => a.score);
-      const avg = vals.reduce((acc, v) => acc + v, 0) / vals.length;
-      return { name: p.name, score10: Math.min(10, Math.max(1, avg)) };
+      const vals = answers.filter((a, i) => questions[i].principle === p.name);
+      const maturity10 = vals.reduce((acc, v) => acc + v.maturity, 0) / vals.length;
+      const roadmap4 = vals.reduce((acc, v) => acc + v.roadmap, 0) / vals.length;
+      return { name: p.name, maturity10, roadmap4 };
     });
   }
 
-  function overall10(ps) {
-    return ps.reduce((acc, p) => acc + p.score10, 0) / ps.length;
+  function overallMaturity10(ps) {
+    return ps.reduce((acc, p) => acc + p.maturity10, 0) / ps.length;
   }
 
-  function toCurve(s10) {
-    return Math.min(4.5, Math.max(1, 1 + (s10 - 1) * 3.5 / 9));
+  function overallRoadmap4(ps) {
+    return ps.reduce((acc, p) => acc + p.roadmap4, 0) / ps.length;
   }
 
-  function fromCurve(curve) {
-    return 1 + (curve - 1) * 9 / 3.5;
+  // Roadmap curve (canonical storage + phases): 0–4 → 1–4.5, matching the
+  // implementation-curve graphic's four-phase span.
+  function roadmapToCurve(r4) {
+    return Math.min(4.5, Math.max(1, 1 + r4 * 0.875));
   }
 
-  function to100(s10) {
-    return Math.round(s10 * 10);
+  function curveToRoadmap(curve) {
+    return (curve - 1) / 0.875;
   }
 
-  // Score band colors: score10 <4 red, 4–<8 yellow, 8–10 green (on the /100
-  // display that's <40 / 40–79 / 80+).
+  function to100(x10) {
+    return Math.round(x10 * 10);
+  }
+
+  // Maturity status colors (Jim's spec, on the /100 display): <50 red,
+  // 50–<75 yellow, 75+ green.
   function bandColor(score100) {
-    if (score100 < 40) return "var(--score-red)";
-    if (score100 < 80) return "var(--score-yellow)";
+    if (score100 < 50) return "var(--score-red)";
+    if (score100 < 75) return "var(--score-yellow)";
     return "var(--score-green)";
   }
 
-  function phaseIndexForScore(score) {
-    return Math.min(3, Math.floor(score) - 1);
+  function phaseIndexForScore(curve) {
+    return Math.min(3, Math.floor(curve) - 1);
   }
 
   function formatScore(score) {
@@ -1536,7 +1547,7 @@
 
   function detectPattern(ps) {
     const by = {};
-    ps.forEach(p => by[p.name] = toCurve(p.score10));
+    ps.forEach(p => by[p.name] = roadmapToCurve(p.roadmap4));
     const all = Object.values(by);
     if (all.every(s => s >= 3.5)) return "calibration";
     if (all.every(s => s < 2)) return "starting-line";
@@ -1564,7 +1575,7 @@
   };
 
   function buildPlan(ps) {
-    const sorted = [...ps].sort((a, b) => a.score10 - b.score10);
+    const sorted = [...ps].sort((a, b) => a.roadmap4 - b.roadmap4);
     const weakest = AREA_LABELS[sorted[0].name];
     const second = AREA_LABELS[sorted[1].name];
     const strongest = AREA_LABELS[sorted[sorted.length - 1].name];
@@ -1582,8 +1593,10 @@
     renderReport({
       firstName: name,
       date: new Date().toISOString(),
-      score: toCurve(overall10(ps)),
-      principles: ps.map(p => ({ name: p.name, score: toCurve(p.score10) })),
+      score: roadmapToCurve(overallRoadmap4(ps)),
+      principles: ps.map(p => ({ name: p.name, score: roadmapToCurve(p.roadmap4) })),
+      maturity: to100(overallMaturity10(ps)),
+      principleMaturity: ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) })),
       pattern: detectPattern(ps)
     });
   }
@@ -1601,17 +1614,23 @@
       `<span class="report-id">Report ID — <strong>pending…</strong></span>`;
   }
 
-  // renderReport always receives CURVE-scale data (1–4.5, canonical storage)
-  // and derives the /100 display from it.
+  // renderReport receives roadmap data on the CURVE scale (1–4.5, canonical
+  // storage for phase/pattern/plan) plus maturity data already on the /100
+  // scale (drives the dial, area bars, and Strengths/Opportunities).
   function renderReport(data) {
     const curveScore = data.score;
     const phaseIdx = phaseIndexForScore(curveScore);
     const phase = PHASES[phaseIdx];
-    const areas = data.principles.map(p => {
-      const s10 = fromCurve(p.score);
-      return { name: p.name, label: AREA_LABELS[p.name] || p.name, score10: s10, score100: to100(s10) };
-    });
-    const total100 = to100(fromCurve(curveScore));
+    const maturityByName = {};
+    (data.principleMaturity || []).forEach(p => maturityByName[p.name] = p.maturity);
+    const areas = data.principles.map(p => ({
+      name: p.name,
+      label: AREA_LABELS[p.name] || p.name,
+      roadmap4: curveToRoadmap(p.score),
+      score100: maturityByName[p.name] != null ? maturityByName[p.name] : 0
+    }));
+    const total100 = data.maturity != null ? data.maturity :
+      Math.round(areas.reduce((acc, a) => acc + a.score100, 0) / areas.length);
 
     clearTimeout(gateTimer);
     document.getElementById("landingScreen").style.display = "none";
@@ -1630,23 +1649,23 @@
         <div class="bar-name">${a.label}</div>
         <div class="bar-track">
           <div class="bar-fill" style="width:${a.score100}%;background:${bandColor(a.score100)}"></div>
-          <div class="bar-tick" style="left:70%"></div>
+          <div class="bar-tick" style="left:75%"></div>
         </div>
         <div class="bar-score">${a.score100} <em>/ 100</em></div>
       </div>`).join("");
 
-    // 02 — Strengths (70+) / 03 — Opportunities (<70)
+    // 02 — Strengths (75+) / 03 — Opportunities (<75)
     const byScore = [...areas].sort((a, b) => b.score100 - a.score100);
-    let strengths = byScore.filter(a => a.score100 >= 70);
-    let opps = [...byScore].reverse().filter(a => a.score100 < 70);
+    let strengths = byScore.filter(a => a.score100 >= 75);
+    let opps = [...byScore].reverse().filter(a => a.score100 < 75);
     let strengthsPreamble = "", oppsPreamble = "";
     if (!strengths.length) {
       strengths = byScore.slice(0, 2);
-      strengthsPreamble = `<li><em>No area reached 70 yet — these are your strongest areas relative to the rest, and the right place to anchor early wins.</em></li>`;
+      strengthsPreamble = `<li><em>No area reached 75 yet — these are your strongest areas relative to the rest, and the right place to anchor early wins.</em></li>`;
     }
     if (!opps.length) {
       opps = [...byScore].reverse().slice(0, 2);
-      oppsPreamble = `<li><em>Every area cleared 70 — impressive. These are the two with the most room left to run.</em></li>`;
+      oppsPreamble = `<li><em>Every area cleared 75 — impressive. These are the two with the most room left to run.</em></li>`;
     }
     document.getElementById("strengthsList").innerHTML = strengthsPreamble + strengths.map(a =>
       `<li><span class="area-score" style="color:${bandColor(a.score100)}">${a.score100}</span><strong>${a.label}</strong><br>${STRENGTH_NOTES[a.name]}</li>`
@@ -1655,14 +1674,14 @@
       `<li><span class="area-score" style="color:${bandColor(a.score100)}">${a.score100}</span><strong>${a.label}</strong><br>${OPP_NOTES[a.name]}</li>`
     ).join("");
 
-    const sorted = [...areas].sort((a, b) => a.score100 - b.score100);
-    const pattern = PATTERNS[data.pattern] || PATTERNS[detectPattern(areas.map(a => ({ name: a.name, score10: a.score10 })))];
+    const sorted = [...areas].sort((a, b) => a.roadmap4 - b.roadmap4);
+    const pattern = PATTERNS[data.pattern] || PATTERNS[detectPattern(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })))];
     document.getElementById("insightCard").innerHTML =
       `<h3>${pattern.title}</h3>${pattern.body.replace("{WEAKEST}", sorted[0].label)}`;
 
     // 04 — Roadmap
     document.getElementById("roadmapLead").innerHTML =
-      `On the lean implementation curve, your <strong>${total100}/100</strong> converts to <strong>${formatScore(curveScore)} / 4.5</strong> — placing your plant in the`;
+      `Based on your Roadmap answers, your plant lands at <strong>${formatScore(curveScore)} / 4.5</strong> on the lean implementation curve — placing it in the`;
     document.getElementById("phaseBadge").textContent = `${phase.name} Phase`;
     document.getElementById("phaseTagline").textContent = phase.tagline;
     document.getElementById("narrative").innerHTML = `<h3>What this means</h3>${phase.narrative}`;
@@ -1670,7 +1689,7 @@
     positionMarker(curveScore);
 
     // 05 — 30-day plan
-    document.getElementById("planList").innerHTML = buildPlan(areas.map(a => ({ name: a.name, score10: a.score10 }))).map(w =>
+    document.getElementById("planList").innerHTML = buildPlan(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 }))).map(w =>
       `<li class="plan-day"><span class="day-num">Week ${w.week}</span><span class="plan-body"><strong>${w.title}.</strong> ${w.text}<span class="plan-tag">${w.tag}</span></span></li>`
     ).join("");
 
@@ -1830,17 +1849,19 @@
   // top two phases (Broad-based, Benchmark) share green. Translucent (light
   // tint) rather than full-strength so the black text stays readable.
   const PILL_COLORS = ["rgba(224,67,63,0.34)", "rgba(242,176,30,0.4)", "rgba(51,168,82,0.34)", "rgba(51,168,82,0.34)"];
-  function pillForScore100(score100) {
-    const curve = toCurve(score100 / 10);
+  function buildPill(curve) {
     const idx = phaseIndexForScore(curve);
     return { label: `Roadmap phase: ${PHASES[idx].name.toUpperCase()}`, color: PILL_COLORS[idx] };
   }
 
-  // Landing page's static sample report preview (fixed demo values).
+  // Landing page's static sample report preview (fixed demo values). Maturity
+  // and Roadmap are independent scales, so the dial score and the phase pill
+  // are each a separate hardcoded demo value rather than derived from one another.
   (function initSampleCard() {
-    const sampleScore = 32; // in the 30s, under the ~35.7 Formative/Localized boundary
+    const sampleScore = 32; // maturity dial demo value
+    const sampleRoadmapCurve = 1.86; // Formative-phase demo value
     document.getElementById("sampleDialRow").innerHTML = buildScoreDialSVG(sampleScore);
-    const pill = pillForScore100(sampleScore);
+    const pill = buildPill(sampleRoadmapCurve);
     document.getElementById("samplePillRow").innerHTML =
       `<span class="score-pill" style="background:${pill.color}">${pill.label}</span>`;
     // Same 5 demo category scores as before (Standards/Quality/People/
