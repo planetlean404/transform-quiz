@@ -739,6 +739,8 @@
     color: var(--pl-accent);
     letter-spacing: 1px;
   }
+  /* Section title: blue leading dash + normal-color "0X / Title". */
+  .section-dash { color: var(--pl-accent); font-weight: 800; font-size: 19px; }
   .section-title {
     font-size: 19px;
     font-weight: 700;
@@ -1367,19 +1369,19 @@
       </section>
 
       <section class="section" id="sec-summaries">
-        <div class="section-head"><span class="section-num">02</span><span class="section-title">Category Summaries</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">02 / Category Summaries</span></div>
         <p class="section-intro">Each category at a glance — why it matters, what you're doing well, and where the opportunity is.</p>
         <div class="summaries-list" id="summariesList"></div>
       </section>
 
       <section class="section" id="sec-deep">
-        <div class="section-head"><span class="section-num">03</span><span class="section-title">Deep Insights</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">03 / Deep Insights</span></div>
         <p class="section-intro">Open a category to see every statement behind its score. Each statement shows how you answered, why it matters, and how to improve.</p>
         <div class="insights-list" id="deepList"></div>
       </section>
 
       <section class="section" id="sec-roadmap">
-        <div class="section-head"><span class="section-num">04</span><span class="section-title">Roadmap</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">04 / Roadmap</span></div>
         <div class="roadmap-head">
           <div class="roadmap-lead" id="roadmapLead"></div>
           <div class="phase-badge" id="phaseBadge"></div>
@@ -1391,18 +1393,18 @@
       </section>
 
       <section class="section" id="sec-profile">
-        <div class="section-head"><span class="section-num">05</span><span class="section-title">Profile</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">05 / Profile</span></div>
         <div class="profile-fit" id="profileFit"></div>
         <div class="profile-detail" id="profileDetail"></div>
       </section>
 
       <section class="section" id="sec-plan">
-        <div class="section-head"><span class="section-num">06</span><span class="section-title">30-Day Plan</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">06 / 30-Day Plan</span></div>
         <ol class="plan-list" id="planList"></ol>
       </section>
 
       <section class="section" id="sec-download">
-        <div class="section-head"><span class="section-num">07</span><span class="section-title">Download</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">07 / Download</span></div>
         <div class="cta-row">
           <button class="cta-primary" onclick="alert('PDF generation comes in the next build step.')">Download PDF Report</button>
           <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
@@ -2174,7 +2176,7 @@
       `At ${gapArea.score100} out of 100, this is your lowest-scoring category. ${WHY_MATTERS[gapArea.name]}`);
     const topGreen = pickByPriority(areas.filter(a => a.score100 >= 75), 1, "highest")[0];
     const strengthCallout = document.getElementById("strengthCallout");
-    if (topGreen) highlightBox(strengthCallout, "Strength", "strength", topGreen,
+    if (topGreen) highlightBox(strengthCallout, "Where You're Strongest", "strength", topGreen,
       `At ${topGreen.score100} out of 100, this is your strongest category. ${WHY_MATTERS[topGreen.name]}`);
     else strengthCallout.style.display = "none";
 
