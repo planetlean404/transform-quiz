@@ -1712,6 +1712,8 @@
   async function syncToServer(name, email) {
     try {
       const ps = computePrincipleScores();
+      const psMat = ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) }));
+      const patternKey = detectPattern(psMat);
       const curveScore = overallRoadmap4(ps);
       const res = await fetch(`${API_BASE}/submit`, {
         method: "POST",
@@ -1723,9 +1725,9 @@
           phase: PHASES[phaseIndexForScore(curveScore)].name,
           principles: ps.map(p => ({ name: p.name, score: p.roadmap4 })),
           maturity: to100(overallMaturity10(ps)),
-          principleMaturity: ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) })),
-          pattern: detectPattern(ps),
-          profile: bestFitProfile(detectPattern(ps), ps),
+          principleMaturity: psMat,
+          pattern: patternKey,
+          profile: bestFitProfile(patternKey, psMat),
           answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
           website: document.getElementById("website").value
         })
@@ -1799,7 +1801,7 @@
     return String(truncated);
   }
 
-  // ---------- Pattern engine (thresholds on the raw 0–4 roadmap scale) ----------
+  // ---------- Pattern engine (thresholds on the /100 maturity scale) ----------
   // Five of these map directly to the Lean Maturity Profiles in the RPA
   // background doc (The Believer / Firefighter / Cracked Foundation / Tool
   // Show / Sprinter); focus-weakest is the generic catch-all.
@@ -1830,16 +1832,29 @@
     }
   };
 
+  // Profile detection runs on the /100 maturity scores the reader actually
+  // sees (same scale as the category bars/pills), so the assigned profile
+  // always agrees with the colors on screen. Bands: green >= 80, weak < 60.
+  // Each entry in ps is { name, maturity }.
   function detectPattern(ps) {
-    const by = {};
-    ps.forEach(p => by[p.name] = p.roadmap4);
-    const all = Object.values(by);
-    if (all.every(s => s >= 3.5)) return "calibration";
-    if (all.every(s => s < 2)) return "starting-line";
-    if (by["Standardization"] < 2.5 && Math.max(...all) >= 3) return "fragile-foundation";
-    const tools = (by["Standardization"] + by["Short Lead Time"] + by["Built-In Quality"]) / 3;
-    if (tools >= 3 && by["People Involvement"] < 2.5) return "tools-without-culture";
-    if (by["Short Lead Time"] >= 3 && by["Built-In Quality"] < 2.5) return "speed-over-quality";
+    const m = {};
+    ps.forEach(p => m[p.name] = p.maturity);
+    const all = Object.values(m);
+    const std = m["Standardization"], people = m["People Involvement"],
+          slt = m["Short Lead Time"], biq = m["Built-In Quality"];
+    // The Believer — every category green (uniformly strong). Requires ALL
+    // categories >= 80, so a plant with any non-green area (a middling overall
+    // like 75) can never land here.
+    if (all.every(s => s >= 80)) return "calibration";
+    // The Firefighter — everything red: foundational chaos.
+    if (all.every(s => s < 50)) return "starting-line";
+    // The Cracked Foundation — weak Standardization under an otherwise advanced plant.
+    if (std < 60 && Math.max(...all) >= 75) return "fragile-foundation";
+    // The Tool Show — strong tools, weak People.
+    const tools = (std + slt + biq) / 3;
+    if (tools >= 75 && people < 60) return "tools-without-culture";
+    // The Sprinter — strong flow, weak Quality.
+    if (slt >= 75 && biq < 60) return "speed-over-quality";
     return "focus-weakest";
   }
 
@@ -1855,12 +1870,12 @@
 
   function bestFitProfile(pattern, ps) {
     if (PROFILE_NAMES[pattern]) return PROFILE_NAMES[pattern];
-    // focus-weakest has no direct profile mapping — pick the nearest of the
-    // 5 by overall level, then by which area is dragging the plant down.
-    const avg = ps.reduce((acc, p) => acc + p.roadmap4, 0) / ps.length;
-    if (avg >= 3) return "The Believer";
-    if (avg < 2) return "The Firefighter";
-    const weakest = [...ps].sort((a, b) => a.roadmap4 - b.roadmap4)[0].name;
+    // focus-weakest: a genuinely low overall is a Firefighter; otherwise map to
+    // the archetype that matches this plant's actual weakest area. (No average-
+    // based "Believer" here — The Believer only comes from all-green above.)
+    const overall = ps.reduce((acc, p) => acc + p.maturity, 0) / ps.length;
+    if (overall < 50) return "The Firefighter";
+    const weakest = [...ps].sort((a, b) => a.maturity - b.maturity)[0].name;
     if (weakest === "Standardization") return "The Cracked Foundation";
     if (weakest === "People Involvement") return "The Tool Show";
     if (weakest === "Built-In Quality") return "The Sprinter";
@@ -2097,14 +2112,15 @@
   // ---------- Results ----------
   function showResults(name) {
     const ps = computePrincipleScores();
+    const psMat = ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) }));
     renderReport({
       firstName: name,
       date: new Date().toISOString(),
       score: overallRoadmap4(ps),
       principles: ps.map(p => ({ name: p.name, score: p.roadmap4 })),
       maturity: to100(overallMaturity10(ps)),
-      principleMaturity: ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) })),
-      pattern: detectPattern(ps),
+      principleMaturity: psMat,
+      pattern: detectPattern(psMat),
       // Per-statement answers drive the Insights statement-level drill-down.
       // Available directly on the live post-quiz view; the shared /r/ link
       // gets the same array back from the report API.
@@ -2344,10 +2360,11 @@
     // 05 — Profile: the plant's best-fit Lean Maturity Profile — its name,
     // the pattern-engine lead for this plant's score shape, and the profile's
     // full characteristics (what it looks like on the floor + why it happens).
-    const sorted = [...areas].sort((a, b) => a.roadmap4 - b.roadmap4);
-    const patternKey = data.pattern && PATTERNS[data.pattern] ? data.pattern : detectPattern(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
+    const sorted = [...areas].sort((a, b) => a.score100 - b.score100);
+    const areasMat = areas.map(a => ({ name: a.name, maturity: a.score100 }));
+    const patternKey = data.pattern && PATTERNS[data.pattern] ? data.pattern : detectPattern(areasMat);
     const pattern = PATTERNS[patternKey];
-    const bestFit = bestFitProfile(patternKey, areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
+    const bestFit = bestFitProfile(patternKey, areasMat);
     const profile = PROFILE_CONTENT[bestFit];
     document.getElementById("profileFit").innerHTML =
       `<div class="profile-fit-eyebrow">Your LEAN Maturity Profile</div>
