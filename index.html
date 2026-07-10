@@ -1021,7 +1021,7 @@
     left: 0; top: 0; bottom: 0;
     border-radius: 999px;
   }
-  /* Status-transition tick marks at 50% and 75% — no values, just a marker
+  /* Status-transition tick marks at 50% and 80% — no values, just a marker
      where red→yellow and yellow→green happen. */
   .bar-tick {
     position: absolute;
@@ -1482,7 +1482,7 @@
   // Scoring (Jim's spec): each statement has two independent scores per
   // option — Maturity (0/5/8/10, drives the /100 dial) and Roadmap
   // (0/2.25/3.25/4, drives the phase pill and implementation curve).
-  // Maturity colors: <50 red, 50–<75 yellow, 75+ green. Under 75 = opportunity.
+  // Maturity colors: <50 red, 50–<80 yellow, 80+ green.
   const SCALES = {
     freq: ["Never", "Sometimes", "Most of the time", "Always"],
     amount: ["None", "Some", "Most", "All"],
@@ -1747,10 +1747,11 @@
   }
 
   // Maturity status colors (Jim's spec, on the /100 display): <50 red,
-  // 50–<75 yellow, 75+ green.
+  // 50–<80 yellow, 80+ green. Green starts at 80 to align with "Most of the
+  // time" (statement value 8 = 80) and the per-statement green threshold.
   function bandColor(score100) {
     if (score100 < 50) return "var(--score-red)";
-    if (score100 < 75) return "var(--score-yellow)";
+    if (score100 < 80) return "var(--score-yellow)";
     return "var(--score-green)";
   }
 
@@ -1759,7 +1760,7 @@
   // per the design rule: colored left edge + light tint of that same color.
   function bandBg(score100) {
     if (score100 < 50) return "rgba(255,145,87,0.14)";
-    if (score100 < 75) return "rgba(242,176,30,0.14)";
+    if (score100 < 80) return "rgba(242,176,30,0.14)";
     return "rgba(51,168,82,0.12)";
   }
 
@@ -2122,7 +2123,7 @@
     // Overall LEAN maturity label — same bands as the category pills, plus a
     // perfect-score Benchmark (all statements at the top of the scale).
     const mb = total100 >= 100 ? { label: "Benchmark", cls: "strong" }
-      : total100 >= 75 ? { label: "Building Momentum", cls: "strong" }
+      : total100 >= 80 ? { label: "Building Momentum", cls: "strong" }
       : total100 >= 50 ? { label: "Developing", cls: "dev" }
       : { label: "Early Stage", cls: "gap" };
     document.getElementById("maturityBadge").innerHTML = `<span class="score-pill ${mb.cls}">${mb.label}</span>`;
@@ -2133,7 +2134,7 @@
         <div class="bar-track">
           <div class="bar-fill" style="width:${a.score100}%;background:${bandColor(a.score100)}"></div>
           <div class="bar-tick" style="left:50%"></div>
-          <div class="bar-tick" style="left:75%"></div>
+          <div class="bar-tick" style="left:80%"></div>
         </div>
         <div class="bar-score">${a.score100}</div>
       </div>`).join("");
@@ -2156,7 +2157,7 @@
     // category score band for presence and the static notes for content.
     const aiText = data.categoryText || {};
     const hasGood = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat >= 5) : a.score100 >= 50;
-    const hasRed  = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat < 5)  : a.score100 < 75;
+    const hasRed  = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat < 5)  : a.score100 < 80;
     const composeGood = name => catStmts(name).filter(s => s.mat != null && s.mat >= 5).map(s => STATEMENT_DETAIL[s.si].strength).join(" ");
     const composeOpp  = name => catStmts(name).filter(s => s.mat != null && s.mat < 5).map(s => STATEMENT_DETAIL[s.si].weakness).join(" ");
     const goodOf = a => {
@@ -2169,7 +2170,7 @@
     };
     // Overview highlights: a one-paragraph summary of why the topic matters
     // and how they scored, in the box's status color. Biggest Gap = lowest
-    // area (tie-break logic). Strength = highest GREEN area (>=75); omitted
+    // area (tie-break logic). Strength = highest GREEN area (>=80); omitted
     // entirely when the plant has no green category.
     const highlightBox = (el, label, labelClass, area, para) => {
       el.style.display = "";
@@ -2187,7 +2188,7 @@
     const gapArea = pickBiggestGap(areas);
     highlightBox(document.getElementById("gapCallout"), "Biggest Gap", "gap", gapArea,
       `At ${gapArea.score100} out of 100, this is your lowest-scoring category. ${WHY_MATTERS[gapArea.name]}`);
-    const topGreen = pickByPriority(areas.filter(a => a.score100 >= 75), 1, "highest")[0];
+    const topGreen = pickByPriority(areas.filter(a => a.score100 >= 80), 1, "highest")[0];
     const strengthCallout = document.getElementById("strengthCallout");
     if (topGreen) highlightBox(strengthCallout, "Where You're Strongest", "strength", topGreen,
       `At ${topGreen.score100} out of 100, this is your strongest category. ${WHY_MATTERS[topGreen.name]}`);
@@ -2215,8 +2216,8 @@
     // background tint here — just the colored left edge. No statements.
     const bandPill = a => {
       const s = a.score100;
-      const cls = s < 50 ? "gap" : (s < 75 ? "dev" : "strong");
-      const label = s < 50 ? "Gap" : (s < 75 ? "Developing" : "Strength");
+      const cls = s < 50 ? "gap" : (s < 80 ? "dev" : "strong");
+      const label = s < 50 ? "Gap" : (s < 80 ? "Developing" : "Strength");
       return `<span class="cat-pill ${cls}">${label}</span>`;
     };
     // Open the first box, collapse the rest — the lead sees the depth of
