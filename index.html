@@ -916,7 +916,7 @@
     flex: 0 0 auto; font-size: 11px; font-weight: 700; color: var(--pl-text-muted);
     background: var(--pl-bg-soft, #f4f6f8); border-radius: 20px; padding: 3px 10px; white-space: nowrap;
   }
-  .stmt-head .chev { flex: 0 0 auto; font-size: 12px; color: var(--pl-text-muted); transition: transform 0.2s; }
+  .stmt-head .chev { flex: 0 0 auto; width: 16px; height: 16px; color: var(--pl-text-muted); transition: transform 0.2s; }
   .stmt-row.open .stmt-head .chev { transform: rotate(180deg); }
   .stmt-body { display: none; padding: 0 2px 14px 21px; }
   .stmt-row.open .stmt-body { display: block; }
@@ -2160,7 +2160,7 @@
             <span class="stmt-dot" style="background:${dot}"></span>
             <span class="stmt-text">${meta.text}</span>
             ${answerLabel ? `<span class="stmt-answer">${answerLabel}</span>` : ""}
-            <span class="chev">▾</span>
+            ${CHEVRON_SVG}
           </button>
           <div class="stmt-body">${detailBody}</div>
         </div>`;
