@@ -895,14 +895,19 @@
   .summary-cat .cat-head { position: relative; }
   .summary-cat .cat-head strong { flex: 0 1 auto; }
   .head-spacer { flex: 1 1 0; }
-  .cat-pill {
-    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+  .cat-pill, .score-pill {
+    font-weight: 800; letter-spacing: 0.04em;
     text-transform: uppercase; border-radius: 20px; padding: 3px 12px; white-space: nowrap;
   }
-  .cat-pill.gap { color: var(--score-red); background: rgba(224, 67, 63, 0.14); }
-  .cat-pill.dev { color: #a9760a; background: rgba(242, 176, 30, 0.18); }
-  .cat-pill.strong { color: var(--score-green); background: rgba(51, 168, 82, 0.15); }
+  .cat-pill {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 11px;
+  }
+  .cat-pill.gap, .score-pill.gap { color: var(--score-red); background: rgba(224, 67, 63, 0.14); }
+  .cat-pill.dev, .score-pill.dev { color: #a9760a; background: rgba(242, 176, 30, 0.18); }
+  .cat-pill.strong, .score-pill.strong { color: var(--score-green); background: rgba(51, 168, 82, 0.15); }
+  /* Overall LEAN maturity label pill, centered below the score dial. */
+  .maturity-badge { text-align: center; margin-top: 12px; }
+  .score-pill { display: inline-block; font-size: 12.5px; padding: 4px 14px; }
 
   /* Insights: per-category cards, each with a statement-level drill-down. */
   .section-intro { font-size: 14px; color: var(--pl-text-muted); margin: 0 0 16px; line-height: 1.5; }
@@ -1355,6 +1360,7 @@
           <div class="overview-left grid-bg">
             <div class="dial-label">LEAN maturity score</div>
             <div class="dial-row" id="bigScore"></div>
+            <div class="maturity-badge" id="maturityBadge"></div>
           </div>
           <div class="overview-bars">
             <div class="bars-title">Category breakout</div>
@@ -2113,6 +2119,13 @@
     document.getElementById("resultsTitle").textContent = `${data.firstName}, here's how your plant scored`;
     document.getElementById("resultsDate").textContent = new Date(data.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
     document.getElementById("bigScore").innerHTML = buildScoreDialSVG(total100);
+    // Overall LEAN maturity label — same bands as the category pills, plus a
+    // perfect-score Benchmark (all statements at the top of the scale).
+    const mb = total100 >= 100 ? { label: "Benchmark", cls: "strong" }
+      : total100 >= 75 ? { label: "Building Momentum", cls: "strong" }
+      : total100 >= 50 ? { label: "Developing", cls: "dev" }
+      : { label: "Early Stage", cls: "gap" };
+    document.getElementById("maturityBadge").innerHTML = `<span class="score-pill ${mb.cls}">${mb.label}</span>`;
     document.getElementById("breakdownList").innerHTML = areas.map(a => `
       <div class="bar-row">
         <img class="bar-icon" src="${AREA_ICONS[a.name]}" alt="">
