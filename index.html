@@ -2158,7 +2158,7 @@
     // perfect-score Benchmark (all statements at the top of the scale).
     const mb = total100 >= 100 ? { label: "Benchmark", cls: "strong" }
       : total100 >= 80 ? { label: "Building Momentum", cls: "strong" }
-      : total100 >= 50 ? { label: "Developing", cls: "dev" }
+      : total100 >= 50 ? { label: "Gaining Traction", cls: "dev" }
       : { label: "Early Stage", cls: "gap" };
     document.getElementById("maturityBadge").innerHTML = `<span class="score-pill ${mb.cls}">${mb.label}</span>`;
     document.getElementById("breakdownList").innerHTML = areas.map(a => `
