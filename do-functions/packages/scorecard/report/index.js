@@ -107,6 +107,13 @@ async function main(event) {
           name,
           maturity: row[15 + i] != null && row[15 + i] !== '' ? Number(row[15 + i]) : 0
         })),
+        // M holds the per-statement answers [{m,r,si}] — needed for the
+        // Insights statement-level drill-down. Older rows may predate the si
+        // field; the frontend simply skips any answer it can't map.
+        answers: (() => {
+          try { return row[12] ? JSON.parse(row[12]) : []; }
+          catch (e) { return []; }
+        })(),
         // U is absent on rows written before AI category text shipped — the
         // frontend falls back to its static copy when this comes back {}.
         categoryText: (() => {

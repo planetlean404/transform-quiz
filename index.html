@@ -873,6 +873,49 @@
   .cat-section-label.opp { color: var(--score-red); }
   .cat-section-body { font-size: 14px; line-height: 1.55; color: var(--pl-text); }
 
+  /* Insights: per-category cards, each with a statement-level drill-down. */
+  .section-intro { font-size: 14px; color: var(--pl-text-muted); margin: 0 0 16px; line-height: 1.5; }
+  .insights-list { display: flex; flex-direction: column; gap: 14px; }
+  .insight-cat {
+    border: 1px solid var(--pl-border);
+    border-left: 4px solid var(--pl-border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .insight-cat .area-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .insight-cat .area-icon-inline { width: 30px; height: 30px; flex: 0 0 auto; }
+  .insight-cat .area-title-row strong { flex: 1; color: var(--pl-accent-dark); }
+  .insight-cat .area-score-inline { font-weight: 800; font-size: 15px; color: var(--pl-accent-dark); }
+
+  /* Statement drill-down rows. */
+  .stmt-list { margin-top: 14px; border-top: 1px solid var(--pl-border); }
+  .stmt-row { border-bottom: 1px solid var(--pl-border); }
+  .stmt-head {
+    width: 100%; background: none; border: 0; cursor: pointer; text-align: left;
+    display: flex; align-items: center; gap: 10px; padding: 11px 2px; font: inherit;
+  }
+  .stmt-dot { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
+  .stmt-text { flex: 1; font-size: 13.5px; line-height: 1.45; color: var(--pl-text); }
+  .stmt-answer {
+    flex: 0 0 auto; font-size: 11px; font-weight: 700; color: var(--pl-text-muted);
+    background: var(--pl-bg-soft, #f4f6f8); border-radius: 20px; padding: 3px 10px; white-space: nowrap;
+  }
+  .stmt-head .chev { flex: 0 0 auto; font-size: 12px; color: var(--pl-text-muted); transition: transform 0.2s; }
+  .stmt-row.open .stmt-head .chev { transform: rotate(180deg); }
+  .stmt-body { display: none; padding: 0 2px 14px 21px; }
+  .stmt-row.open .stmt-body { display: block; }
+  .stmt-why, .stmt-move { font-size: 13px; line-height: 1.55; color: var(--pl-text); margin-top: 4px; }
+  .stmt-why strong { color: var(--pl-text-muted); }
+  .stmt-move strong { color: var(--pl-accent-dark); }
+
+  /* Profile: best-fit headline above the pattern narrative card. */
+  .profile-fit { margin-bottom: 16px; }
+  .profile-fit-eyebrow {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--pl-text-muted); margin-bottom: 4px;
+  }
+  .profile-fit-name { font-size: 26px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.15; }
+
   /* Overview: dial + pill on the left, proportional area bars on the right. */
   .overview-left {
     text-align: center;
@@ -1229,10 +1272,11 @@
       <div class="toc-title">Report Contents</div>
       <a href="#sec-overview" class="active"><span class="toc-num">01</span>Overview</a>
       <a href="#sec-strengths"><span class="toc-num">02</span>Strengths</a>
-      <a href="#sec-opps"><span class="toc-num">03</span>Opportunities</a>
+      <a href="#sec-insights"><span class="toc-num">03</span>Insights</a>
       <a href="#sec-roadmap"><span class="toc-num">04</span>Roadmap</a>
-      <a href="#sec-plan"><span class="toc-num">05</span>30-Day Plan</a>
-      <a href="#sec-download"><span class="toc-num">06</span>Download</a>
+      <a href="#sec-profile"><span class="toc-num">05</span>Profile</a>
+      <a href="#sec-plan"><span class="toc-num">06</span>30-Day Plan</a>
+      <a href="#sec-download"><span class="toc-num">07</span>Download</a>
     </aside>
 
     <main class="report-main">
@@ -1259,26 +1303,26 @@
 
       <section class="section acc open" id="sec-strengths">
         <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="true">
-          <span class="section-num">02</span><span class="section-title">Where You're Strongest</span><span class="chev">▾</span>
+          <span class="section-num">02</span><span class="section-title">Strengths</span><span class="chev">▾</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
           <ul class="area-list strengths" id="strengthsList"></ul>
         </div></div>
       </section>
 
-      <section class="section acc open" id="sec-opps">
+      <section class="section acc open" id="sec-insights">
         <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="true">
-          <span class="section-num">03</span><span class="section-title">Your Biggest Opportunities</span><span class="chev">▾</span>
+          <span class="section-num">03</span><span class="section-title">Insights</span><span class="chev">▾</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
-          <ul class="area-list opps" id="oppsList"></ul>
-          <div class="insight-card" id="insightCard"></div>
+          <p class="section-intro">Every category, broken down to the statement level. Expand any statement to see why it matters and where you stand on it.</p>
+          <div class="insights-list" id="insightsList"></div>
         </div></div>
       </section>
 
       <section class="section acc" id="sec-roadmap">
         <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
-          <span class="section-num">04</span><span class="section-title">Your Transformation Roadmap</span><span class="chev">▾</span>
+          <span class="section-num">04</span><span class="section-title">Roadmap</span><span class="chev">▾</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
           <div class="roadmap-head">
@@ -1292,9 +1336,19 @@
         </div></div>
       </section>
 
+      <section class="section acc" id="sec-profile">
+        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
+          <span class="section-num">05</span><span class="section-title">Profile</span><span class="chev">▾</span>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="profile-fit" id="profileFit"></div>
+          <div class="insight-card" id="insightCard"></div>
+        </div></div>
+      </section>
+
       <section class="section acc" id="sec-plan">
         <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
-          <span class="section-num">05</span><span class="section-title">Your 30-Day Plan</span><span class="chev">▾</span>
+          <span class="section-num">06</span><span class="section-title">30-Day Plan</span><span class="chev">▾</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
           <ol class="plan-list" id="planList"></ol>
@@ -1302,7 +1356,7 @@
       </section>
 
       <section class="section" id="sec-download">
-        <div class="section-head"><span class="section-num">06</span><span class="section-title">Take It With You</span></div>
+        <div class="section-head"><span class="section-num">07</span><span class="section-title">Download</span></div>
         <div class="cta-row">
           <button class="cta-primary" onclick="alert('PDF generation comes in the next build step.')">Download PDF Report</button>
           <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
@@ -1763,6 +1817,84 @@
     "Continuous Improvement": "Without a structured method, problem-solving defaults to whoever's loudest guessing at a fix — treating symptoms while the root cause survives to return. This principle makes improvement a daily discipline: PDCA from quick fix to formal root-cause work, real-time dashboards the team actually reviews each shift, required countermeasures with an owner and due date on every red metric, and a structured channel for floor-level ideas."
   };
 
+  // Per-statement detail for the Insights section's statement-level drill-down.
+  // si-indexed (0–19), matching PRINCIPLES.flatMap() order below. why =
+  // what the statement is about + cost of skipping it; strength = the payoff
+  // when it's green/yellow; steps = concrete moves when it's red. Kept in
+  // sync with do-functions/.../submit/statements.js (which feeds the AI
+  // category text) — same source doc, edit both together.
+  const STATEMENT_DETAIL = [
+    { why: "Standard work is the \"current best known method\" — the baseline everything else stands on. Skip it and training time doubles, tribal knowledge walks out the door with turnover, and there's no way to tell normal from abnormal.",
+      strength: "One correct way to train against cuts training time and shrinks cycle-time variation, and abnormalities become visible in real time instead of hiding inside \"operator style.\"",
+      steps: "Pick one pilot station (highest-turnover or highest-variability). Watch your best operator, document what they actually do, write it with them, post it, train the team to it — then have a leader verify adherence for two weeks." },
+    { why: "5S without an audit is a one-time event, not a standard — it decays within weeks. Hidden problems stay buried in clutter, and search waste eats real capacity every shift without ever showing up on a schedule.",
+      strength: "Problems surface the moment they happen instead of hiding until they force a bigger failure, operators produce instead of search, and the floor reads as disciplined at a glance.",
+      steps: "Pick one area (most cluttered or highest safety risk). Run one structured 5S event, add shadow boards or floor marking, then build a short 5–10 item audit checklist with a named owner and a weekly scoring cadence, posted visibly." },
+    { why: "This is autonomous maintenance — the plant's earliest warning system for equipment failure. Skip it and small problems become big failures, maintenance stays trapped in firefighting, and the cheapest early signal is lost.",
+      strength: "Unplanned downtime drops because small issues are caught before they cascade, maintenance shifts from reactive repair to real preventive work, and operators own \"their\" machine.",
+      steps: "Pick your least reliable asset. Walk it with maintenance to identify 3–5 checks an operator can safely do (look, listen, clean, tighten, lubricate), build a simple daily checklist, and have a leader review it for the first month." },
+    { why: "A dashboard is where the other Standards statements become visible and actionable instead of staying private knowledge. Without one, performance is invisible to the people who drive it, and a missed target with no countermeasure signals that red is acceptable.",
+      strength: "Everyone on the floor — not just leadership — knows in real time whether they're winning or losing, and wins get seen and celebrated, not just misses.",
+      steps: "Pick one area and the 2–3 metrics that matter most. Build a simple visible board with a clear target for each, and require one written countermeasure — owner and date — for anything red before the next shift starts." },
+    { why: "The people closest to the work see problems no report or leader walk ever will — but that knowledge is worthless without a structured way to surface it. Skip it and the same problem gets \"solved\" repeatedly, and floor ideas never reach leadership.",
+      strength: "Problems get solved at the level closest to where they occur, permanently, and the team builds real ownership over its own area instead of waiting for someone else.",
+      steps: "Pick one team and one recurring problem everyone agrees is worth fixing. Use a single-page PDCA form, set a fixed protected weekly 15-minute slot, and make sure every action item has a named owner and due date." },
+    { why: "Leadership presence is what separates a real operating system from a poster on the wall. Skip it and words and actions diverge — the floor calibrates its effort to match — and dashboards decay into wallpaper within weeks.",
+      strength: "The whole organization sees leadership behavior matching leadership words — the strongest predictor of whether a lean effort survives its first year — and problems get caught early because a leader is present.",
+      steps: "Pick one leader and one area. Set a fixed, protected 10-minute daily dashboard walk that's a conversation (what's red, why, what's the countermeasure) not an inspection, and track the leader's own consistency." },
+    { why: "Without a real help chain, an operator facing a problem only has two options — stop and wait, or push through alone — and both are bad. Silent workarounds become normal, hiding exactly the issues leadership most needs to see.",
+      strength: "Problems get real-time support instead of silent workarounds, protecting throughput and quality at once, and operators feel backed up rather than exposed — so they flag issues immediately.",
+      steps: "Pick one area and define the trigger conditions for a call for help. Choose a simple visible signal, define who responds and in what order, and set a documented response-time target, then track actual times and refine." },
+    { why: "If continuous improvement isn't explicitly written into the job, it's treated as optional extra work — the first thing dropped when schedule pressure hits. Accountability has no anchor, and new hires never learn it's expected.",
+      strength: "Improvement becomes part of \"how we work here\" rather than a program competing with production, and the plant taps a steady stream of small compounding gains from the people who know each job best.",
+      steps: "Pick one role or team. Add one explicit, simple CI expectation to that role's description — even one improvement idea per month — tied to something concrete and trackable, then reference it in that person's next review." },
+    { why: "Every interim staging point is inventory sitting still — a place for defects to hide, cash to tie up, and handling to add cost without value. Lead time balloons invisibly because staging time between operations rarely gets measured.",
+      strength: "Lead time drops because material isn't sitting idle, defects get caught closer to their source, and the plant needs less space and cash tied up for the same output.",
+      steps: "Pick one value stream and map the current flow. Find the single biggest staging point, define a real min/max from actual consumption, and physically shrink the space available so the new limit holds." },
+    { why: "Unlabeled or over-full inventory locations hide two costs at once — cash tied up in excess stock, and time wasted searching — both invisible until someone measures them. Search time is a hidden tax on every shift.",
+      strength: "Anyone can read stock status at a glance, search time drops because there's one correct place for everything, and the trustworthy data makes it safe to build pull systems on top.",
+      steps: "Start with your highest-volume or highest-value parts. Label each location with part number and a visible min/max, physically define the space so \"correct location\" is unambiguous, and check compliance weekly until it's habit." },
+    { why: "Push scheduling builds inventory on forecasts that are always somewhat wrong — pull responds to what's actually being consumed. Forecast error becomes physical inventory, and slow-moving stock accumulates quietly.",
+      strength: "Inventory sizes itself to actual demand without manual rebalancing, and demand shifts get noticed and reacted to far faster than under a periodic push schedule.",
+      steps: "Start with one stable, moderate-volume part. Calculate a simple kanban quantity from real consumption and lead time, set up a signal that fires replenishment only on consumption, and run it alongside push before cutting over." },
+    { why: "Long changeovers force large batch sizes to \"make them worth it\" — exactly backwards, since large batches create the staging, inventory, and quality-detection-lag problems the rest of Logistics is trying to eliminate.",
+      strength: "Smaller batches become economical, shrinking lead time, inventory, and the gap between making a defect and discovering it, and the plant gains real scheduling flexibility.",
+      steps: "Pick your worst changeover and time it honestly, step by step. Separate steps that need the equipment stopped from those that don't, run one focused event to convert or eliminate stopped-equipment steps, then standardize the new method." },
+    { why: "If quality checks aren't literally written into the standard work, they get skipped under schedule pressure. Without a shared definition of \"acceptable,\" the same part can pass at one station and fail at the next.",
+      strength: "Quality is inseparable from doing the job correctly, so it never gets sacrificed under pressure, and every operator on every shift checks the same things the same way.",
+      steps: "Pick your highest-risk station. Add one explicit, visible quality check directly into that station's standard work, make it physically impossible to skip, and verify adherence for two weeks." },
+    { why: "A defect caught at its source costs a fraction of one found downstream or by a customer — and error proofing that isn't verified regularly can silently fail, giving false confidence while defects flow through undetected.",
+      strength: "Defects stop at their source instead of traveling — protecting cost, schedule, and customer trust — and silent device failures get caught quickly instead of running for weeks.",
+      steps: "Identify your single highest-risk operation. Add one error-proofing device or check sized to that failure mode, define exactly what \"verified\" means, put a realistic verification schedule on it, and assign a named owner." },
+    { why: "Without leadership auditing the system itself — not just the output — standards and checks quietly erode over weeks, and nobody notices until a quality escape forces a painful root-cause investigation.",
+      strength: "Drift gets caught and corrected in days, not discovered in a customer complaint months later, and every level of leadership works from the same objective picture of performance.",
+      steps: "Start with a simple leader audit checklist for one area — 3 to 5 of the most critical standards. Set a weekly cadence, have the leader physically walk and check adherence, and record findings visibly by the area's dashboard." },
+    { why: "Quality feedback that arrives hours or shifts after production gives operators no chance to correct course — the same mistake repeats dozens or hundreds of times before anyone finds out.",
+      strength: "Operators learn and correct in real time, turning quality from a downstream inspection function into a feedback loop embedded in production, and defect volume per incident stays low.",
+      steps: "Map how long a defect currently takes to get discovered and reported back for your worst case. Find the biggest source of delay, move the check point closer to the point of creation, and build a fast feedback path to the operator." },
+    { why: "Without a structured method, problem-solving defaults to whoever's loudest guessing at a fix — treating symptoms while the root cause survives to return.",
+      strength: "The organization gets measurably better at solving its own problems instead of re-solving the same ones, and fixes get verified before they're trusted.",
+      steps: "Pick one recurring problem. Define it and a likely root cause, try one specific change on a small scale, honestly check whether it worked, then standardize it or use what you learned to try again." },
+    { why: "Metrics reviewed weekly or monthly are historical records, not management tools — by the time a problem shows up in a monthly report, it's cost weeks of performance that could have been caught on day one.",
+      strength: "Problems get caught and addressed within the shift they occur, and the team closest to a metric can self-correct before anyone above them needs to step in.",
+      steps: "Start with your single most important metric in one area. Update it hourly even if manually at first, post it where the team naturally passes by, and have the shift glance at it before every break." },
+    { why: "A red metric with no required countermeasure is just decoration — it tells everyone something's wrong without requiring anyone to fix it, training the organization to tolerate red instead of act on it.",
+      strength: "Every red metric triggers action with a named owner — nothing sits unaddressed — and the team develops confidence that red gets a response.",
+      steps: "Pick one metric that's red with no action. Require a posted countermeasure — what's being done, who owns it, by when — before the next shift, keep the rule simple, and follow up on the due date." },
+    { why: "The people doing the work daily see more small improvement opportunities than any improvement team ever will — without a structured channel, those ideas stay in people's heads and the organization loses its best source of gains.",
+      strength: "Improvement gets crowdsourced from the whole workforce, employees feel heard and see their input matters, and leadership gains a renewable pipeline of low-risk gains.",
+      steps: "Put a simple idea box or form in one area. Review submissions weekly, make sure every submitter gets a response (accepted, declined with a reason, or still evaluating), and track submissions and outcomes visibly." }
+  ];
+
+  // Stable (unshuffled) statement metadata, si-indexed to match PRINCIPLES
+  // and STATEMENT_DETAIL. Used to render the Insights drill-down grouped by
+  // category regardless of the quiz's random presentation order.
+  const STATEMENTS_META = (() => {
+    const out = []; let k = 0;
+    PRINCIPLES.forEach(p => p.statements.forEach(s => out.push({ si: k++, principle: p.name, text: s.text, scale: s.scale })));
+    return out;
+  })();
+
   // Follows the same Plan / Do / Check / Act shape as the RPA background
   // doc's master 30-day template, applied to this plant's actual weakest area.
   function buildPlan(ps) {
@@ -1788,7 +1920,11 @@
       principles: ps.map(p => ({ name: p.name, score: p.roadmap4 })),
       maturity: to100(overallMaturity10(ps)),
       principleMaturity: ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) })),
-      pattern: detectPattern(ps)
+      pattern: detectPattern(ps),
+      // Per-statement answers drive the Insights statement-level drill-down.
+      // Available directly on the live post-quiz view; the shared /r/ link
+      // gets the same array back from the report API.
+      answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si }))
     });
   }
 
@@ -1805,9 +1941,20 @@
       `<span class="report-id">Report ID — <strong>pending…</strong></span>`;
   }
 
+  // Per-statement status from its maturity value (same thresholds the backend
+  // uses to bucket statements for the AI category text): 10/8 green, 5 yellow,
+  // 0 red. Returns null when the statement wasn't answered (e.g. an older
+  // report link stored before per-statement data was captured).
+  function stmtStatus(m) {
+    if (m == null || isNaN(m)) return null;
+    if (m >= 8) return { key: "green", color: "var(--score-green)", word: "Strong" };
+    if (m >= 5) return { key: "yellow", color: "var(--score-yellow)", word: "Developing" };
+    return { key: "red", color: "var(--score-red)", word: "Gap" };
+  }
+
   // renderReport receives roadmap data on the RAW 0–4 scale (canonical
   // storage for phase/pattern/plan) plus maturity data already on the /100
-  // scale (drives the dial, area bars, and Strengths/Opportunities).
+  // scale (drives the dial, area bars, and Strengths/Insights).
   function renderReport(data) {
     const curveScore = data.score;
     const phaseIdx = phaseIndexForScore(curveScore);
@@ -1880,51 +2027,95 @@
       </div>
       <div class="gap-text">${gapText(gap)}</div>`;
 
+    // Shared bits for the category boxes / cards.
+    const catSection = (cls, label, body) =>
+      `<div class="cat-section"><div class="cat-section-label ${cls}">${label}</div><div class="cat-section-body">${body}</div></div>`;
+    const catSectionsHTML = a => {
+      let html = catSection("why", "Why It Matters", WHY_MATTERS[a.name]);
+      const good = goodOf(a);
+      const opp = oppOf(a);
+      if (good) html += catSection("good", "Good", good);
+      if (opp) html += catSection("opp", "Opportunity", opp);
+      return html;
+    };
+
     // 02 — Strengths: top two by score among yellow/green areas only (same
     // GAP_PRIORITY tie-break as Biggest Gap) — a red area never counts as a
     // strength, even if it's relatively the plant's best. Can show 0, 1, or 2.
-    // 03 — Opportunities: every area under 75.
+    // Keeps the full three-section box (Jim's call).
     const strengths = pickByPriority(areas.filter(a => a.score100 >= 50), 2, "highest");
-    const byScore = [...areas].sort((a, b) => b.score100 - a.score100);
-    let opps = [...byScore].reverse().filter(a => a.score100 < 75);
-    let oppsPreamble = "";
-    if (!opps.length) {
-      opps = [...byScore].reverse().slice(0, 2);
-      oppsPreamble = `<li><em>Every area cleared 75 — impressive. These are the two with the most room left to run.</em></li>`;
-    }
-    // Every category box shows three labeled sections: Why It Matters (static,
-    // always), then Good and Opportunity only when that category actually has
-    // qualifying statements.
-    const catSection = (cls, label, body) =>
-      `<div class="cat-section"><div class="cat-section-label ${cls}">${label}</div><div class="cat-section-body">${body}</div></div>`;
-    const categoryBox = a => {
-      let sections = catSection("why", "Why It Matters", WHY_MATTERS[a.name]);
-      const good = goodOf(a);
-      const opp = oppOf(a);
-      if (good) sections += catSection("good", "Good", good);
-      if (opp) sections += catSection("opp", "Opportunity", opp);
-      return `
+    const strengthBox = a => `
       <li style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
         <div class="area-title-row">
           <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
           <strong>${a.label}</strong>
           <span class="area-score-inline">${a.score100}</span>
         </div>
-        ${sections}
+        ${catSectionsHTML(a)}
       </li>`;
-    };
     document.getElementById("strengthsList").innerHTML = strengths.length
-      ? strengths.map(categoryBox).join("")
+      ? strengths.map(strengthBox).join("")
       : `<li><em>Focus on your 30-day plan to improve the strength of your categories.</em></li>`;
-    document.getElementById("oppsList").innerHTML = oppsPreamble + opps.map(categoryBox).join("");
 
+    // 03 — Insights: every category (weakest first), each with its three-section
+    // text plus a statement-level drill-down. Each statement expands to show
+    // why it matters and — depending on how it scored — the strength it's
+    // earning or the concrete steps to close the gap.
+    const siMaturity = {};
+    (data.answers || []).forEach(ans => { if (ans && ans.si != null) siMaturity[ans.si] = Number(ans.m); });
+    const stmtRow = meta => {
+      const st = stmtStatus(siMaturity[meta.si]);
+      const detail = STATEMENT_DETAIL[meta.si] || {};
+      const dot = st ? st.color : "var(--pl-border)";
+      const answerIdx = MATURITY_VALUES.indexOf(siMaturity[meta.si]);
+      const answerLabel = (st && answerIdx >= 0 && SCALES[meta.scale]) ? SCALES[meta.scale][answerIdx] : "";
+      // Green/yellow → show the payoff being earned; red → show the steps to
+      // close it. Unknown status (older link) → why it matters only.
+      let detailBody = detail.why ? `<div class="stmt-why"><strong>Why it matters.</strong> ${detail.why}</div>` : "";
+      if (st && st.key === "red" && detail.steps) {
+        detailBody += `<div class="stmt-move"><strong>Steps to improve.</strong> ${detail.steps}</div>`;
+      } else if (st && detail.strength) {
+        detailBody += `<div class="stmt-move"><strong>What you're earning.</strong> ${detail.strength}</div>`;
+      }
+      return `
+        <div class="stmt-row status-${st ? st.key : "none"}">
+          <button class="stmt-head" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">
+            <span class="stmt-dot" style="background:${dot}"></span>
+            <span class="stmt-text">${meta.text}</span>
+            ${answerLabel ? `<span class="stmt-answer">${answerLabel}</span>` : ""}
+            <span class="chev">▾</span>
+          </button>
+          <div class="stmt-body">${detailBody}</div>
+        </div>`;
+    };
+    const insightCatCard = a => {
+      const metas = STATEMENTS_META.filter(m => m.principle === a.name);
+      return `
+        <div class="insight-cat" style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
+          <div class="area-title-row">
+            <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
+            <strong>${a.label}</strong>
+            <span class="area-score-inline">${a.score100}</span>
+          </div>
+          ${catSectionsHTML(a)}
+          <div class="stmt-list">${metas.map(stmtRow).join("")}</div>
+        </div>`;
+    };
+    const insightsOrder = [...areas].sort((a, b) => a.score100 - b.score100);
+    document.getElementById("insightsList").innerHTML = insightsOrder.map(insightCatCard).join("");
+
+    // 05 — Profile: the plant's best-fit Lean Maturity Profile and the
+    // pattern-engine narrative for its score shape.
     const sorted = [...areas].sort((a, b) => a.roadmap4 - b.roadmap4);
     const patternKey = data.pattern && PATTERNS[data.pattern] ? data.pattern : detectPattern(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
     const pattern = PATTERNS[patternKey];
+    const bestFit = bestFitProfile(patternKey, areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
+    document.getElementById("profileFit").innerHTML =
+      `<div class="profile-fit-eyebrow">Your LEAN Maturity Profile</div><div class="profile-fit-name">${bestFit}</div>`;
     document.getElementById("insightCard").innerHTML =
       `<h3>${pattern.title}</h3>${pattern.body.replace("{WEAKEST}", sorted[0].label)}`;
     document.getElementById("scFooter").innerHTML =
-      `LEAN maturity profile best fit: <strong>${bestFitProfile(patternKey, areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })))}</strong>`;
+      `LEAN maturity profile best fit: <strong>${bestFit}</strong>`;
 
     // 04 — Roadmap (no numeric score — the curve marker and phase carry it)
     document.getElementById("roadmapLead").innerHTML =
