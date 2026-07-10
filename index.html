@@ -739,12 +739,15 @@
     color: var(--pl-accent);
     letter-spacing: 1px;
   }
-  /* Section title: blue leading dash + normal-color "0X / Title". */
-  .section-dash { color: var(--pl-accent); font-weight: 800; font-size: 19px; }
+  /* Section title styled like the "— RAPID PLANT ASSESSMENT REPORT" eyebrow:
+     small uppercase muted text with a blue leading dash. */
+  .section-dash { color: var(--pl-accent); font-weight: 800; font-size: 12px; }
   .section-title {
-    font-size: 19px;
-    font-weight: 700;
-    color: var(--pl-accent-dark);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--pl-text-muted);
   }
   .chev {
     margin-left: auto;
@@ -913,7 +916,8 @@
   .score-pill { display: inline-block; font-size: 12.5px; padding: 4px 14px; }
 
   /* Insights: per-category cards, each with a statement-level drill-down. */
-  .section-intro { font-size: 14px; color: var(--pl-text-muted); margin: 0 0 16px; line-height: 1.5; }
+  /* Section lead — sized to echo the Overview hero line under its eyebrow. */
+  .section-intro { font-size: 26px; font-weight: 600; color: var(--pl-accent-dark); margin: 0 0 20px; line-height: 1.3; }
   .insights-list, .summaries-list { display: flex; flex-direction: column; gap: 14px; }
   .insight-cat, .summary-cat {
     border: 1px solid var(--pl-border);
