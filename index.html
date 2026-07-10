@@ -902,9 +902,10 @@
   .cat-pill {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 11px;
   }
-  .cat-pill.gap, .score-pill.gap { color: var(--score-red); background: rgba(224, 67, 63, 0.14); }
-  .cat-pill.dev, .score-pill.dev { color: #a9760a; background: rgba(242, 176, 30, 0.18); }
-  .cat-pill.strong, .score-pill.strong { color: var(--score-green); background: rgba(51, 168, 82, 0.15); }
+  /* Vibrant status pills with dark lettering. */
+  .cat-pill.gap, .score-pill.gap { color: var(--pl-text); background: #ff8f87; }
+  .cat-pill.dev, .score-pill.dev { color: var(--pl-text); background: #f5be2e; }
+  .cat-pill.strong, .score-pill.strong { color: var(--pl-text); background: #4ec583; }
   /* Overall LEAN maturity label pill, centered below the score dial. */
   .maturity-badge { text-align: center; margin-top: 12px; }
   .score-pill { display: inline-block; font-size: 12.5px; padding: 4px 14px; }
