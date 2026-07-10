@@ -915,6 +915,16 @@
     color: var(--pl-text-muted); margin-bottom: 4px;
   }
   .profile-fit-name { font-size: 26px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.15; }
+  .profile-fit-tagline { font-size: 14px; color: var(--pl-text-muted); margin-top: 4px; line-height: 1.4; }
+  .profile-lead { font-size: 15px; line-height: 1.6; color: var(--pl-text); margin: 0 0 18px; }
+  .profile-block { margin-top: 18px; }
+  .profile-block-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--pl-text-muted); margin-bottom: 8px;
+  }
+  .profile-looks { margin: 0; padding-left: 20px; }
+  .profile-looks li { font-size: 14px; line-height: 1.5; color: var(--pl-text); margin-bottom: 7px; }
+  .profile-why { font-size: 14px; line-height: 1.6; color: var(--pl-text); margin: 0; }
 
   /* Overview: dial + pill on the left, proportional area bars on the right. */
   .overview-left {
@@ -1342,7 +1352,7 @@
         </button>
         <div class="acc-body"><div class="acc-inner">
           <div class="profile-fit" id="profileFit"></div>
-          <div class="insight-card" id="insightCard"></div>
+          <div class="profile-detail" id="profileDetail"></div>
         </div></div>
       </section>
 
@@ -1650,6 +1660,7 @@
           maturity: to100(overallMaturity10(ps)),
           principleMaturity: ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) })),
           pattern: detectPattern(ps),
+          profile: bestFitProfile(detectPattern(ps), ps),
           answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
           website: document.getElementById("website").value
         })
@@ -1789,6 +1800,67 @@
     if (weakest === "Built-In Quality") return "The Sprinter";
     return "The Cracked Foundation";
   }
+
+  // Full characteristics for each of the 5 Lean Maturity Profiles (from the
+  // RPA background doc). Keyed by the name bestFitProfile() returns. Displayed
+  // in the Profile section for whichever profile the plant maps to; the
+  // matching first-30-days template lives backend-side and feeds the AI plan.
+  const PROFILE_CONTENT = {
+    "The Firefighter": {
+      tagline: "Reacting to yesterday's problems instead of preventing tomorrow's",
+      looksLike: [
+        "No posted, followed standard work — every operator does the job a little differently, and training is whoever-shows-you-today.",
+        "Quality is caught by inspection after the product is built, not prevented at the point of cause — defects are found, not stopped.",
+        "Few or no visual displays, and the ones that exist are outdated or ignored rather than reviewed.",
+        "No countermeasure discipline — red metrics, where tracked at all, sit red for weeks with no assigned owner.",
+        "Leadership's day is dominated by expediting and answering escalations rather than coaching or auditing."
+      ],
+      whyItHappens: "This pattern typically emerges in plants that grew quickly without ever pausing to document how work should be done, or where turnover has quietly eroded whatever standards once existed. Without Standardization as a foundation, nothing else in the system has anywhere to attach. The result is a plant that spends its energy reacting to yesterday's problems instead of preventing tomorrow's — exhausting for leadership and demoralizing for the floor, even though the fix is more straightforward than it feels from inside the fire."
+    },
+    "The Tool Show": {
+      tagline: "The tools are installed — the culture that sustains them isn't",
+      looksLike: [
+        "5S audits score well, pull systems are running, and error-proofing devices are installed and functioning.",
+        "Dashboards exist and look sophisticated, but leaders rarely show up to review them in person.",
+        "Problem solving is done by a dedicated improvement team or engineering staff, not the floor team that owns the process.",
+        "Operators can point to the tools and name them, but struggle to explain why they matter — lean is something that happened to them.",
+        "Improvement ideas, where tracked at all, come almost entirely from leadership or staff, rarely from the floor."
+      ],
+      whyItHappens: "This pattern usually shows up in plants that brought in outside expertise — consultants, a corporate rollout, a dedicated improvement team — to install tools quickly, without an equal investment in the coaching habits and floor ownership that sustain them. The tools work fine while the original champions are still pushing; the moment attention shifts, they keep running on inertia but nobody is renewing them or explaining the \"why\" to new hires. It's exactly the trajectory the roadmap curve warns about: a fast early climb followed by a plateau, because the culture that should have compounded the early gains was never built alongside them."
+    },
+    "The Cracked Foundation": {
+      tagline: "Advanced capability built on standards that keep drifting",
+      looksLike: [
+        "Standard work is undocumented or inconsistently followed, even though other systems around it look advanced.",
+        "A sophisticated quality system or active improvement team exists, but results don't hold consistently shift to shift.",
+        "5S and equipment care are inconsistent or absent, quietly undermining whatever else is built on top of them.",
+        "Gains from a kaizen event erode within weeks, because nothing anchors the new method as the actual standard.",
+        "Different shifts or operators produce measurably different results doing what's supposed to be the same job."
+      ],
+      whyItHappens: "This pattern often appears in plants that invested early and heavily in a specific, visible capability — often a quality system driven by customer or regulatory requirements, or a strong improvement team running regular kaizen events — without ever circling back to build standard work underneath it. Standardization can feel like the least glamorous of the five principles, so it's the one most likely to get skipped. The problem surfaces slowly: without a stable standard to build on, every gain made elsewhere has to be re-won repeatedly. It's the manufacturing equivalent of building the second floor before the first — impressive from a distance, unstable up close."
+    },
+    "The Sprinter": {
+      tagline: "Flow is genuinely fast — and speed amplifies the quality gaps",
+      looksLike: [
+        "Material moves fast — short changeovers, small batches, pull systems running well.",
+        "Quality checks are still mostly inspection-based, catching problems after the fact rather than built into standard work.",
+        "Error-proofing devices are thin or absent at high-risk operations.",
+        "Defects that occur travel through the plant quickly, since fast flow leaves little time to catch them before the next station — or the customer.",
+        "Metrics track throughput and speed closely, but quality escapes get treated as one-off surprises rather than a real gap."
+      ],
+      whyItHappens: "This pattern often shows up in plants that adopted lean flow tools — kanban, quick changeover, small-batch scheduling — as their entry point into lean, because the throughput and lead-time wins are fast, visible, and easy to sell internally. Quality, by comparison, is a slower, less flashy investment. The result is a plant that's genuinely good at moving material and genuinely behind at catching what shouldn't move. The danger compounds because the two interact: the very speed that makes this plant efficient is what turns one undetected defect into dozens of affected units before anyone notices."
+    },
+    "The Believer": {
+      tagline: "Strong scores across the board — now the question is calibration",
+      looksLike: [
+        "Every category scores strong on the self-assessment — standard work, 5S, quality, and continuous improvement all reported as consistently in place.",
+        "Leadership believes the system is running well across the board, with few obvious weak spots.",
+        "The internal view of the plant is confident — which is either fully earned, or has quietly drifted ahead of what's happening on the floor.",
+        "Because everything reads as green, there's no obvious next target — the risk is coasting rather than confirming."
+      ],
+      whyItHappens: "A uniformly strong self-assessment is either a genuinely excellent plant or — far more often, in our experience calibrating self-assessments against on-site findings — a plant whose internal view has drifted ahead of what's actually happening on the floor. That's not a knock on the people scoring it; it's simply the most common finding when a strong self-assessment meets an outside pair of eyes. The next right step is the same either way: verify the strongest claims against the real criteria before assuming the level is locked in."
+    }
+  };
 
   const STRENGTH_NOTES = {
     "Standardization": "Standard work, 5S discipline, and a dashboard your team actually reviews mean your improvements have something to hold onto — this is the foundation most plants skip, and you haven't.",
@@ -2104,16 +2176,29 @@
     const insightsOrder = [...areas].sort((a, b) => a.score100 - b.score100);
     document.getElementById("insightsList").innerHTML = insightsOrder.map(insightCatCard).join("");
 
-    // 05 — Profile: the plant's best-fit Lean Maturity Profile and the
-    // pattern-engine narrative for its score shape.
+    // 05 — Profile: the plant's best-fit Lean Maturity Profile — its name,
+    // the pattern-engine lead for this plant's score shape, and the profile's
+    // full characteristics (what it looks like on the floor + why it happens).
     const sorted = [...areas].sort((a, b) => a.roadmap4 - b.roadmap4);
     const patternKey = data.pattern && PATTERNS[data.pattern] ? data.pattern : detectPattern(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
     const pattern = PATTERNS[patternKey];
     const bestFit = bestFitProfile(patternKey, areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
+    const profile = PROFILE_CONTENT[bestFit];
     document.getElementById("profileFit").innerHTML =
-      `<div class="profile-fit-eyebrow">Your LEAN Maturity Profile</div><div class="profile-fit-name">${bestFit}</div>`;
-    document.getElementById("insightCard").innerHTML =
-      `<h3>${pattern.title}</h3>${pattern.body.replace("{WEAKEST}", sorted[0].label)}`;
+      `<div class="profile-fit-eyebrow">Your LEAN Maturity Profile</div>
+       <div class="profile-fit-name">${bestFit}</div>
+       ${profile ? `<div class="profile-fit-tagline">${profile.tagline}</div>` : ""}`;
+    document.getElementById("profileDetail").innerHTML = `
+      <p class="profile-lead">${pattern.body.replace("{WEAKEST}", sorted[0].label)}</p>
+      ${profile ? `
+        <div class="profile-block">
+          <div class="profile-block-label">What it looks like on the floor</div>
+          <ul class="profile-looks">${profile.looksLike.map(li => `<li>${li}</li>`).join("")}</ul>
+        </div>
+        <div class="profile-block">
+          <div class="profile-block-label">Why it happens</div>
+          <p class="profile-why">${profile.whyItHappens}</p>
+        </div>` : ""}`;
     document.getElementById("scFooter").innerHTML =
       `LEAN maturity profile best fit: <strong>${bestFit}</strong>`;
 
@@ -2126,9 +2211,16 @@
     document.getElementById("curveBox").innerHTML = buildCurveSVG(phaseIdx);
     positionMarker(curveScore);
 
-    // 05 — 30-day plan
-    document.getElementById("planList").innerHTML = buildPlan(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 }))).map(w =>
-      `<li class="plan-day"><span class="day-num">Week ${w.week}</span><span class="plan-body"><strong>${w.title}.</strong> ${w.text}<span class="plan-tag">${w.tag}</span></span></li>`
+    // 06 — 30-day plan. Prefer the AI plan generated at submit time (tailored
+    // to the best-fit profile's first-30-days template + this plant's actual
+    // scoring); fall back to the static buildPlan when it's absent (older
+    // report link or a failed generation).
+    const aiPlan = Array.isArray(data.plan) && data.plan.length === 4 ? data.plan : null;
+    const planWeeks = aiPlan
+      ? aiPlan.map(w => ({ week: w.week, title: w.title, tag: w.tag || w.focus || "", text: w.text }))
+      : buildPlan(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
+    document.getElementById("planList").innerHTML = planWeeks.map(w =>
+      `<li class="plan-day"><span class="day-num">Week ${w.week}</span><span class="plan-body"><strong>${w.title}.</strong> ${w.text}${w.tag ? `<span class="plan-tag">${w.tag}</span>` : ""}</span></li>`
     ).join("");
 
     initAccordions();

@@ -19,7 +19,8 @@ const PRINCIPLE_ORDER = [
 // A id | B timestamp | C firstName | D email | E score | F phase |
 // G–K principle scores (order above) | L pattern | M answers JSON | N kartra |
 // O maturity | P–T principle maturity scores (order above) |
-// U categoryText JSON (AI-generated per-category Good/Opportunity text)
+// U categoryText JSON (AI-generated per-category Good/Opportunity text) |
+// V plan JSON (AI-generated 4-week 30-day plan)
 
 function base64url(buffer) {
   return buffer.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -76,7 +77,7 @@ async function main(event) {
   try {
     const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
     const token = await getAccessToken(sa);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:U`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:V`;
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await res.json();
     if (!res.ok) throw new Error(JSON.stringify(data));
@@ -119,6 +120,12 @@ async function main(event) {
         categoryText: (() => {
           try { return row[20] ? JSON.parse(row[20]) : {}; }
           catch (e) { return {}; }
+        })(),
+        // V (AI 30-day plan) is absent on older rows — frontend falls back to
+        // its static buildPlan() when this comes back [].
+        plan: (() => {
+          try { return row[21] ? JSON.parse(row[21]) : []; }
+          catch (e) { return []; }
         })()
       }
     };

@@ -59,9 +59,44 @@ function buildCategoryPrompt(answers) {
   }).join('\n\n');
 }
 
-async function generateCategoryText(answers) {
+// Shared Anthropic call — posts one message, returns the parsed JSON from the
+// model's text (throws on HTTP error, timeout, or unparseable JSON). Callers
+// wrap it in try/catch so any failure is non-fatal.
+async function callAnthropicJSON(system, userContent, maxTokens) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || !Array.isArray(answers) || !answers.length) return {};
+  if (!apiKey) throw new Error('no-api-key');
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ANTHROPIC_CALL_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: ANTHROPIC_MODEL,
+        max_tokens: maxTokens,
+        system,
+        messages: [{ role: 'user', content: userContent }]
+      }),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(`Anthropic error: ${JSON.stringify(data).slice(0, 200)}`);
+  const text = (data.content || []).map(b => b.text || '').join('');
+  return JSON.parse(text);
+}
+
+async function generateCategoryText(answers) {
+  if (!Array.isArray(answers) || !answers.length) return {};
 
   const system = `You write the "Good" and "Opportunity" sections of a lean-manufacturing plant assessment report, for a plant manager reading their own results.
 
@@ -78,39 +113,85 @@ Opportunity example (note: no fix steps): "Without a documented, followed standa
 Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape with all 5 category names as keys:
 {"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}`;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), ANTHROPIC_CALL_TIMEOUT_MS);
-  let res;
-  try {
-    res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
-        max_tokens: 1500,
-        system,
-        messages: [{ role: 'user', content: buildCategoryPrompt(answers) }]
-      }),
-      signal: controller.signal
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(`Anthropic error: ${JSON.stringify(data).slice(0, 200)}`);
-  const text = (data.content || []).map(b => b.text || '').join('');
-  const parsed = JSON.parse(text);
-
+  const parsed = await callAnthropicJSON(system, buildCategoryPrompt(answers), 1500);
   const out = {};
   PRINCIPLE_ORDER.forEach(name => {
     if (parsed[name]) out[name] = { good: String(parsed[name].good || ''), opportunity: String(parsed[name].opportunity || '') };
   });
   return out;
+}
+
+// ─── AI-generated 30-day plan ────────────────────────────────────────────────
+// Builds a tailored 4-week PDCA plan from the plant's best-fit Lean Maturity
+// Profile's first-30-days template (below) plus this plant's actual weakest
+// areas and specific red statements. Non-fatal — the frontend falls back to
+// its static buildPlan() if this comes back empty.
+
+// First-30-days template per profile, from the RPA background doc. These are
+// the starting shape the AI adapts to the plant's real red statements.
+const PROFILE_PLANS = {
+  "The Firefighter": "Week 1 (Plan): pick one high-pain pilot area; document what the best operator actually does; identify the single highest-risk step where defects escape undetected. Week 2 (Do): post the new standard and train the team to it; add one built-in quality check at that highest-risk step; put up a simple visual dashboard with 2–3 metrics. Week 3 (Check): a leader verifies the standard is actually being followed on the floor; require a posted countermeasure for any red metric; hold the first weekly team problem-solving session on the biggest recurring issue. Week 4 (Act): assess whether the area shifted from reactive to structured; standardize what worked; pick the next pilot area.",
+  "The Tool Show": "Week 1 (Plan): pick one area that already has strong tools installed; assign one leader to it and define what daily coaching will look like; identify who currently owns problem solving there (usually staff, not the floor). Week 2 (Do): start the leader's fixed daily 10-minute dashboard walk; hand ownership of the weekly problem-solving session to the floor team, not the improvement staff; add one explicit CI expectation to that team's role. Week 3 (Check): track the leader's actual walk attendance; track the floor team's problem-solving consistency; track early idea submissions coming from the floor. Week 4 (Act): compare floor-driven activity before and after — that's the signal culture is catching up to the tools; standardize what worked; expand the coaching habit to the next area.",
+  "The Cracked Foundation": "Week 1 (Plan): pick the area where the strong capability (the quality system, the CI program) is being undermined most visibly by inconsistency; observe what's actually happening versus what that strong system assumes. Week 2 (Do): document actual current practice as real standard work; reconcile it with what the quality or CI system assumes and close the gaps; post the standard and train the team. Week 3 (Check): hold the team to the new standard and verify adherence directly on the floor; track whether the existing strong-system results start becoming more consistent. Week 4 (Act): confirm the standard is holding without active enforcement — that's proof the crack is closing; apply the same standard-first sequencing to the next area on an unstable foundation.",
+  "The Sprinter": "Week 1 (Plan): pick your highest-volume, fastest-moving flow; identify the single highest-risk step where a defect currently escapes undetected; establish a baseline defect-escape rate for that step. Week 2 (Do): add one built-in quality check at that step directly into the standard work; if a check alone isn't reliable enough, add one error-proofing device at the same step. Week 3 (Check): set and run a verification schedule for the new check or device; track the defect-escape rate against the baseline. Week 4 (Act): confirm the drop is real and holding; standardize the check or device as the new normal; apply the same sequencing to the next-fastest flow.",
+  "The Believer": "Week 1 (Plan): pick your 2–3 highest-scoring statements; walk them personally, station by station, against the real scoring criteria rather than the self-assessment. Week 2 (Do): bring in an outside set of eyes to confirm the level; document any gap between the self-score and what's actually happening on the floor. Week 3 (Check): for any gap found, treat it as standard-work drift and re-anchor the standard with the team. Week 4 (Act): where the strong score is confirmed, shift the focus to sustaining — lock in the audit cadence that keeps it there; pick the next set of strong claims to verify."
+};
+
+function buildPlanPrompt(profile, answers, principleMaturity) {
+  // Weakest areas first, from the /100 maturity scores.
+  const areasByScore = [...(principleMaturity || [])].sort((a, b) => Number(a.maturity) - Number(b.maturity));
+  const areaLines = areasByScore.map(a => `- ${a.name}: ${Math.round(Number(a.maturity))}/100`).join('\n');
+
+  // The specific red statements the plan should bite on, grouped by category.
+  const redByPrinciple = {};
+  (answers || []).forEach(a => {
+    const stmt = STATEMENTS[a.si];
+    if (!stmt || Number(a.m) >= 5) return;
+    (redByPrinciple[stmt.principle] = redByPrinciple[stmt.principle] || []).push(stmt.text);
+  });
+  const redLines = Object.keys(redByPrinciple).length
+    ? Object.entries(redByPrinciple).map(([p, list]) =>
+        `${p}:\n${list.map(t => `  - "${t}"`).join('\n')}`).join('\n')
+    : '(no red statements — every area is at least developing)';
+
+  return `Best-fit Lean Maturity Profile: ${profile || '(unspecified)'}
+
+This profile's standard first-30-days template:
+${PROFILE_PLANS[profile] || PROFILE_PLANS["The Firefighter"]}
+
+This plant's category maturity (weakest first):
+${areaLines}
+
+This plant's red (lowest-scoring) statements — where the plan should focus:
+${redLines}`;
+}
+
+async function generatePlan(profile, answers, principleMaturity) {
+  if (!Array.isArray(answers) || !answers.length) return [];
+
+  const system = `You write the 30-day plan for a lean-manufacturing plant assessment report, for a plant manager reading their own results.
+
+Produce a focused 4-week plan structured as one PDCA cycle: Week 1 = Plan, Week 2 = Do, Week 3 = Check, Week 4 = Act. Start from the best-fit profile's first-30-days template provided, but ADAPT it to this specific plant — name the plant's actual weakest area(s) and bite on its specific red statements rather than staying generic. One pilot area, one 30-day cycle.
+
+For each week write:
+- "week": the number (1–4).
+- "title": exactly "Plan", "Do", "Check", or "Act" for weeks 1–4 respectively.
+- "tag": the short report label of the single area that week focuses on — one of: Standards, People, Logistics, Quality, Continuous Improvement (or "All" for a whole-plant week).
+- "text": 2-3 sentences, concrete and specific to this plant. Direct, plainspoken, second-person ("you", "your team"). No preamble.
+
+Tone example: "Pick your weakest area (Standards) as this month's pilot. Spend real time on the floor there — watch what's actually happening, not what you assume is happening — and write down one specific gap worth closing first."
+
+Return ONLY valid JSON, no markdown fences, no commentary — an array of exactly 4 objects:
+[{"week":1,"title":"Plan","tag":"...","text":"..."},{"week":2,"title":"Do","tag":"...","text":"..."},{"week":3,"title":"Check","tag":"...","text":"..."},{"week":4,"title":"Act","tag":"...","text":"..."}]`;
+
+  const parsed = await callAnthropicJSON(system, buildPlanPrompt(profile, answers, principleMaturity), 1200);
+  if (!Array.isArray(parsed) || parsed.length !== 4) throw new Error('plan-bad-shape');
+  return parsed.map(w => ({
+    week: Number(w.week),
+    title: String(w.title || ''),
+    tag: String(w.tag || ''),
+    text: String(w.text || '')
+  }));
 }
 
 // ─── Google Sheets (JWT + append) ────────────────────────────────────────────
@@ -165,13 +246,15 @@ async function appendRow(sheetId, accessToken, row) {
   return match ? Number(match[1]) : null;
 }
 
-async function updateCategoryTextCell(sheetId, accessToken, rowNumber, categoryText) {
-  const range = `${SHEET_TAB}%21U${rowNumber}`;
+async function updateAiCells(sheetId, accessToken, rowNumber, categoryText, plan) {
+  // Patches the two AI columns for this row in one write: U = categoryText,
+  // V = plan. Both are stored as JSON strings.
+  const range = `${SHEET_TAB}%21U${rowNumber}:V${rowNumber}`;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?valueInputOption=RAW`;
   const res = await fetch(url, {
     method: 'PUT',
     headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ values: [[JSON.stringify(categoryText)]] })
+    body: JSON.stringify({ values: [[JSON.stringify(categoryText || {}), JSON.stringify(plan || [])]] })
   });
   const data = await res.json();
   if (!res.ok) throw new Error(`Sheets cell update error: ${JSON.stringify(data)}`);
@@ -305,8 +388,11 @@ function validate(event) {
   }
 
   const pattern = String(event.pattern || '').slice(0, 40);
+  // Best-fit profile name (drives the AI 30-day plan). Optional — the plan
+  // generator falls back to a default template if it's missing or unknown.
+  const profile = String(event.profile || '').slice(0, 40);
 
-  return { errors, firstName, email, score, phase, principles, maturity, principleMaturity, pattern };
+  return { errors, firstName, email, score, phase, principles, maturity, principleMaturity, pattern, profile };
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -356,12 +442,12 @@ async function main(event) {
   }
   kartraStatus += ` | zb:${emailCheck.status}`;
 
-  // The row lands with an empty categoryText cell first — lead capture must
-  // never wait on or be threatened by an AI call. generateCategoryText can
-  // legitimately take up to its own 20s timeout; if that (plus a retry or a
-  // slow day) ever ate into the function's total time budget before the
-  // sheet write ran, a real lead could be lost. Instead we write the row
-  // immediately, then best-effort patch just the categoryText cell after.
+  // The row lands with empty AI cells first — lead capture must never wait on
+  // or be threatened by an AI call. The two generations (category text +
+  // 30-day plan) can each take up to their own 20s timeout; if that ever ate
+  // into the function's total budget before the sheet write ran, a real lead
+  // could be lost. So we write the row immediately, then run both AI calls in
+  // parallel and best-effort patch columns U (categoryText) and V (plan).
   let rowNumber;
   try {
     const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
@@ -379,17 +465,25 @@ async function main(event) {
       kartraStatus,
       v.maturity,
       ...v.principleMaturity.map(p => Number(p.maturity)),
-      '{}'
+      '{}',
+      '[]'
     ]);
 
     if (rowNumber) {
-      try {
-        const categoryText = await generateCategoryText(event.answers);
-        if (Object.keys(categoryText).length) {
-          await updateCategoryTextCell(process.env.GOOGLE_SHEET_ID, token, rowNumber, categoryText);
+      const [catResult, planResult] = await Promise.allSettled([
+        generateCategoryText(event.answers),
+        generatePlan(v.profile, event.answers, v.principleMaturity)
+      ]);
+      const categoryText = catResult.status === 'fulfilled' ? catResult.value : {};
+      const plan = planResult.status === 'fulfilled' ? planResult.value : [];
+      if (catResult.status === 'rejected') console.error('Category text generation failed (non-fatal, static fallback):', catResult.reason && catResult.reason.message);
+      if (planResult.status === 'rejected') console.error('Plan generation failed (non-fatal, static fallback):', planResult.reason && planResult.reason.message);
+      if (Object.keys(categoryText).length || plan.length) {
+        try {
+          await updateAiCells(process.env.GOOGLE_SHEET_ID, token, rowNumber, categoryText, plan);
+        } catch (err) {
+          console.error('AI cell write failed (non-fatal):', err.message);
         }
-      } catch (err) {
-        console.error('Category text generation/write failed (non-fatal, frontend falls back to static copy):', err.message);
       }
     }
   } catch (err) {
