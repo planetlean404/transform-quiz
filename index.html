@@ -706,8 +706,13 @@
   .toc a.active { background: rgba(21,149,211,0.1); color: var(--pl-accent); }
   .toc a.active .toc-num { color: var(--pl-accent); }
 
-  .report-main { min-width: 0; }
-  .section { margin-bottom: 30px; }
+  /* Trailing room so any section — even the lower, collapsed ones — has
+     enough page below it to scroll its eyebrow up to the top of the viewport
+     when picked from the TOC. */
+  .report-main { min-width: 0; padding-bottom: 70vh; }
+  /* scroll-margin-top clears the 56px sticky topbar so a TOC jump lands the
+     section's eyebrow just below the header instead of hidden behind it. */
+  .section { margin-bottom: 30px; scroll-margin-top: 72px; }
   .section-head {
     display: flex;
     align-items: baseline;
@@ -2353,11 +2358,27 @@
   }
 
   document.querySelectorAll("#reportToc a").forEach(a => {
-    a.addEventListener("click", () => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
       document.querySelectorAll("#reportToc a").forEach(x => x.classList.remove("active"));
       a.classList.add("active");
       const sec = document.querySelector(a.getAttribute("href"));
-      if (sec && sec.classList.contains("acc") && !sec.classList.contains("open")) setAccOpen(sec, true);
+      if (!sec) return;
+      const scrollToSec = () => sec.scrollIntoView({ behavior: "smooth", block: "start" });
+      const body = sec.querySelector(".acc-body");
+      if (sec.classList.contains("acc") && !sec.classList.contains("open")) {
+        // Expand first, then scroll only once the max-height transition
+        // settles — otherwise the page can still be too short to lift the
+        // section's eyebrow to the top. scroll-margin-top clears the topbar;
+        // report-main's trailing padding guarantees the room to scroll.
+        setAccOpen(sec, true);
+        let done = false;
+        const finish = () => { if (done) return; done = true; if (body) body.removeEventListener("transitionend", finish); scrollToSec(); };
+        if (body) body.addEventListener("transitionend", finish);
+        setTimeout(finish, 420);
+      } else {
+        scrollToSec();
+      }
     });
   });
 
