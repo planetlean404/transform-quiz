@@ -2204,9 +2204,11 @@
       const label = s < 50 ? "Gap" : (s < 75 ? "Developing" : "Strength");
       return `<span class="cat-pill ${cls}">${label}</span>`;
     };
-    const summaryBox = a => `
-      <div class="cat-box summary-cat open" style="border-left-color:${bandColor(a.score100)}">
-        <button class="cat-head" onclick="toggleCat(this)" aria-expanded="true">
+    // Open the first box, collapse the rest — the lead sees the depth of
+    // content without the whole section fully expanded.
+    const summaryBox = (a, i) => `
+      <div class="cat-box summary-cat${i === 0 ? " open" : ""}" style="border-left-color:${bandColor(a.score100)}">
+        <button class="cat-head" onclick="toggleCat(this)" aria-expanded="${i === 0}">
           <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
           <strong>${a.label}</strong>
           <span class="head-spacer"></span>
@@ -2250,11 +2252,11 @@
           <div class="stmt-body">${body}</div>
         </div>`;
     };
-    const deepCatCard = a => {
+    const deepCatCard = (a, i) => {
       const metas = STATEMENTS_META.filter(m => m.principle === a.name);
       return `
-        <div class="cat-box insight-cat" style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
-          <button class="cat-head" onclick="toggleCat(this)" aria-expanded="false">
+        <div class="cat-box insight-cat${i === 0 ? " open" : ""}" style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
+          <button class="cat-head" onclick="toggleCat(this)" aria-expanded="${i === 0}">
             <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
             <strong>${a.label}</strong>
             <span class="area-score-inline">${a.score100}</span>
