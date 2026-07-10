@@ -750,9 +750,6 @@
     color: var(--pl-text-muted);
     transition: transform 0.25s ease;
   }
-  .acc:not(.open) .chev { transform: rotate(-90deg); }
-  .acc-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
-  .acc-inner { padding-top: 18px; }
 
   .results-header { text-align: left; margin-bottom: 8px; }
   .results-header h2 {
@@ -877,6 +874,20 @@
   .cat-section-label.good { color: var(--score-green); }
   .cat-section-label.opp { color: var(--score-red); }
   .cat-section-body { font-size: 14px; line-height: 1.55; color: var(--pl-text); }
+
+  /* Collapsible category boxes (Insights + Strengths): a clickable header
+     (icon + name + score + chevron) toggles the body open/closed. */
+  .cat-head {
+    width: 100%; background: none; border: 0; font: inherit; text-align: left; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; padding: 0;
+  }
+  .cat-head .area-icon-inline { width: 30px; height: 30px; flex: 0 0 auto; }
+  .cat-head strong { flex: 1; color: var(--pl-accent-dark); }
+  .cat-head .area-score-inline { font-weight: 800; font-size: 15px; color: var(--pl-accent-dark); }
+  .cat-head .chev { margin-left: 6px; font-size: 13px; color: var(--pl-text-muted); transition: transform 0.2s ease; }
+  .cat-box:not(.open) .cat-head .chev { transform: rotate(-90deg); }
+  .cat-collapse { display: none; }
+  .cat-box.open .cat-collapse { display: block; margin-top: 10px; }
 
   /* Insights: per-category cards, each with a statement-level drill-down. */
   .section-intro { font-size: 14px; color: var(--pl-text-muted); margin: 0 0 16px; line-height: 1.5; }
@@ -1316,58 +1327,38 @@
         <div class="gap-callout" id="gapCallout"></div>
       </section>
 
-      <section class="section acc open" id="sec-strengths">
-        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="true">
-          <span class="section-num">02</span><span class="section-title">Strengths</span><span class="chev">▾</span>
-        </button>
-        <div class="acc-body"><div class="acc-inner">
-          <ul class="area-list strengths" id="strengthsList"></ul>
-        </div></div>
+      <section class="section" id="sec-strengths">
+        <div class="section-head"><span class="section-num">02</span><span class="section-title">Strengths</span></div>
+        <ul class="area-list strengths" id="strengthsList"></ul>
       </section>
 
-      <section class="section acc open" id="sec-insights">
-        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="true">
-          <span class="section-num">03</span><span class="section-title">Insights</span><span class="chev">▾</span>
-        </button>
-        <div class="acc-body"><div class="acc-inner">
-          <p class="section-intro">Every category, broken down to the statement level. Expand any statement to see why it matters and where you stand on it.</p>
-          <div class="insights-list" id="insightsList"></div>
-        </div></div>
+      <section class="section" id="sec-insights">
+        <div class="section-head"><span class="section-num">03</span><span class="section-title">Insights</span></div>
+        <p class="section-intro">Every category, broken down to the statement level. Open a category for its full read, then any statement to see why it matters and where you stand.</p>
+        <div class="insights-list" id="insightsList"></div>
       </section>
 
-      <section class="section acc" id="sec-roadmap">
-        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
-          <span class="section-num">04</span><span class="section-title">Roadmap</span><span class="chev">▾</span>
-        </button>
-        <div class="acc-body"><div class="acc-inner">
-          <div class="roadmap-head">
-            <div class="roadmap-lead" id="roadmapLead"></div>
-            <div class="phase-badge" id="phaseBadge"></div>
-            <div class="phase-tagline" id="phaseTagline"></div>
-          </div>
-          <div class="curve-box" id="curveBox"></div>
-          <div class="curve-caption">SQDCPS — Safety, Quality, Delivery, Cost, People, Sustainability</div>
-          <div class="narrative" id="narrative"></div>
-        </div></div>
+      <section class="section" id="sec-roadmap">
+        <div class="section-head"><span class="section-num">04</span><span class="section-title">Roadmap</span></div>
+        <div class="roadmap-head">
+          <div class="roadmap-lead" id="roadmapLead"></div>
+          <div class="phase-badge" id="phaseBadge"></div>
+          <div class="phase-tagline" id="phaseTagline"></div>
+        </div>
+        <div class="curve-box" id="curveBox"></div>
+        <div class="curve-caption">SQDCPS — Safety, Quality, Delivery, Cost, People, Sustainability</div>
+        <div class="narrative" id="narrative"></div>
       </section>
 
-      <section class="section acc" id="sec-profile">
-        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
-          <span class="section-num">05</span><span class="section-title">Profile</span><span class="chev">▾</span>
-        </button>
-        <div class="acc-body"><div class="acc-inner">
-          <div class="profile-fit" id="profileFit"></div>
-          <div class="profile-detail" id="profileDetail"></div>
-        </div></div>
+      <section class="section" id="sec-profile">
+        <div class="section-head"><span class="section-num">05</span><span class="section-title">Profile</span></div>
+        <div class="profile-fit" id="profileFit"></div>
+        <div class="profile-detail" id="profileDetail"></div>
       </section>
 
-      <section class="section acc" id="sec-plan">
-        <button class="section-head" onclick="toggleAcc(this.parentElement)" aria-expanded="false">
-          <span class="section-num">06</span><span class="section-title">30-Day Plan</span><span class="chev">▾</span>
-        </button>
-        <div class="acc-body"><div class="acc-inner">
-          <ol class="plan-list" id="planList"></ol>
-        </div></div>
+      <section class="section" id="sec-plan">
+        <div class="section-head"><span class="section-num">06</span><span class="section-title">30-Day Plan</span></div>
+        <ol class="plan-list" id="planList"></ol>
       </section>
 
       <section class="section" id="sec-download">
@@ -2120,15 +2111,21 @@
     // GAP_PRIORITY tie-break as Biggest Gap) — a red area never counts as a
     // strength, even if it's relatively the plant's best. Can show 0, 1, or 2.
     // Keeps the full three-section box (Jim's call).
+    // Shared collapsible-category header (icon + name + score + chevron).
+    const catHead = a => `
+      <button class="cat-head" onclick="toggleCat(this)" aria-expanded="true">
+        <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
+        <strong>${a.label}</strong>
+        <span class="area-score-inline">${a.score100}</span>
+        <span class="chev">▾</span>
+      </button>`;
+
     const strengths = pickByPriority(areas.filter(a => a.score100 >= 50), 2, "highest");
+    // Strengths boxes open by default (short section), still collapsible.
     const strengthBox = a => `
-      <li style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
-        <div class="area-title-row">
-          <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
-          <strong>${a.label}</strong>
-          <span class="area-score-inline">${a.score100}</span>
-        </div>
-        ${catSectionsHTML(a)}
+      <li class="cat-box open" style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
+        ${catHead(a)}
+        <div class="cat-collapse">${catSectionsHTML(a)}</div>
       </li>`;
     document.getElementById("strengthsList").innerHTML = strengths.length
       ? strengths.map(strengthBox).join("")
@@ -2165,20 +2162,28 @@
           <div class="stmt-body">${detailBody}</div>
         </div>`;
     };
+    const insightsOrder = [...areas].sort((a, b) => a.score100 - b.score100);
+    // Open the gaps by default (any red category, plus the single lowest so
+    // the section is never all-collapsed); collapse the stronger ones. Draws
+    // the eye straight to what matters while keeping the section scannable.
+    const lowestScore = Math.min(...areas.map(x => x.score100));
     const insightCatCard = a => {
       const metas = STATEMENTS_META.filter(m => m.principle === a.name);
+      const open = a.score100 < 50 || a.score100 === lowestScore;
       return `
-        <div class="insight-cat" style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
-          <div class="area-title-row">
+        <div class="cat-box insight-cat${open ? " open" : ""}" style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
+          <button class="cat-head" onclick="toggleCat(this)" aria-expanded="${open}">
             <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
             <strong>${a.label}</strong>
             <span class="area-score-inline">${a.score100}</span>
+            <span class="chev">▾</span>
+          </button>
+          <div class="cat-collapse">
+            ${catSectionsHTML(a)}
+            <div class="stmt-list">${metas.map(stmtRow).join("")}</div>
           </div>
-          ${catSectionsHTML(a)}
-          <div class="stmt-list">${metas.map(stmtRow).join("")}</div>
         </div>`;
     };
-    const insightsOrder = [...areas].sort((a, b) => a.score100 - b.score100);
     document.getElementById("insightsList").innerHTML = insightsOrder.map(insightCatCard).join("");
 
     // 05 — Profile: the plant's best-fit Lean Maturity Profile — its name,
@@ -2227,8 +2232,13 @@
     document.getElementById("planList").innerHTML = planWeeks.map(w =>
       `<li class="plan-day"><span class="day-num">Week ${w.week}</span><span class="plan-body"><strong>${w.title}.</strong> ${w.text}${w.tag ? `<span class="plan-tag">${w.tag}</span>` : ""}</span></li>`
     ).join("");
+  }
 
-    initAccordions();
+  // Toggle a collapsible category box (Insights + Strengths).
+  function toggleCat(head) {
+    const box = head.parentElement;
+    const open = box.classList.toggle("open");
+    head.setAttribute("aria-expanded", open);
   }
 
   // ---------- Transformation curve graphic ----------
@@ -2341,44 +2351,17 @@
     marker.style.display = "";
   }
 
-  // ---------- Accordion sections ----------
-  function setAccOpen(sec, open) {
-    const body = sec.querySelector(".acc-body");
-    sec.classList.toggle("open", open);
-    sec.querySelector(".section-head").setAttribute("aria-expanded", open);
-    body.style.maxHeight = open ? body.scrollHeight + "px" : "0px";
-  }
-
-  function toggleAcc(sec) {
-    setAccOpen(sec, !sec.classList.contains("open"));
-  }
-
-  function initAccordions() {
-    document.querySelectorAll(".acc").forEach(sec => setAccOpen(sec, sec.classList.contains("open")));
-  }
-
+  // ---------- TOC navigation ----------
+  // Sections are always open now, so a TOC click just scrolls the target to
+  // the top. scroll-margin-top on .section clears the sticky topbar; the
+  // report-main trailing padding guarantees room to lift lower sections up.
   document.querySelectorAll("#reportToc a").forEach(a => {
     a.addEventListener("click", (e) => {
       e.preventDefault();
       document.querySelectorAll("#reportToc a").forEach(x => x.classList.remove("active"));
       a.classList.add("active");
       const sec = document.querySelector(a.getAttribute("href"));
-      if (!sec) return;
-      const scrollToSec = () => sec.scrollIntoView({ behavior: "smooth", block: "start" });
-      const body = sec.querySelector(".acc-body");
-      if (sec.classList.contains("acc") && !sec.classList.contains("open")) {
-        // Expand first, then scroll only once the max-height transition
-        // settles — otherwise the page can still be too short to lift the
-        // section's eyebrow to the top. scroll-margin-top clears the topbar;
-        // report-main's trailing padding guarantees the room to scroll.
-        setAccOpen(sec, true);
-        let done = false;
-        const finish = () => { if (done) return; done = true; if (body) body.removeEventListener("transitionend", finish); scrollToSec(); };
-        if (body) body.addEventListener("transitionend", finish);
-        setTimeout(finish, 420);
-      } else {
-        scrollToSec();
-      }
+      if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
 
