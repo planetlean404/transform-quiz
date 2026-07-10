@@ -953,8 +953,15 @@
   }
   .stmt-head .chev { flex: 0 0 auto; width: 16px; height: 16px; color: var(--pl-text-muted); transition: transform 0.2s; }
   .stmt-row.open .stmt-head .chev { transform: rotate(180deg); }
-  .stmt-body { display: none; padding: 0 2px 14px 21px; }
-  .stmt-row.open .stmt-body { display: block; }
+  .stmt-body { display: none; }
+  .stmt-row.open .stmt-body {
+    display: block;
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 8px;
+    padding: 13px 15px;
+    margin: 2px 0 14px 21px;
+  }
   .stmt-why, .stmt-move { font-size: 13px; line-height: 1.55; color: var(--pl-text); margin-top: 4px; }
   .stmt-why strong { color: var(--pl-text-muted); }
   .stmt-move strong { color: var(--pl-accent-dark); }
@@ -968,11 +975,10 @@
   .stmt-part:first-child { margin-top: 0; }
   .stmt-part-label {
     display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
-    color: var(--pl-text-muted); margin-bottom: 2px;
+    color: var(--pl-accent-dark); margin-bottom: 2px;
   }
   .stmt-part-label.strong { color: var(--score-green); }
   .stmt-part-label.weak { color: var(--score-red); }
-  .stmt-part-label.action { color: var(--pl-accent); }
 
   /* Profile: best-fit headline above the pattern narrative card. */
   .profile-fit { margin-bottom: 16px; }
@@ -2294,7 +2300,7 @@
         if (detail.strength) body += stmtPart("Bright Spot", "strong", detail.strength);
       } else if (st) {
         if (detail.weakness) body += stmtPart("Gap", "weak", detail.weakness);
-        if (detail.steps) body += stmtPart("Gap Closure", "action", detail.steps);
+        if (detail.steps) body += stmtPart("Gap Closure", "weak", detail.steps);
       }
       return `
         <div class="stmt-row status-${st ? st.key : "none"}">
