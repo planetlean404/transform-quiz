@@ -884,7 +884,7 @@
   .cat-head .area-icon-inline { width: 30px; height: 30px; flex: 0 0 auto; }
   .cat-head strong { flex: 1; color: var(--pl-accent-dark); }
   .cat-head .area-score-inline { font-weight: 800; font-size: 15px; color: var(--pl-accent-dark); }
-  .cat-head .chev { margin-left: 6px; font-size: 19px; color: var(--pl-text-muted); transition: transform 0.2s ease; }
+  .cat-head .chev { margin-left: 8px; width: 26px; height: 26px; flex: 0 0 auto; color: var(--pl-text-muted); transition: transform 0.2s ease; }
   .cat-box:not(.open) .cat-head .chev { transform: rotate(-90deg); }
   .cat-collapse { display: none; }
   .cat-box.open .cat-collapse { display: block; margin-top: 10px; }
@@ -2111,13 +2111,16 @@
     // GAP_PRIORITY tie-break as Biggest Gap) — a red area never counts as a
     // strength, even if it's relatively the plant's best. Can show 0, 1, or 2.
     // Keeps the full three-section box (Jim's call).
+    // True chevron shape (a downward V stroke), used on the collapsible
+    // category-box headers. Rotates to point right when the box is collapsed.
+    const CHEVRON_SVG = `<svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 8.5l7 7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     // Shared collapsible-category header (icon + name + score + chevron).
     const catHead = a => `
       <button class="cat-head" onclick="toggleCat(this)" aria-expanded="true">
         <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
         <strong>${a.label}</strong>
         <span class="area-score-inline">${a.score100}</span>
-        <span class="chev">▾</span>
+        ${CHEVRON_SVG}
       </button>`;
 
     const strengths = pickByPriority(areas.filter(a => a.score100 >= 50), 2, "highest");
@@ -2176,7 +2179,7 @@
             <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
             <strong>${a.label}</strong>
             <span class="area-score-inline">${a.score100}</span>
-            <span class="chev">▾</span>
+            ${CHEVRON_SVG}
           </button>
           <div class="cat-collapse">
             ${catSectionsHTML(a)}
