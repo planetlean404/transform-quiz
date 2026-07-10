@@ -808,6 +808,9 @@
     color: var(--pl-text-muted);
     margin-bottom: 14px;
   }
+  /* Larger labels in the main report scoring box (not the landing sample). */
+  .overview-left .dial-label { font-size: 14px; }
+  .overview-bars .bars-title { font-size: 14px; }
   .phase-badge {
     display: inline-block;
     background: var(--pl-orange);
@@ -913,6 +916,10 @@
   .cat-pill.strong, .score-pill.strong { color: var(--pl-text); background: #4ec583; }
   /* Overall LEAN maturity label pill, centered below the score dial. */
   .maturity-badge { text-align: center; margin-top: 12px; }
+  .maturity-badge-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--pl-text-muted); margin-bottom: 6px;
+  }
   .score-pill { display: inline-block; font-size: 12.5px; padding: 4px 14px; }
 
   /* Insights: per-category cards, each with a statement-level drill-down. */
@@ -1354,7 +1361,7 @@
     <aside class="toc" id="reportToc">
       <div class="toc-title">Report Contents</div>
       <a href="#sec-overview" class="active"><span class="toc-num">01</span>Overview</a>
-      <a href="#sec-summaries"><span class="toc-num">02</span>Category Summaries</a>
+      <a href="#sec-summaries"><span class="toc-num">02</span>Category Highlights</a>
       <a href="#sec-deep"><span class="toc-num">03</span>Deep Insights</a>
       <a href="#sec-roadmap"><span class="toc-num">04</span>Roadmap</a>
       <a href="#sec-profile"><span class="toc-num">05</span>Best-Fit Profile</a>
@@ -1377,7 +1384,7 @@
             <div class="maturity-badge" id="maturityBadge"></div>
           </div>
           <div class="overview-bars">
-            <div class="bars-title">Category breakout</div>
+            <div class="bars-title">Category scores</div>
             <div id="breakdownList"></div>
           </div>
           <div class="sc-footer" id="scFooter"></div>
@@ -1389,7 +1396,7 @@
       </section>
 
       <section class="section" id="sec-summaries">
-        <div class="section-head"><span class="section-dash">—</span><span class="section-title">02 / Category Summaries</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">02 / Category Highlights</span></div>
         <p class="section-intro">Each category at a glance — why it matters, what you're doing well, and where the opportunity is.</p>
         <div class="summaries-list" id="summariesList"></div>
       </section>
@@ -2166,7 +2173,7 @@
       : total100 >= 80 ? { label: "Building Momentum", cls: "strong" }
       : total100 >= 50 ? { label: "Gaining Traction", cls: "dev" }
       : { label: "Early Stage", cls: "gap" };
-    document.getElementById("maturityBadge").innerHTML = `<span class="score-pill ${mb.cls}">${mb.label}</span>`;
+    document.getElementById("maturityBadge").innerHTML = `<div class="maturity-badge-label">Implementation Status</div><span class="score-pill ${mb.cls}">${mb.label}</span>`;
     document.getElementById("breakdownList").innerHTML = areas.map(a => `
       <div class="bar-row">
         <img class="bar-icon" src="${AREA_ICONS[a.name]}" alt="">
