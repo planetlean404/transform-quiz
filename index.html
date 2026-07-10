@@ -2123,20 +2123,35 @@
         <div class="bar-score">${a.score100}</div>
       </div>`).join("");
 
-    // AI-generated per-report category text (Good/Opportunity), keyed by
-    // category name, from the live Claude call at submit time. Falls back to
-    // the static STRENGTH_NOTES/OPP_NOTES copy when absent (older report
-    // links, or a failed generation) or when a field comes back empty.
+    // Per-statement maturity from the answers — drives both the Category
+    // Summaries Good/Opportunity selection and the Deep Insights drill-down.
+    const siMaturity = {};
+    (data.answers || []).forEach(ans => { if (ans && ans.si != null) siMaturity[ans.si] = Number(ans.m); });
+    const answersPresent = Object.keys(siMaturity).length > 0;
+    const catStmts = name => STATEMENTS_META.filter(m => m.principle === name).map(m => ({ si: m.si, mat: siMaturity[m.si] }));
+
+    // Category Summaries text (Jim's model): Why It Matters is static and
+    // score-independent; Good is built from this category's GREEN/YELLOW
+    // statements (maturity >= 5); Opportunity from its RED statements (< 5).
+    // A section shows only when the category actually has statements of that
+    // kind. Content prefers the AI-written prose (per-report Claude call);
+    // when it's absent — the live post-quiz view or an older link — we compose
+    // from the per-statement strength/weakness text so it still reflects the
+    // real answers. Links that predate stored answers fall back to the
+    // category score band for presence and the static notes for content.
     const aiText = data.categoryText || {};
-    // Good = strengths of this category's yellow/green statements; Opportunity
-    // = gap + cost of its red statements (no improvement steps — those live in
-    // the 30-day plan). When the AI text is present, trust its per-field value
-    // (an empty string means "no qualifying statements" — omit that section).
-    // When it's absent (older report links or a failed generation), fall back
-    // to the static band-based notes so a box is never left with only its
-    // Why It Matters.
-    const goodOf = a => aiText[a.name] ? (aiText[a.name].good || "") : (a.score100 >= 50 ? STRENGTH_NOTES[a.name] : "");
-    const oppOf  = a => aiText[a.name] ? (aiText[a.name].opportunity || "") : (a.score100 < 75 ? OPP_NOTES[a.name] : "");
+    const hasGood = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat >= 5) : a.score100 >= 50;
+    const hasRed  = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat < 5)  : a.score100 < 75;
+    const composeGood = name => catStmts(name).filter(s => s.mat != null && s.mat >= 5).map(s => STATEMENT_DETAIL[s.si].strength).join(" ");
+    const composeOpp  = name => catStmts(name).filter(s => s.mat != null && s.mat < 5).map(s => STATEMENT_DETAIL[s.si].weakness).join(" ");
+    const goodOf = a => {
+      if (!hasGood(a)) return "";
+      return (aiText[a.name] && aiText[a.name].good) || (answersPresent ? composeGood(a.name) : STRENGTH_NOTES[a.name]);
+    };
+    const oppOf = a => {
+      if (!hasRed(a)) return "";
+      return (aiText[a.name] && aiText[a.name].opportunity) || (answersPresent ? composeOpp(a.name) : OPP_NOTES[a.name]);
+    };
     // Overview highlights: a one-paragraph summary of why the topic matters
     // and how they scored, in the box's status color. Biggest Gap = lowest
     // area (tie-break logic). Strength = highest GREEN area (>=75); omitted
@@ -2208,9 +2223,7 @@
     // Each is a collapsible box (default closed) whose body lists its four
     // statements (numbered 1–20). Each statement opens to show how it was
     // answered, why it matters, its strength or weakness by score, and how to
-    // improve.
-    const siMaturity = {};
-    (data.answers || []).forEach(ans => { if (ans && ans.si != null) siMaturity[ans.si] = Number(ans.m); });
+    // improve. (siMaturity computed above.)
     const stmtPart = (label, cls, body) =>
       `<div class="stmt-part"><span class="stmt-part-label ${cls || ""}">${label}</span> ${body}</div>`;
     const deepStmtRow = meta => {
