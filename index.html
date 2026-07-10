@@ -1826,6 +1826,14 @@
       title: "Flow is ahead of quality — speed amplifies defects",
       body: "Material moves fast here — flow is genuinely good, batches are small, changeovers are quick — but quality hasn't kept pace, and defects are still mostly caught by inspection rather than prevented at the source. The danger is specific: speed without built-in quality means defects travel through the plant, and reach the customer, faster too. You don't need to slow down; you need quality to catch up to the pace you've already set."
     },
+    "warehouse": {
+      title: "Disciplined and capable — but material sits instead of flowing",
+      body: "This is a genuinely capable plant — standards are followed, people are engaged, quality is built in — but flow is the missing piece. Material stages between operations, inventory piles up, and you're likely still pushing to a schedule rather than pulling to actual demand. Every station can look productive while the part itself sits for days between them, so door-to-door lead time is far longer than the work content justifies — and cash is tied up in inventory the whole way. You don't need more discipline; you need the material to move as well as the people do."
+    },
+    "plateau": {
+      title: "A solid plant that runs well — and has quietly stopped climbing",
+      body: "You've done the hard part: standards, discipline, flow, and quality are real here. But improvement has gone quiet — problems get worked around instead of solved, red metrics don't reliably trigger a countermeasure, and there's no steady stream of ideas from the floor. Nothing is broken; it's just that today's performance has become the ceiling, because the engine that would keep raising it was never made a daily habit. The next gains won't come from a new system — they'll come from rebuilding the continuous-improvement muscle: PDCA, real-time review, and a floor that's expected to make its own work better."
+    },
     "focus-weakest": {
       title: "One area is holding the others back",
       body: "Your profile is uneven — and in a lean system, the weakest area sets the pace for the whole transformation, since the other four principles all depend on it in some way. Concentrating your next 30 days on {WEAKEST} will do more for your overall results than pushing an already-strong area higher."
@@ -1841,7 +1849,8 @@
     ps.forEach(p => m[p.name] = p.maturity);
     const all = Object.values(m);
     const std = m["Standardization"], people = m["People Involvement"],
-          slt = m["Short Lead Time"], biq = m["Built-In Quality"];
+          slt = m["Short Lead Time"], biq = m["Built-In Quality"],
+          ci = m["Continuous Improvement"];
     // The Believer — every category green (uniformly strong). Requires ALL
     // categories >= 80, so a plant with any non-green area (a middling overall
     // like 75) can never land here.
@@ -1855,6 +1864,10 @@
     if (tools >= 75 && people < 60) return "tools-without-culture";
     // The Sprinter — strong flow, weak Quality.
     if (slt >= 75 && biq < 60) return "speed-over-quality";
+    // The Warehouse — capable plant, but flow (Short Lead Time) is the gap.
+    if (slt < 60 && Math.max(...all) >= 75) return "warehouse";
+    // The Plateau — solid plant that has stopped improving (weak CI).
+    if (ci < 60 && Math.max(...all) >= 75) return "plateau";
     return "focus-weakest";
   }
 
@@ -1865,7 +1878,9 @@
     "starting-line": "The Firefighter",
     "fragile-foundation": "The Cracked Foundation",
     "tools-without-culture": "The Tool Show",
-    "speed-over-quality": "The Sprinter"
+    "speed-over-quality": "The Sprinter",
+    "warehouse": "The Warehouse",
+    "plateau": "The Plateau"
   };
 
   function bestFitProfile(pattern, ps) {
@@ -1878,7 +1893,9 @@
     const weakest = [...ps].sort((a, b) => a.maturity - b.maturity)[0].name;
     if (weakest === "Standardization") return "The Cracked Foundation";
     if (weakest === "People Involvement") return "The Tool Show";
+    if (weakest === "Short Lead Time") return "The Warehouse";
     if (weakest === "Built-In Quality") return "The Sprinter";
+    if (weakest === "Continuous Improvement") return "The Plateau";
     return "The Cracked Foundation";
   }
 
@@ -1940,6 +1957,28 @@
         "Because everything reads as green, there's no obvious next target — the risk is coasting rather than confirming."
       ],
       whyItHappens: "A uniformly strong self-assessment is either a genuinely excellent plant or — far more often, in our experience calibrating self-assessments against on-site findings — a plant whose internal view has drifted ahead of what's actually happening on the floor. That's not a knock on the people scoring it; it's simply the most common finding when a strong self-assessment meets an outside pair of eyes. The next right step is the same either way: verify the strongest claims against the real criteria before assuming the level is locked in."
+    },
+    "The Warehouse": {
+      tagline: "Disciplined and capable — but material sits instead of flowing",
+      looksLike: [
+        "Material stages between operations — staging piles and double-handling, with no defined or followed min/max buffer rules.",
+        "Inventory locations are over-full or unlabeled, so stock status isn't readable at a glance and cash is quietly tied up in it.",
+        "Production runs to a push schedule rather than actual consumption — there's no real pull system or kanban.",
+        "Long changeovers force large batches, which stretch lead time and hide defects inside the batch.",
+        "The plant is busy and disciplined, yet door-to-door lead time is far longer than the actual work content justifies."
+      ],
+      whyItHappens: "This plant invested in the visible disciplines — standards, quality, engaged people — but never went after flow, because batch-and-queue feels efficient at each station even as it stretches total lead time and buries cash in inventory. Flow is the least visible waste: every station can look productive while material sits for days between them, so the cost hides in door-to-door lead time and working capital rather than in any one station's numbers. The gains here don't require slowing down or adding discipline — they come from making the material move as well as the people already do."
+    },
+    "The Plateau": {
+      tagline: "A solid plant that runs well — and has quietly stopped climbing",
+      looksLike: [
+        "Problems get worked around rather than solved — there's no consistent PDCA method, so the same issues keep coming back.",
+        "Metrics are posted and reviewed, but a red number doesn't reliably trigger a countermeasure with a named owner and a due date.",
+        "Improvement shows up as occasional projects or past kaizen events, not as a daily habit.",
+        "There's no structured floor-idea process, so the workforce's improvement ideas never surface.",
+        "Performance is stable and decent — and has been stable for a while, because nothing is actively pushing it higher."
+      ],
+      whyItHappens: "This plant did the hard work of building standards, discipline, and systems, then quietly treated \"good\" as the finish line. The continuous-improvement muscle — PDCA, real-time review, required countermeasures, a steady flow of floor ideas — is what compounds those gains over time; without it, today's performance simply becomes the ceiling. It's the most common plateau there is: not broken, not backsliding, just done improving — which in a competitive market is its own kind of slow decline."
     }
   };
 
