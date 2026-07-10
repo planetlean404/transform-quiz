@@ -939,7 +939,7 @@
     width: 100%; background: none; border: 0; cursor: pointer; text-align: left;
     display: flex; align-items: center; gap: 10px; padding: 11px 2px; font: inherit;
   }
-  .stmt-dot { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
+  .stmt-dot { width: 14px; height: 14px; border-radius: 50%; flex: 0 0 auto; }
   .stmt-text { flex: 1; font-size: 13.5px; line-height: 1.45; color: var(--pl-text); }
   .stmt-answer {
     flex: 0 0 auto; font-size: 11px; font-weight: 700; color: var(--pl-text-muted);
@@ -966,6 +966,7 @@
   }
   .stmt-part-label.strong { color: var(--score-green); }
   .stmt-part-label.weak { color: var(--score-red); }
+  .stmt-part-label.action { color: var(--pl-accent); }
 
   /* Profile: best-fit headline above the pattern narrative card. */
   .profile-fit { margin-bottom: 16px; }
@@ -2024,6 +2025,32 @@
       steps: "Put a simple idea box or form in one area. Review submissions weekly, make sure every submitter gets a response (accepted, declined with a reason, or still evaluating), and track submissions and outcomes visibly." }
   ];
 
+  // Per-statement Dependencies (si-indexed), the lead-friendly rewrite of the
+  // Word doc's "Connects to" — how each practice relates to the others, in
+  // plain language (no internal statement numbering).
+  const STATEMENT_DEPENDENCIES = [
+    "This is the load-bearing wall of the whole assessment — most other practices assume it exists. Built-in quality checks and error proofing both need a known, fixed sequence to build around; PDCA problem-solving needs a documented baseline to measure a change against; and team problem-solving and leader coaching both depend on a shared definition of \"normal.\" The rest of the Standardization practices — 5S, equipment care, dashboards — are each just standard work applied to a different target.",
+    "5S is itself a form of standard, and its \"audit it, score it, post it\" habit is the template the other Standards practices reuse for equipment care and dashboards — it's often where a plant first learns that discipline. A cluttered station also makes visual error proofing and quality confirmation harder to see and trust, and labeled inventory locations are simply this same 5S applied to material instead of tools.",
+    "The daily care checklist is itself a standard, and the clearest example of improvement being \"part of the job.\" A clean machine is the same discipline as a clean work area, just extended to the equipment. And the condition trends and downtime data it surfaces are exactly the early signals that PDCA and the dashboards are built to act on before they become failures.",
+    "The dashboard is the capstone of the other Standards practices — it's only trustworthy when it's reporting on stable standard work, 5S, and equipment care. It's the physical home for the countermeasures that continuous improvement requires, it's the artifact leaders coach against on daily walks, and a red metric on it is usually what triggers the weekly problem-solving cycle.",
+    "Problem-solving needs a documented standard to tell a real deviation from normal variation, and it's usually kicked off by a red metric on the dashboard — the two should work as one loop. It's PDCA practiced as a team habit, a natural channel for the monthly improvement ideas, and the single best forum for a leader to coach real problem-solving skill. Issues that can't wait a week should escalate through the help chain.",
+    "Leader presence is what keeps the dashboard honest — a board no leader reviews is the fastest way for it to quietly fail. Daily dashboard walks are the best in-the-moment forum to coach problem-solving, they're the People-side counterpart to the layered leadership audit, and leaders modeling ownership of improvement is what makes that expectation credible for everyone else.",
+    "The help chain needs a documented standard so operators know exactly what warrants a call. It's often the actual mechanism that contains a defect at the point of cause, it's the immediate outlet for issues that can't wait for the weekly problem-solving cycle, and an abnormal condition spotted during daily equipment care is a textbook trigger for it. Response-time performance belongs on the same dashboard leaders already review.",
+    "This is what turns continuous improvement from a volunteer activity into a job requirement — the role-definition backbone the weekly problem-solving and monthly idea processes depend on to have any teeth. It's also what justifies operator equipment care being \"part of the job,\" and leaders can only credibly coach and hold people to an expectation that's actually written into the role.",
+    "Min/max buffer rules are themselves a form of standard work, and they need labeled inventory locations to be enforceable on the floor. Less staging and handling means fewer chances to damage or contaminate parts, which ties it to point-of-cause quality — and big staging buffers are often a symptom of long changeovers forcing large batches, so the two usually have to be solved together.",
+    "This is 5S applied to material instead of tools — it should look and function identically on the floor. Labeled locations are the visible mechanism that makes direct-flow buffer rules enforceable, and a pull system is only as reliable as the location data triggering it, so mislabeled or wrong-location stock breaks the signal. Inventory accuracy is a natural metric for the dashboard.",
+    "A pull system's kanban or electronic signal depends entirely on accurate, correctly-labeled inventory locations to trigger correctly. It works best with small batches, so long changeovers are often the real reason a plant is still pushing to a schedule. The kanban itself is a standard that only works if it's followed consistently, and its performance — stockouts, overflow, response time — belongs on a real-time dashboard with a countermeasure trigger.",
+    "Shorter changeovers are what make small batches economical, which is what actually lets material flow directly without large buffers and lets a true pull system run. Changeover reduction is a natural, easy-to-measure project for the weekly problem-solving team, and it's PDCA in its clearest form: time it, try a change, re-time it, and standardize what worked.",
+    "This can't exist without documented standard work first — a check can only be \"built in\" if it's part of a followed standard. The checks defined here are usually the starting point for deciding where error proofing goes next, the layered leadership audit exists partly to confirm they're actually happening, and a check that keeps catching the same issue is a strong candidate for the team's next problem-solving cycle.",
+    "This builds directly on built-in quality checks — those establish what to check, and error proofing adds the mechanism that removes reliance on human vigilance. Its verification schedule is the same audit habit as 5S, just applied to a device; the layered leadership audit should confirm that verification is actually happening; and when a device catches something or is found to have failed, that's exactly what the help chain should route immediately.",
+    "This is leadership's verification layer over standard work, 5S, and equipment care — it's what confirms those standards are being lived, not just documented. It should specifically check that built-in quality checks and error proofing are happening as designed, and that the dashboard itself is current and actually reviewed. It's the scheduled, comprehensive counterpart to the informal daily coaching walk.",
+    "Confirmation stations close the loop that built-in checks and error proofing open — those only improve the process if the feedback gets back to the operator fast enough to matter. The layered audit should confirm they're placed where they give fast feedback, a defect caught should trigger a look at whether the standard itself needs to change, and a spike in catches is a missed-target signal that should trigger a countermeasure.",
+    "PDCA is the method; the weekly team problem-solving session is the forum where it's practiced as a habit. A recurring audit finding is a signal that a fix skipped the \"Check\" or \"Act\" step and needs a real cycle, a posted countermeasure is the visible \"Plan\" step of a cycle, and the best submitted improvement ideas deserve a lightweight cycle to confirm they work before becoming the new standard.",
+    "This defines how fresh and how frequently reviewed the visual dashboard has to be. A countermeasure can only be posted \"before the next shift\" if the metric driving it is current enough to know that in time; leader and team reviews should look at the same live data; and it's the metric-level equivalent of quality confirmation stations — both exist to shrink the gap between something happening and someone knowing about it.",
+    "A required countermeasure is the action that real-time metrics should trigger — a fresh metric with no response requirement is only half the system. Its natural home is right next to the metric on the dashboard, it's really a compressed PDCA cycle (planned action, named owner, due date), and one that isn't resolved by its due date should escalate into the team's structured problem-solving process.",
+    "This is the concrete, trackable process that turns the \"improvement is part of the job\" role expectation into something real and measurable. The weekly problem-solving session is a ready-made venue to review submitted ideas rather than creating a separate meeting, a promising idea deserves a lightweight PDCA cycle before adoption, and the count and status of ideas is a simple, motivating metric to post on the dashboard."
+  ];
+
   // Stable (unshuffled) statement metadata, si-indexed to match PRINCIPLES
   // and STATEMENT_DETAIL. Used to render the Insights drill-down grouped by
   // category regardless of the quiz's random presentation order.
@@ -2245,18 +2272,24 @@
     // improve. (siMaturity computed above.)
     const stmtPart = (label, cls, body) =>
       `<div class="stmt-part"><span class="stmt-part-label ${cls || ""}">${label}</span> ${body}</div>`;
+    // Vibrant status colors for the statement circle (match the pill palette).
+    const DOT_VIBRANT = { green: "#4ec583", yellow: "#f5be2e", red: "#ff8f87" };
     const deepStmtRow = meta => {
       const st = stmtStatus(siMaturity[meta.si]);
       const detail = STATEMENT_DETAIL[meta.si] || {};
-      const dot = st ? st.color : "var(--pl-border)";
+      const dot = st ? DOT_VIBRANT[st.key] : "var(--pl-border)";
       const answerIdx = MATURITY_VALUES.indexOf(siMaturity[meta.si]);
       const answerLabel = (st && answerIdx >= 0 && SCALES[meta.scale]) ? SCALES[meta.scale][answerIdx] : "";
-      let body = detail.why ? stmtPart("Why it matters", "", detail.why) : "";
-      if (st && st.key === "red" && detail.weakness) body += stmtPart("Weakness", "weak", detail.weakness);
-      else if (st && detail.strength) body += stmtPart("Strength", "strong", detail.strength);
-      // How to improve applies where there's room to grow (red/yellow), not on
-      // an already-green statement.
-      if (st && st.key !== "green" && detail.steps) body += stmtPart("How to improve", "", detail.steps);
+      // Always: Why It Matters + Dependencies. Then green → Bright Spot
+      // (strength); yellow or red → Gap (weakness) + Gap Closure (steps).
+      let body = detail.why ? stmtPart("Why It Matters", "", detail.why) : "";
+      if (STATEMENT_DEPENDENCIES[meta.si]) body += stmtPart("Dependencies", "", STATEMENT_DEPENDENCIES[meta.si]);
+      if (st && st.key === "green") {
+        if (detail.strength) body += stmtPart("Bright Spot", "strong", detail.strength);
+      } else if (st) {
+        if (detail.weakness) body += stmtPart("Gap", "weak", detail.weakness);
+        if (detail.steps) body += stmtPart("Gap Closure", "action", detail.steps);
+      }
       return `
         <div class="stmt-row status-${st ? st.key : "none"}">
           <button class="stmt-head" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">
@@ -2272,7 +2305,7 @@
     const deepCatCard = (a, i) => {
       const metas = STATEMENTS_META.filter(m => m.principle === a.name);
       return `
-        <div class="cat-box insight-cat${i === 0 ? " open" : ""}" style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
+        <div class="cat-box insight-cat${i === 0 ? " open" : ""}" style="border-left-color:${bandColor(a.score100)}">
           <button class="cat-head" onclick="toggleCat(this)" aria-expanded="${i === 0}">
             <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
             <strong>${a.label}</strong>
