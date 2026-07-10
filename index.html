@@ -888,6 +888,19 @@
   .cat-box:not(.open) .cat-head .chev { transform: rotate(-90deg); }
   .cat-collapse { display: none; }
   .cat-box.open .cat-collapse { display: block; margin-top: 10px; }
+  /* Category Summaries: name hugs left, score+chevron right, status pill
+     absolutely centered in the header so pills align across all boxes. */
+  .summary-cat .cat-head { position: relative; }
+  .summary-cat .cat-head strong { flex: 0 1 auto; }
+  .head-spacer { flex: 1 1 0; }
+  .cat-pill {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+    text-transform: uppercase; border-radius: 20px; padding: 3px 12px; white-space: nowrap;
+  }
+  .cat-pill.gap { color: var(--score-red); background: rgba(224, 67, 63, 0.14); }
+  .cat-pill.dev { color: #a9760a; background: rgba(242, 176, 30, 0.18); }
+  .cat-pill.strong { color: var(--score-green); background: rgba(51, 168, 82, 0.15); }
 
   /* Insights: per-category cards, each with a statement-level drill-down. */
   .section-intro { font-size: 14px; color: var(--pl-text-muted); margin: 0 0 16px; line-height: 1.5; }
@@ -2124,10 +2137,11 @@
     // Why It Matters.
     const goodOf = a => aiText[a.name] ? (aiText[a.name].good || "") : (a.score100 >= 50 ? STRENGTH_NOTES[a.name] : "");
     const oppOf  = a => aiText[a.name] ? (aiText[a.name].opportunity || "") : (a.score100 < 75 ? OPP_NOTES[a.name] : "");
-    // Overview highlights: compact boxes (no prose — the summaries carry that).
-    // Biggest Gap = lowest area (tie-break logic). Strength = highest GREEN
-    // area (>=75); omitted entirely when the plant has no green category.
-    const highlightBox = (el, label, labelClass, area) => {
+    // Overview highlights: a one-paragraph summary of why the topic matters
+    // and how they scored, in the box's status color. Biggest Gap = lowest
+    // area (tie-break logic). Strength = highest GREEN area (>=75); omitted
+    // entirely when the plant has no green category.
+    const highlightBox = (el, label, labelClass, area, para) => {
       el.style.display = "";
       el.style.borderLeftColor = bandColor(area.score100);
       el.style.background = bandBg(area.score100);
@@ -2137,12 +2151,16 @@
           <img class="gap-icon" src="${AREA_ICONS[area.name]}" alt="">
           <div class="gap-title">${area.label}</div>
           <span class="gap-score">${area.score100}</span>
-        </div>`;
+        </div>
+        <div class="gap-text">${para}</div>`;
     };
-    highlightBox(document.getElementById("gapCallout"), "Biggest Gap", "gap", pickBiggestGap(areas));
+    const gapArea = pickBiggestGap(areas);
+    highlightBox(document.getElementById("gapCallout"), "Biggest Gap", "gap", gapArea,
+      `At ${gapArea.score100} out of 100, this is your lowest-scoring category. ${WHY_MATTERS[gapArea.name]}`);
     const topGreen = pickByPriority(areas.filter(a => a.score100 >= 75), 1, "highest")[0];
     const strengthCallout = document.getElementById("strengthCallout");
-    if (topGreen) highlightBox(strengthCallout, "Strength", "strength", topGreen);
+    if (topGreen) highlightBox(strengthCallout, "Strength", "strength", topGreen,
+      `At ${topGreen.score100} out of 100, this is your strongest category. ${WHY_MATTERS[topGreen.name]}`);
     else strengthCallout.style.display = "none";
 
     // Shared bits for the category boxes / cards.
@@ -2162,16 +2180,27 @@
     const CHEVRON_SVG = `<svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 8.5l7 7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
     // 02 — Category Summaries: all five categories in canonical order (areas
-    // is already in that order), each an always-open box with its Why It
-    // Matters / Good / Opportunity summary. No statements here.
+    // is already in that order), each a collapsible box (default open) with a
+    // status pill and its Why It Matters / Good / Opportunity summary. No
+    // background tint here — just the colored left edge. No statements.
+    const bandPill = a => {
+      const s = a.score100;
+      const cls = s < 50 ? "gap" : (s < 75 ? "dev" : "strong");
+      const label = s < 50 ? "Gap" : (s < 75 ? "Developing" : "Strength");
+      return `<span class="cat-pill ${cls}">${label}</span>`;
+    };
     const summaryBox = a => `
-      <div class="cat-box summary-cat" style="border-left-color:${bandColor(a.score100)};background:${bandBg(a.score100)}">
-        <div class="cat-head-static">
+      <div class="cat-box summary-cat open" style="border-left-color:${bandColor(a.score100)}">
+        <button class="cat-head" onclick="toggleCat(this)" aria-expanded="true">
           <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
           <strong>${a.label}</strong>
+          <span class="head-spacer"></span>
+          ${bandPill(a)}
+          <span class="head-spacer"></span>
           <span class="area-score-inline">${a.score100}</span>
-        </div>
-        ${catSectionsHTML(a)}
+          ${CHEVRON_SVG}
+        </button>
+        <div class="cat-collapse">${catSectionsHTML(a)}</div>
       </div>`;
     document.getElementById("summariesList").innerHTML = areas.map(summaryBox).join("");
 
