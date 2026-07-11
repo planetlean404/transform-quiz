@@ -1009,6 +1009,19 @@
   }
   .profile-fit-name { font-size: 26px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.15; }
   .profile-fit-tagline { font-size: 14px; color: var(--pl-text-muted); margin-top: 4px; line-height: 1.4; }
+  /* Match-confidence indicator under the profile name — a thin fill bar tinted
+     by tier plus a "NN% match" line naming the runner-up when it's not strong. */
+  .profile-confidence { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .conf-bar {
+    flex: 0 0 96px; height: 7px; border-radius: 999px;
+    background: var(--pl-bg-soft); border: 1px solid var(--pl-border); overflow: hidden;
+  }
+  .conf-bar-fill { display: block; height: 100%; border-radius: 999px; }
+  .conf-text { font-size: 13px; color: var(--pl-text-muted); }
+  .conf-text strong { color: var(--pl-accent-dark); }
+  .conf-strong .conf-bar-fill { background: #4ec583; }
+  .conf-good   .conf-bar-fill { background: #f5be2e; }
+  .conf-blended .conf-bar-fill { background: #94a2ac; }
   .profile-lead { font-size: 15px; line-height: 1.6; color: var(--pl-text); margin: 0 0 18px; }
   .profile-block { margin-top: 18px; }
   .profile-block-label {
@@ -1731,7 +1744,7 @@
     try {
       const ps = computePrincipleScores();
       const psMat = ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) }));
-      const patternKey = detectPattern(psMat);
+      const mp = matchProfile(psMat);
       const curveScore = overallRoadmap4(ps);
       const res = await fetch(`${API_BASE}/submit`, {
         method: "POST",
@@ -1744,8 +1757,9 @@
           principles: ps.map(p => ({ name: p.name, score: p.roadmap4 })),
           maturity: to100(overallMaturity10(ps)),
           principleMaturity: psMat,
-          pattern: patternKey,
-          profile: bestFitProfile(patternKey, psMat),
+          pattern: mp.patternKey,
+          profile: mp.name,
+          confidence: mp.confidence,
           answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
           website: document.getElementById("website").value
         })
@@ -1868,63 +1882,64 @@
     }
   };
 
-  // Profile detection runs on the /100 maturity scores the reader actually
-  // sees (same scale as the category bars/pills), so the assigned profile
-  // always agrees with the colors on screen. Bands: green >= 80, weak < 60.
-  // Each entry in ps is { name, maturity }.
-  function detectPattern(ps) {
-    const m = {};
-    ps.forEach(p => m[p.name] = p.maturity);
-    const all = Object.values(m);
-    const std = m["Standardization"], people = m["People Involvement"],
-          slt = m["Short Lead Time"], biq = m["Built-In Quality"],
-          ci = m["Continuous Improvement"];
-    // The Believer — every category green (uniformly strong). Requires ALL
-    // categories >= 80, so a plant with any non-green area (a middling overall
-    // like 75) can never land here.
-    if (all.every(s => s >= 80)) return "calibration";
-    // The Firefighter — everything red: foundational chaos.
-    if (all.every(s => s < 50)) return "starting-line";
-    // The Cracked Foundation — weak Standardization under an otherwise advanced plant.
-    if (std < 60 && Math.max(...all) >= 75) return "fragile-foundation";
-    // The Tool Show — strong tools, weak People.
-    const tools = (std + slt + biq) / 3;
-    if (tools >= 75 && people < 60) return "tools-without-culture";
-    // The Sprinter — strong flow, weak Quality.
-    if (slt >= 75 && biq < 60) return "speed-over-quality";
-    // The Warehouse — capable plant, but flow (Short Lead Time) is the gap.
-    if (slt < 60 && Math.max(...all) >= 75) return "warehouse";
-    // The Plateau — solid plant that has stopped improving (weak CI).
-    if (ci < 60 && Math.max(...all) >= 75) return "plateau";
-    return "focus-weakest";
-  }
-
-  // ---------- Lean Maturity Profile best-fit (always one of the 5 named
-  // profiles, even for the "focus-weakest" catch-all pattern) ----------
-  const PROFILE_NAMES = {
-    "calibration": "The Believer",
-    "starting-line": "The Firefighter",
-    "fragile-foundation": "The Cracked Foundation",
-    "tools-without-culture": "The Tool Show",
-    "speed-over-quality": "The Sprinter",
-    "warehouse": "The Warehouse",
-    "plateau": "The Plateau"
+  // ---------- Best-fit profile: nearest-archetype similarity ----------
+  // Each profile has a canonical "signature" over the five categories on the
+  // 0-100 maturity scale (same scale the reader sees), capturing its defining
+  // strong/weak axes. We score a plant by average per-category distance (RMSD)
+  // to each signature and pick the closest — every archetype competes equally,
+  // and we get a confidence signal from how well it fits and how clearly it
+  // beats the runner-up. Category order below: Std, People, SLT, Quality, CI.
+  const PROFILE_ORDER = ["Standardization", "People Involvement", "Short Lead Time", "Built-In Quality", "Continuous Improvement"];
+  const ARCHETYPE_SHAPES = {
+    "The Firefighter":        [25, 25, 25, 25, 25], // uniformly low — foundational chaos
+    "The Believer":           [92, 92, 92, 92, 92], // uniformly high — everything green
+    "The Cracked Foundation": [35, 82, 78, 82, 78], // Std weak under an advanced plant
+    "The Tool Show":          [85, 35, 82, 82, 50], // tools strong, People weak
+    "The Sprinter":           [75, 72, 90, 35, 68], // flow fast, Quality weak
+    "The Warehouse":          [82, 78, 35, 82, 78], // capable, flow (SLT) is the gap
+    "The Plateau":            [82, 78, 78, 82, 35]  // solid, stopped improving (CI weak)
+  };
+  // Each profile's narrative-body key in PATTERNS (the "what this means" copy).
+  const PROFILE_TO_PATTERN = {
+    "The Firefighter": "starting-line",
+    "The Believer": "calibration",
+    "The Cracked Foundation": "fragile-foundation",
+    "The Tool Show": "tools-without-culture",
+    "The Sprinter": "speed-over-quality",
+    "The Warehouse": "warehouse",
+    "The Plateau": "plateau"
   };
 
-  function bestFitProfile(pattern, ps) {
-    if (PROFILE_NAMES[pattern]) return PROFILE_NAMES[pattern];
-    // focus-weakest: a genuinely low overall is a Firefighter; otherwise map to
-    // the archetype that matches this plant's actual weakest area. (No average-
-    // based "Believer" here — The Believer only comes from all-green above.)
-    const overall = ps.reduce((acc, p) => acc + p.maturity, 0) / ps.length;
-    if (overall < 50) return "The Firefighter";
-    const weakest = [...ps].sort((a, b) => a.maturity - b.maturity)[0].name;
-    if (weakest === "Standardization") return "The Cracked Foundation";
-    if (weakest === "People Involvement") return "The Tool Show";
-    if (weakest === "Short Lead Time") return "The Warehouse";
-    if (weakest === "Built-In Quality") return "The Sprinter";
-    if (weakest === "Continuous Improvement") return "The Plateau";
-    return "The Cracked Foundation";
+  // ps: [{ name, maturity }]. Returns the best-fit profile plus a confidence
+  // read (0-100), a tier, a user-facing label, and the runner-up. Deterministic
+  // from the scores, so it reproduces identically on a shared /r/ link.
+  function matchProfile(ps) {
+    const m = {};
+    ps.forEach(p => m[p.name] = p.maturity);
+    const vec = PROFILE_ORDER.map(n => Number(m[n]) || 0);
+    const rmsd = shape => {
+      let s = 0;
+      for (let i = 0; i < 5; i++) { const d = vec[i] - shape[i]; s += d * d; }
+      return Math.sqrt(s / 5);
+    };
+    const scored = Object.entries(ARCHETYPE_SHAPES)
+      .map(([name, shape]) => ({ name, d: rmsd(shape) }))
+      .sort((a, b) => a.d - b.d);
+    const best = scored[0], second = scored[1];
+    const fit = 100 - best.d;                                    // absolute closeness
+    const sep = second.d > 0 ? 1 - best.d / second.d : 1;        // distinctiveness
+    const confidence = Math.max(0, Math.min(100, Math.round(fit * (0.55 + 0.45 * sep))));
+    let tier;
+    if (confidence >= 72) tier = "strong";
+    else if (confidence >= 52) tier = "good";
+    else tier = "blended";
+    return {
+      name: best.name,
+      second: second.name,
+      confidence,
+      tier,
+      patternKey: PROFILE_TO_PATTERN[best.name] || "focus-weakest"
+    };
   }
 
   // Full characteristics for each of the 5 Lean Maturity Profiles (from the
@@ -2187,7 +2202,7 @@
       principles: ps.map(p => ({ name: p.name, score: p.roadmap4 })),
       maturity: to100(overallMaturity10(ps)),
       principleMaturity: psMat,
-      pattern: detectPattern(psMat),
+      pattern: matchProfile(psMat).patternKey,
       // Per-statement answers drive the Insights statement-level drill-down.
       // Available directly on the live post-quiz view; the shared /r/ link
       // gets the same array back from the report API.
@@ -2428,14 +2443,25 @@
     // full characteristics (what it looks like on the floor + why it happens).
     const sorted = [...areas].sort((a, b) => a.score100 - b.score100);
     const areasMat = areas.map(a => ({ name: a.name, maturity: a.score100 }));
-    const patternKey = data.pattern && PATTERNS[data.pattern] ? data.pattern : detectPattern(areasMat);
-    const pattern = PATTERNS[patternKey];
-    const bestFit = bestFitProfile(patternKey, areasMat);
+    // Recompute from the maturity scores — deterministic, so a shared /r/ link
+    // reproduces the same match and confidence as the live post-quiz view.
+    const mp = matchProfile(areasMat);
+    const pattern = PATTERNS[mp.patternKey] || PATTERNS["focus-weakest"];
+    const bestFit = mp.name;
     const profile = PROFILE_CONTENT[bestFit];
+    const confNote = mp.tier === "strong" ? ""
+      : mp.tier === "good" ? ` &middot; also resembles ${mp.second}`
+      : ` &middot; nearly ties with ${mp.second}`;
+    const confWord = mp.tier === "strong" ? "Strong fit"
+      : mp.tier === "good" ? "Good fit" : "Blended";
     document.getElementById("profileFit").innerHTML =
       `<div class="profile-fit-eyebrow">Your LEAN Maturity Profile</div>
        <div class="profile-fit-name">${bestFit}</div>
-       ${profile ? `<div class="profile-fit-tagline">${profile.tagline}</div>` : ""}`;
+       ${profile ? `<div class="profile-fit-tagline">${profile.tagline}</div>` : ""}
+       <div class="profile-confidence conf-${mp.tier}">
+         <span class="conf-bar"><span class="conf-bar-fill" style="width:${mp.confidence}%"></span></span>
+         <span class="conf-text"><strong>${mp.confidence}% match</strong> &middot; ${confWord}${confNote}</span>
+       </div>`;
     document.getElementById("profileDetail").innerHTML = `
       <p class="profile-lead">${pattern.body.replace("{WEAKEST}", sorted[0].label)}</p>
       ${profile ? `
