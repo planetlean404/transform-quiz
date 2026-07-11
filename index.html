@@ -2109,6 +2109,21 @@
   let emailVerdictPromise = null;   // set in submitGate; null on shared links
   let emailVerdictResolve = null;
   let emailVerdict = undefined;     // undefined = pending, true = bad, false/null = allow
+  let bookName = "";                // first name for the booking prefill (set on render)
+
+  // Pre-fill the Kartra calendar so the lead doesn't re-enter their details:
+  // pass first_name + email as query params (Kartra's calendar reads these).
+  // Instant view has both from the gate inputs; a shared /r/ link has the
+  // first name (from the report data) but not the email (never returned).
+  function buildBookUrl(base) {
+    const email = (document.getElementById("email") || {}).value || "";
+    const name = ((document.getElementById("firstName") || {}).value || bookName || "").trim();
+    const params = new URLSearchParams();
+    if (name) params.set("first_name", name);
+    if (email.trim()) params.set("email", email.trim());
+    const qs = params.toString();
+    return qs ? base + (base.includes("?") ? "&" : "?") + qs : base;
+  }
 
   async function bookCall(url, btn) {
     if (emailVerdictPromise) {
@@ -2123,7 +2138,7 @@
         return;
       }
     }
-    window.open(url, "_blank", "noopener");
+    window.open(buildBookUrl(url), "_blank", "noopener");
   }
 
   function submitGate() {
@@ -2639,6 +2654,7 @@
     let reportDate = new Date(data.date);
     if (isNaN(reportDate)) reportDate = new Date(String(data.date || "").replace(/,\s*\d{1,2}:\d{2}.*$/i, "").trim());
     if (isNaN(reportDate)) reportDate = new Date();
+    bookName = data.firstName || "";
     document.getElementById("planReportTitle").textContent = `${data.firstName}, your 6-month transformation plan`;
     document.getElementById("planReportDate").textContent = reportDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
@@ -2829,6 +2845,7 @@
 
     // 01 — Overview: maturity dial left, proportional bars right.
     // The dial is the only number shown anywhere in the report.
+    bookName = data.firstName || "";
     document.getElementById("resultsTitle").textContent = `${data.firstName}, here's how your plant scored`;
     // Robust date: live view sends an ISO string; shared /r/ links send the
     // sheet's friendly "Jul 11, 2026, 2:23 PM ET" (which doesn't parse), so
