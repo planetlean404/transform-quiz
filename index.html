@@ -1430,25 +1430,19 @@
   </div>
 </div>
 
-<!-- ---------- Email gate ---------- -->
-<div class="card-wrap" id="gateWrap" style="display:none">
+<!-- ---------- General plant info (after the 20th statement) ---------- -->
+<div class="card-wrap" id="plantInfoWrap" style="display:none">
   <div class="card">
-    <div class="gate" id="gateScreen">
-      <h2>Your report is ready</h2>
-      <p>Tell us where to send it — your personalized results appear instantly, right here.</p>
-      <input type="text" id="firstName" placeholder="First name">
-      <input type="email" id="email" placeholder="Email you check frequently">
-      <div class="gate-hint">A few quick details so we can tailor your report:</div>
-      <select id="role" onchange="this.classList.toggle('chosen', !!this.value)">
-        <option value="">Your role</option>
-        <option>Plant Manager</option>
-        <option>Operations Manager / Director</option>
-        <option>Continuous Improvement / Lean Leader</option>
-        <option>Production / Shift Supervisor</option>
-        <option>Quality Manager</option>
-        <option>Engineering</option>
-        <option>Executive / Owner</option>
-        <option>Other</option>
+    <div class="gate" id="plantInfoScreen">
+      <h2>General plant info</h2>
+      <p>Three quick details so we can tailor your report to your operation.</p>
+      <select id="plantSize" onchange="this.classList.toggle('chosen', !!this.value)">
+        <option value="">Plant size</option>
+        <option>1&ndash;50 employees</option>
+        <option>51&ndash;200 employees</option>
+        <option>201&ndash;500 employees</option>
+        <option>501&ndash;2,000 employees</option>
+        <option>2,000+ employees</option>
       </select>
       <select id="industry" onchange="this.classList.toggle('chosen', !!this.value)">
         <option value="">Industry</option>
@@ -1463,14 +1457,30 @@
         <option>Consumer Goods</option>
         <option>Other</option>
       </select>
-      <select id="companySize" onchange="this.classList.toggle('chosen', !!this.value)">
-        <option value="">Company size</option>
-        <option>1&ndash;50 employees</option>
-        <option>51&ndash;200 employees</option>
-        <option>201&ndash;500 employees</option>
-        <option>501&ndash;2,000 employees</option>
-        <option>2,000+ employees</option>
+      <select id="role" onchange="this.classList.toggle('chosen', !!this.value)">
+        <option value="">Your role</option>
+        <option>Plant Manager</option>
+        <option>Operations Manager / Director</option>
+        <option>Continuous Improvement / Lean Leader</option>
+        <option>Production / Shift Supervisor</option>
+        <option>Quality Manager</option>
+        <option>Engineering</option>
+        <option>Executive / Owner</option>
+        <option>Other</option>
       </select>
+      <button onclick="plantInfoContinue()">Continue&nbsp;&nbsp;→</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Email gate ---------- -->
+<div class="card-wrap" id="gateWrap" style="display:none">
+  <div class="card">
+    <div class="gate" id="gateScreen">
+      <h2>Your report is ready</h2>
+      <p>Tell us where to send it — your personalized results appear instantly, right here.</p>
+      <input type="text" id="firstName" placeholder="First name">
+      <input type="email" id="email" placeholder="Email you check frequently">
       <input type="text" id="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true">
       <button onclick="submitGate()">Show My Results&nbsp;&nbsp;→</button>
       <div class="privacy">One report, no spam. We never share your email. [PLACEHOLDER — Jim refines privacy line]</div>
@@ -1833,7 +1843,7 @@
         renderQuestion();
       } else {
         document.getElementById("progressFill").style.width = "100%";
-        gateTimer = setTimeout(showGate, 200);
+        gateTimer = setTimeout(showPlantInfo, 200);
       }
     }, 220);
   }
@@ -1845,9 +1855,23 @@
     renderQuestion();
   }
 
+  // After the last statement: collect general plant info, then the email gate.
+  function showPlantInfo() {
+    if (document.getElementById("resultsScreen").style.display === "block") return;
+    document.getElementById("quizScreen").style.display = "none";
+    document.getElementById("plantInfoWrap").style.display = "block";
+    window.scrollTo(0, 0);
+  }
+
+  function plantInfoContinue() {
+    document.getElementById("plantInfoWrap").style.display = "none";
+    showGate();
+  }
+
   function showGate() {
     if (document.getElementById("resultsScreen").style.display === "block") return;
     document.getElementById("quizScreen").style.display = "none";
+    document.getElementById("plantInfoWrap").style.display = "none";
     document.getElementById("gateWrap").style.display = "block";
     window.scrollTo(0, 0);
   }
@@ -1888,7 +1912,7 @@
           fit: mp.fit,
           role: document.getElementById("role").value,
           industry: document.getElementById("industry").value,
-          companySize: document.getElementById("companySize").value,
+          plantSize: document.getElementById("plantSize").value,
           answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
           website: document.getElementById("website").value
         })
@@ -2385,6 +2409,7 @@
     clearTimeout(gateTimer);
     document.getElementById("landingScreen").style.display = "none";
     document.getElementById("quizScreen").style.display = "none";
+    document.getElementById("plantInfoWrap").style.display = "none";
     document.getElementById("gateWrap").style.display = "none";
     document.getElementById("resultsScreen").style.display = "block";
     setReportHeader(data.id || null);
@@ -2772,6 +2797,7 @@
     answers.length = 0;
     document.getElementById("firstName").value = "";
     document.getElementById("email").value = "";
+    document.getElementById("plantInfoWrap").style.display = "none";
     document.getElementById("gateWrap").style.display = "none";
     document.getElementById("resultsScreen").style.display = "none";
     document.getElementById("quizScreen").style.display = "none";
