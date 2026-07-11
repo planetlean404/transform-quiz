@@ -1350,7 +1350,10 @@
       break-inside: avoid; page-break-inside: avoid;
       break-after: avoid; page-break-after: avoid;
     }
-    .section { padding-top: 6px; }
+    /* Each TOC section starts on its own page (chapter-style). Overview is
+       first and holds the report title, so it stays on page 1. */
+    .section { break-before: page; page-break-before: always; padding-top: 6px; }
+    #sec-overview { break-before: auto; page-break-before: auto; }
     /* Drop the Download section itself from the printout. */
     #sec-download { display: none !important; }
   }
