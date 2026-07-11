@@ -217,9 +217,9 @@
   /* Report's Overview dial runs larger than the landing sample card's,
      since the pill was removed and the dial is now the left column's only
      content — scoped here so the sample card stays its original size. */
-  .overview-left .dial { width: 210px; height: 210px; }
-  .overview-left .dial-text .dial-score { font-size: 56px; }
-  .overview-left .dial-text .dial-of { font-size: 15px; }
+  .overview-left .dial { width: 188px; height: 188px; }
+  .overview-left .dial-text .dial-score { font-size: 52px; }
+  .overview-left .dial-text .dial-of { font-size: 14px; }
 
   /* Sample report card (hero right) — plain white header/footer, grid-bg
      only in the body, matching the PMB reference card structure exactly. */
@@ -820,7 +820,10 @@
     margin-bottom: 14px;
   }
   /* Larger labels in the main report scoring box (not the landing sample). */
-  .overview-left .dial-label { font-size: 14px; }
+  .overview-left .dial-label { font-size: 14px; margin-bottom: 6px; }
+  /* Tighter margins around the dial in the report box (scoped so the landing
+     sample card keeps its own spacing). */
+  .overview-left .dial-row { margin: 2px 0 8px; }
   .overview-bars .bars-title { font-size: 14px; }
   .phase-badge {
     display: inline-block;
@@ -926,7 +929,7 @@
   .cat-pill.dev, .score-pill.dev { color: var(--pl-text); background: #f5be2e; }
   .cat-pill.strong, .score-pill.strong { color: var(--pl-text); background: #4ec583; }
   /* Overall LEAN maturity label pill, centered below the score dial. */
-  .maturity-badge { text-align: center; margin-top: 12px; }
+  .maturity-badge { text-align: center; margin-top: 8px; }
   .maturity-badge-label {
     font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase;
     color: var(--pl-text-muted); margin-bottom: 6px;
@@ -1019,13 +1022,13 @@
   /* Overview: dial + pill on the left, proportional area bars on the right. */
   .overview-left {
     text-align: center;
-    padding: 26px 34px;
+    padding: 16px 34px;
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
   .overview-bars {
-    padding: 26px 24px 22px 38px;
+    padding: 16px 24px 16px 38px;
     display: flex;
     flex-direction: column;
     justify-content: center;
