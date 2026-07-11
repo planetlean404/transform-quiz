@@ -1182,6 +1182,31 @@
     margin-top: 16px;
   }
   .insight-card h3 { margin: 0 0 10px; font-size: 16.5px; color: var(--pl-accent-dark); }
+  /* 30-day plan header (pilot area / objective / metric) + weekly extras + outcome. */
+  .plan-head {
+    background: var(--pl-bg-soft); border: 1px solid var(--pl-border);
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  .plan-meta { font-size: 14px; line-height: 1.5; color: var(--pl-text); margin-bottom: 10px; }
+  .plan-meta:last-child { margin-bottom: 0; }
+  .plan-meta-label {
+    display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--pl-text-muted); margin-bottom: 2px;
+  }
+  .plan-meta strong { font-size: 16px; color: var(--pl-accent-dark); }
+  .plan-extra { display: block; margin-top: 6px; font-size: 13px; line-height: 1.5; color: var(--pl-text-muted); }
+  .plan-extra-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--pl-accent-dark); margin-right: 6px;
+  }
+  .plan-outcome {
+    margin-top: 16px; background: rgba(21,149,211,0.07); border-left: 3px solid var(--pl-accent);
+    border-radius: 6px; padding: 12px 14px; font-size: 14px; line-height: 1.55; color: var(--pl-text);
+  }
+  .plan-outcome-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--pl-accent-dark); margin-right: 6px;
+  }
   .plan-list { list-style: none; margin: 0; padding: 0; }
   .plan-day {
     display: flex;
@@ -1597,7 +1622,10 @@
 
       <section class="section" id="sec-plan">
         <div class="section-head"><span class="section-dash">—</span><span class="section-title">06 / 30-Day Plan</span></div>
+        <p class="section-intro">One pilot area, one PDCA cycle — the first month of your transformation, built to prove the model before you scale it.</p>
+        <div class="plan-head" id="planHead"></div>
         <ol class="plan-list" id="planList"></ol>
+        <div class="plan-outcome" id="planOutcome"></div>
       </section>
 
       <section class="section" id="sec-download">
@@ -2362,14 +2390,18 @@
   function buildPlan(ps) {
     const sorted = [...ps].sort((a, b) => a.roadmap4 - b.roadmap4);
     const weakest = AREA_LABELS[sorted[0].name];
-    const second = AREA_LABELS[sorted[1].name];
-    const strongest = AREA_LABELS[sorted[sorted.length - 1].name];
-    return [
-      { week: 1, tag: weakest, title: "Plan", text: `Pick your weakest area (${weakest}) as this month's pilot. Spend real time on the floor there — watch what's actually happening, not what you assume is happening — and write down one specific gap worth closing first.` },
-      { week: 2, tag: weakest, title: "Do", text: `Close that gap directly: document the fix as real standard work, train the team to it, and post it somewhere visible. Make it a real change, not a demo — the kind that has to survive without you standing there.` },
-      { week: 3, tag: second, title: "Check", text: `Verify the change is actually holding — check it yourself, on the floor, rather than trusting a report. While you're there, visit your strongest area (${strongest}) and write down what makes it work, then apply one piece of that recipe to your second-weakest area (${second}).` },
-      { week: 4, tag: "All", title: "Act", text: `If the fix held, lock it in as the new standard and make the floor time itself permanent — same time, same place, on the calendar. If it didn't fully hold, use what you learned and run the cycle again. Either way, pick the next area and retake this assessment in 90 days to see the shift.` }
-    ];
+    return {
+      pilotArea: weakest,
+      objective: `Close one real ${weakest} gap in a single pilot area within 30 days — proof you can run the cycle before scaling it plant-wide.`,
+      metric: `One before/after measure tied to that gap — for example new-operator training time, defect escapes at the target step, or changeover time in the pilot area.`,
+      weeks: [
+        { week: 1, title: "Plan", tag: weakest, text: `Pick one pilot area and spend real time on the floor there — watch what actually happens, not what you assume. Name the single ${weakest} gap worth closing first and take a baseline of your metric.`, artifact: `A one-page current-state write-up naming the specific gap and its baseline number.`, owner: `Plant/Ops leader with the area's line lead.` },
+        { week: 2, title: "Do", tag: weakest, text: `Close that gap directly: document the fix as real standard work, train the team to it, and post it where the work happens. Make it a real change — the kind that survives without you standing there.`, artifact: `Posted standard work at the pilot station, with the team trained to it.`, owner: `Line lead / team lead.` },
+        { week: 3, title: "Check", tag: weakest, text: `Verify it's holding — check it yourself, on the floor, not from a report. Read your metric against the week-1 baseline and note whether the standard is actually being followed.`, artifact: `A short check confirming adherence and the metric's movement vs. baseline.`, owner: `Area supervisor.` },
+        { week: 4, title: "Act", tag: "All", text: `If it held, lock it in as the standard and put the floor time on the calendar — same time, same place, permanently. If it didn't fully hold, use what you learned and run the cycle again.`, artifact: `The gap closed and standardized, or a documented next iteration.`, owner: `Plant/Ops leader.` }
+      ],
+      outcome: `You'll have one ${weakest} gap closed and holding in a pilot area, with a metric that proves it — the repeatable pattern you scale across the plant in the months that follow.`
+    };
   }
 
   // ---------- Results ----------
@@ -2666,13 +2698,25 @@
     // to the best-fit profile's first-30-days template + this plant's actual
     // scoring); fall back to the static buildPlan when it's absent (older
     // report link or a failed generation).
-    const aiPlan = Array.isArray(data.plan) && data.plan.length === 4 ? data.plan : null;
-    const planWeeks = aiPlan
-      ? aiPlan.map(w => ({ week: w.week, title: w.title, tag: w.tag || w.focus || "", text: w.text }))
+    const plan = (data.plan && Array.isArray(data.plan.weeks) && data.plan.weeks.length === 4)
+      ? data.plan
       : buildPlan(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
-    document.getElementById("planList").innerHTML = planWeeks.map(w =>
-      `<li class="plan-day"><span class="day-num">Week ${w.week}</span><span class="plan-body"><strong>${w.title}.</strong> ${w.text}${w.tag ? `<span class="plan-tag">${w.tag}</span>` : ""}</span></li>`
+    document.getElementById("planHead").innerHTML = `
+      <div class="plan-meta"><span class="plan-meta-label">Pilot area</span><strong>${plan.pilotArea || ""}</strong></div>
+      <div class="plan-meta"><span class="plan-meta-label">30-day objective</span>${plan.objective || ""}</div>
+      <div class="plan-meta"><span class="plan-meta-label">Track this</span>${plan.metric || ""}</div>`;
+    document.getElementById("planList").innerHTML = plan.weeks.map(w =>
+      `<li class="plan-day">
+        <span class="day-num">Week ${w.week}</span>
+        <span class="plan-body">
+          <strong>${w.title}.</strong> ${w.text}
+          ${w.artifact ? `<span class="plan-extra"><span class="plan-extra-label">Deliverable</span> ${w.artifact}</span>` : ""}
+          ${w.owner ? `<span class="plan-extra"><span class="plan-extra-label">Owner</span> ${w.owner}</span>` : ""}
+        </span>
+      </li>`
     ).join("");
+    document.getElementById("planOutcome").innerHTML = plan.outcome
+      ? `<span class="plan-outcome-label">By day 30</span> ${plan.outcome}` : "";
   }
 
   // Toggle a collapsible category box (Insights + Strengths).

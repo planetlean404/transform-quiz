@@ -191,31 +191,44 @@ ${redLines}`;
 }
 
 async function generatePlan(profile, answers, principleMaturity, ctx) {
-  if (!Array.isArray(answers) || !answers.length) return [];
+  if (!Array.isArray(answers) || !answers.length) return {};
 
   const system = `You write the 30-day plan for a lean-manufacturing plant assessment report, for a plant manager reading their own results.
 
-Produce a focused 4-week plan structured as one PDCA cycle: Week 1 = Plan, Week 2 = Do, Week 3 = Check, Week 4 = Act. Start from the best-fit profile's first-30-days template provided, but ADAPT it to this specific plant — name the plant's actual weakest area(s) and bite on its specific red statements rather than staying generic. One pilot area, one 30-day cycle.
+Produce a focused, runnable 30-day project: ONE pilot area, ONE PDCA cycle (Week 1 = Plan, Week 2 = Do, Week 3 = Check, Week 4 = Act). Start from the best-fit profile's first-30-days template provided, but ADAPT it to this specific plant — name the actual weakest area and bite on its specific red statements rather than staying generic. This is month 1 of a longer transformation, so it should read like a real project a plant manager could hand to a team on Monday.
 
-For each week write:
-- "week": the number (1–4).
-- "title": exactly "Plan", "Do", "Check", or "Act" for weeks 1–4 respectively.
-- "tag": the short report label of the single area that week focuses on — one of: Standards, People, Logistics, Quality, Continuous Improvement (or "All" for a whole-plant week).
-- "text": 2-3 sentences, concrete and specific to this plant. Direct, plainspoken, second-person ("you", "your team"). No preamble.
+Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
+{
+ "pilotArea": "the single area to focus — one of: Standards, People, Logistics, Quality, Continuous Improvement (normally the weakest)",
+ "objective": "one sentence: the concrete 30-day goal for the pilot area",
+ "metric": "the single before/after measure to track (e.g., defect escapes at one step, changeover time, new-operator training time) — one specific measure, not a list",
+ "weeks": [
+   {"week":1,"title":"Plan","tag":"<area>","text":"2-3 sentences, concrete and specific, second-person","artifact":"the tangible thing that exists by end of week (a document, a posted standard, a check) — one short phrase","owner":"who runs it — a role, e.g., 'Line lead + area supervisor'"},
+   {"week":2,"title":"Do","tag":"<area>","text":"...","artifact":"...","owner":"..."},
+   {"week":3,"title":"Check","tag":"<area>","text":"...","artifact":"...","owner":"..."},
+   {"week":4,"title":"Act","tag":"<area or All>","text":"...","artifact":"...","owner":"..."}
+ ],
+ "outcome": "1-2 sentences: what the plant manager will see if this worked — the proof point, and the pattern they'll carry into month 2. Do NOT begin with 'By day 30' — that label is added automatically."
+}
 
-Tone example: "Pick your weakest area (Standards) as this month's pilot. Spend real time on the floor there — watch what's actually happening, not what you assume is happening — and write down one specific gap worth closing first."
+Tone: direct, plainspoken, second-person ("you", "your team"). No preamble, no filler. Every field specific to THIS plant's weakest area and red statements.` + flavorInstruction(ctx);
 
-Return ONLY valid JSON, no markdown fences, no commentary — an array of exactly 4 objects:
-[{"week":1,"title":"Plan","tag":"...","text":"..."},{"week":2,"title":"Do","tag":"...","text":"..."},{"week":3,"title":"Check","tag":"...","text":"..."},{"week":4,"title":"Act","tag":"...","text":"..."}]` + flavorInstruction(ctx);
-
-  const parsed = await callAnthropicJSON(system, buildPlanPrompt(profile, answers, principleMaturity), 1200);
-  if (!Array.isArray(parsed) || parsed.length !== 4) throw new Error('plan-bad-shape');
-  return parsed.map(w => ({
-    week: Number(w.week),
-    title: String(w.title || ''),
-    tag: String(w.tag || ''),
-    text: String(w.text || '')
-  }));
+  const parsed = await callAnthropicJSON(system, buildPlanPrompt(profile, answers, principleMaturity), 1600);
+  if (!parsed || !Array.isArray(parsed.weeks) || parsed.weeks.length !== 4) throw new Error('plan-bad-shape');
+  return {
+    pilotArea: String(parsed.pilotArea || ''),
+    objective: String(parsed.objective || ''),
+    metric: String(parsed.metric || ''),
+    weeks: parsed.weeks.map(w => ({
+      week: Number(w.week),
+      title: String(w.title || ''),
+      tag: String(w.tag || ''),
+      text: String(w.text || ''),
+      artifact: String(w.artifact || ''),
+      owner: String(w.owner || '')
+    })),
+    outcome: String(parsed.outcome || '')
+  };
 }
 
 // ─── Google Sheets (JWT + append) ────────────────────────────────────────────
@@ -281,7 +294,7 @@ async function updateAiCells(sheetId, accessToken, rowNumber, categoryText, plan
     body: JSON.stringify({
       valueInputOption: 'RAW',
       data: [
-        { range: `${SHEET_TAB}!U${rowNumber}:V${rowNumber}`, values: [[JSON.stringify(categoryText || {}), JSON.stringify(plan || [])]] },
+        { range: `${SHEET_TAB}!U${rowNumber}:V${rowNumber}`, values: [[JSON.stringify(categoryText || {}), JSON.stringify(plan || {})]] },
         { range: `${SHEET_TAB}!Z${rowNumber}`, values: [[aiStatus || '']] }
       ]
     })
@@ -502,7 +515,7 @@ async function main(event) {
       v.maturity,
       ...v.principleMaturity.map(p => Number(p.maturity)),
       '{}',
-      '[]',
+      '{}',
       v.plantSize,
       v.industry,
       v.role
@@ -515,7 +528,7 @@ async function main(event) {
         generatePlan(v.profile, event.answers, v.principleMaturity, ctx)
       ]);
       const categoryText = catResult.status === 'fulfilled' ? catResult.value : {};
-      const plan = planResult.status === 'fulfilled' ? planResult.value : [];
+      const plan = planResult.status === 'fulfilled' ? planResult.value : {};
       if (catResult.status === 'rejected') console.error('Category text generation failed (non-fatal, static fallback):', catResult.reason && catResult.reason.message);
       if (planResult.status === 'rejected') console.error('Plan generation failed (non-fatal, static fallback):', planResult.reason && planResult.reason.message);
       // Human-readable status for the sheet's ai_status column (col Z).
@@ -524,7 +537,7 @@ async function main(event) {
         ? (Object.keys(categoryText).length ? 'ok' : 'empty')
         : `FAIL(${shortErr(catResult)})`;
       const planPart = planResult.status === 'fulfilled'
-        ? (plan.length ? 'ok' : 'empty')
+        ? (plan && plan.weeks && plan.weeks.length ? 'ok' : 'empty')
         : `FAIL(${shortErr(planResult)})`;
       const aiStatus = (catPart === 'ok' && planPart === 'ok') ? 'ok' : `category:${catPart} | plan:${planPart}`;
       // Always write — so a total failure (both empty) still records its status.
