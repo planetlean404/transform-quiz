@@ -1008,7 +1008,7 @@
     color: var(--pl-text-muted); margin-bottom: 4px;
   }
   .profile-fit-name { font-size: 26px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.15; }
-  .profile-fit-tagline { font-size: 14px; color: var(--pl-text-muted); margin-top: 4px; line-height: 1.4; }
+  .profile-fit-tagline { font-size: 14px; color: #566573; margin-top: 4px; line-height: 1.4; }
   /* Match-confidence indicator under the profile name — a thin fill bar tinted
      by tier plus a "NN% match" line naming the runner-up when it's not strong. */
   .profile-confidence { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
@@ -1022,11 +1022,18 @@
   .conf-strong .conf-bar-fill { background: #4ec583; }
   .conf-good   .conf-bar-fill { background: #f5be2e; }
   .conf-blended .conf-bar-fill { background: #94a2ac; }
+  /* Whole profile body in a gray box (starts below the confidence number). */
+  .profile-detail {
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
   .profile-lead { font-size: 15px; line-height: 1.6; color: var(--pl-text); margin: 0 0 18px; }
   .profile-block { margin-top: 18px; }
   .profile-block-label {
     font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--pl-text-muted); margin-bottom: 8px;
+    color: var(--pl-accent-dark); margin-bottom: 8px;
   }
   .profile-looks { margin: 0; padding-left: 20px; }
   .profile-looks li { font-size: 14px; line-height: 1.5; color: var(--pl-text); margin-bottom: 7px; }
