@@ -1629,9 +1629,10 @@
       <a href="#sec-summaries"><span class="toc-num">02</span>Category Highlights</a>
       <a href="#sec-deep"><span class="toc-num">03</span>Deep Insights</a>
       <a href="#sec-roadmap"><span class="toc-num">04</span>Roadmap</a>
-      <a href="#sec-profile"><span class="toc-num">05</span>Best-Fit Profile</a>
-      <a href="#sec-plan"><span class="toc-num">06</span>30-Day Plan</a>
-      <a href="#sec-download"><span class="toc-num">07</span>Download</a>
+      <a href="#sec-comparison"><span class="toc-num">05</span>Industry Comparison</a>
+      <a href="#sec-profile"><span class="toc-num">06</span>Best-Fit Profile</a>
+      <a href="#sec-plan"><span class="toc-num">07</span>30-Day Plan</a>
+      <a href="#sec-download"><span class="toc-num">08</span>Download</a>
     </aside>
 
     <main class="report-main">
@@ -1691,8 +1692,14 @@
         <div class="narrative" id="narrative"></div>
       </section>
 
+      <section class="section" id="sec-comparison">
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">05 / Industry Comparison</span></div>
+        <p class="section-intro" id="cmpIntro"></p>
+        <div id="cmpBody"></div>
+      </section>
+
       <section class="section" id="sec-profile">
-        <div class="section-head"><span class="section-dash">—</span><span class="section-title">05 / Best-Fit Profile</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">06 / Best-Fit Profile</span></div>
         <p class="section-intro">Plants that score like yours tend to share the same story. Here's your best-fit profile — what it looks like on the floor, and why it happens.</p>
         <div class="profile-card">
           <div class="profile-fit" id="profileFit"></div>
@@ -1701,7 +1708,7 @@
       </section>
 
       <section class="section" id="sec-plan">
-        <div class="section-head"><span class="section-dash">—</span><span class="section-title">06 / 30-Day Plan</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">07 / 30-Day Plan</span></div>
         <p class="section-intro">One pilot area, one PDCA cycle — the first month of your transformation, built to prove the model before you scale it.</p>
         <div class="plan-head" id="planHead"></div>
         <ol class="plan-list" id="planList"></ol>
@@ -1709,7 +1716,7 @@
       </section>
 
       <section class="section" id="sec-download">
-        <div class="section-head"><span class="section-dash">—</span><span class="section-title">07 / Download</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">08 / Download</span></div>
         <div class="cta-row">
           <button class="cta-primary" onclick="downloadPdf()">Download PDF Report</button>
           <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
@@ -1749,21 +1756,6 @@
       <p class="section-intro" id="sixArc"></p>
       <div class="months-list" id="monthsList"></div>
       <div class="plan-outcome" id="sixDestination"></div>
-    </section>
-  </div>
-</div>
-
-<!-- ---------- Industry Comparison (email-only view: /r/{id}?v=comparison) ---------- -->
-<div class="results" id="comparisonScreen" style="display:none">
-  <div class="report-main plan-standalone">
-    <section class="section" id="sec-comparison">
-      <div class="results-header">
-        <h2 id="cmpReportTitle"></h2>
-        <div class="hero-date" id="cmpReportDate"></div>
-      </div>
-      <div class="section-head"><span class="section-dash">—</span><span class="section-title" id="cmpSectionTitle">Industry Comparison</span></div>
-      <p class="section-intro" id="cmpIntro"></p>
-      <div id="cmpBody"></div>
     </section>
   </div>
 </div>
@@ -2624,48 +2616,25 @@
       ? `<span class="plan-outcome-label">Where you'll be</span> ${six.destination}` : "";
   }
 
-  // ---------- Industry comparison view (email-only: /r/{id}?v=comparison) ----------
-  function renderComparison(data) {
-    document.getElementById("landingScreen").style.display = "none";
-    document.getElementById("resultsScreen").style.display = "none";
-    document.getElementById("planScreen").style.display = "none";
-    document.getElementById("comparisonScreen").style.display = "block";
-    setReportHeader(data.id || null);
-    window.scrollTo(0, 0);
-
-    let reportDate = new Date(data.date);
-    if (isNaN(reportDate)) reportDate = new Date(String(data.date || "").replace(/,\s*\d{1,2}:\d{2}.*$/i, "").trim());
-    if (isNaN(reportDate)) reportDate = new Date();
-    document.getElementById("cmpReportTitle").textContent = `${data.firstName}, how your plant compares`;
-    document.getElementById("cmpReportDate").textContent = reportDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-
-    const industry = data.industry || "";
+  // ---------- Industry comparison (section 05 of the scorecard report) ----------
+  // Fills #cmpIntro + #cmpBody from the plant's areas and the industry average.
+  function fillComparison(industry, avg, areas, total100) {
     const industryLabel = (industry && industry !== "Other") ? industry : "manufacturing";
-    document.getElementById("cmpSectionTitle").textContent = `Industry Comparison${(industry && industry !== "Other") ? " — " + industry : ""}`;
-    document.getElementById("cmpIntro").textContent = `How your plant stacks up against a typical ${industryLabel} plant. This is the industry average — the middle of the pack, not a best-in-class target.`;
-
-    const maturityByName = {};
-    (data.principleMaturity || []).forEach(p => maturityByName[p.name] = p.maturity);
-    const areas = (data.principles || []).map(p => ({
-      name: p.name, label: AREA_LABELS[p.name] || p.name,
-      score100: maturityByName[p.name] != null ? maturityByName[p.name] : 0
-    }));
-    const total100 = data.maturity != null ? data.maturity : Math.round(areas.reduce((a, x) => a + x.score100, 0) / (areas.length || 1));
-    const avg = data.industryAverage;
+    const introEl = document.getElementById("cmpIntro");
+    const bodyEl = document.getElementById("cmpBody");
+    if (!introEl || !bodyEl) return;
+    introEl.textContent = `How your plant stacks up against a typical ${industryLabel} plant. This is the industry average — the middle of the pack, not a best-in-class target.`;
 
     if (!Array.isArray(avg) || avg.length < 6) {
-      document.getElementById("cmpBody").innerHTML =
-        `<p class="cmp-none">An industry comparison isn't available for this plant yet.</p>`;
+      bodyEl.innerHTML = `<p class="cmp-none">An industry comparison isn't available for this plant.</p>`;
       return;
     }
-
     const deltaEl = d => {
       const cls = d > 0 ? "up" : (d < 0 ? "down" : "even");
       const sign = d > 0 ? "+" : "";
       return `<span class="cmp-delta ${cls}">${sign}${d}</span>`;
     };
     const overallAvg = Math.round(Number(avg[5]));
-    const overallDelta = total100 - overallAvg;
     const rows = areas.map((a, i) => {
       const av = Math.round(Number(avg[i]));
       const d = a.score100 - av;
@@ -2680,18 +2649,28 @@
           <div class="cmp-nums"><span class="cmp-you">${a.score100}</span><span class="cmp-avg-num"> · avg ${av}</span>${deltaEl(d)}</div>
         </div>`;
     }).join("");
-
-    document.getElementById("cmpBody").innerHTML = `
+    bodyEl.innerHTML = `
       <div class="cmp-overall">
         <div class="cmp-overall-label">Overall maturity vs the industry average</div>
         <div class="cmp-overall-row">
           <span class="cmp-overall-you">You <strong>${total100}</strong></span>
           <span class="cmp-overall-avg">Typical ${industryLabel} plant <strong>${overallAvg}</strong></span>
-          ${deltaEl(overallDelta)}
+          ${deltaEl(total100 - overallAvg)}
         </div>
       </div>
       <div class="cmp-list">${rows}</div>
       <div class="cmp-legend"><span class="cmp-legend-marker"></span> The marker on each bar is the ${industryLabel} industry average.</div>`;
+  }
+
+  // Instant view has no industryAverage in-hand — fetch just the average for
+  // this industry (fast; doesn't wait on the full submit) and fill.
+  async function fetchAndFillComparison(industry, areas, total100) {
+    if (!industry) { fillComparison(industry, null, areas, total100); return; }
+    try {
+      const res = await fetch(`${API_BASE}/report?avg=${encodeURIComponent(industry)}`);
+      const out = await res.json();
+      fillComparison(industry, out.industryAverage, areas, total100);
+    } catch (e) { fillComparison(industry, null, areas, total100); }
   }
 
   // ---------- Results ----------
@@ -2706,6 +2685,9 @@
       maturity: to100(overallMaturity10(ps)),
       principleMaturity: psMat,
       pattern: matchProfile(psMat).patternKey,
+      // Industry drives the on-scorecard comparison; the instant view has no
+      // stored average yet, so renderReport fetches it for this industry.
+      industry: document.getElementById("industry").value,
       // Per-statement answers drive the Insights statement-level drill-down.
       // Available directly on the live post-quiz view; the shared /r/ link
       // gets the same array back from the report API.
@@ -2793,6 +2775,12 @@
         </div>
         <div class="bar-score">${a.score100}</div>
       </div>`).join("");
+
+    // 05 — Industry comparison. A shared /r/ link returns the average with the
+    // report; the instant post-quiz view fetches just the average for the
+    // plant's industry.
+    if (Array.isArray(data.industryAverage)) fillComparison(data.industry || "", data.industryAverage, areas, total100);
+    else fetchAndFillComparison(data.industry || "", areas, total100);
 
     // Per-statement maturity from the answers — drives both the Category
     // Summaries Good/Opportunity selection and the Deep Insights drill-down.
@@ -3223,7 +3211,6 @@
       if (out.ok) {
         const view = new URLSearchParams(location.search).get("v");
         if (view === "plan") renderPlanReport(out);
-        else if (view === "comparison") renderComparison(out);
         else renderReport(out);
         return;
       }

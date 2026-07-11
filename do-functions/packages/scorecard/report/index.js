@@ -67,6 +67,24 @@ async function main(event) {
   const method = (event.__ow_method || '').toLowerCase();
   if (method === 'options') return { statusCode: 200, headers: corsHeaders() };
 
+  // Lightweight industry-average lookup: ?avg=<industry>. Used by the instant
+  // scorecard view (the report row doesn't exist yet) so it can show the
+  // comparison without waiting on the full submit. No id required.
+  const avgQuery = String(event.avg || '').trim();
+  if (avgQuery) {
+    try {
+      const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
+      const token = await getAccessToken(sa);
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${encodeURIComponent('Industry Averages!A2:G100')}`;
+      const rows = ((await (await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })).json()).values) || [];
+      const match = rows.find(r => (r[0] || '').trim() === avgQuery);
+      const industryAverage = (match && match.length >= 7) ? match.slice(1, 7).map(v => Number(v)) : null;
+      return { statusCode: 200, headers: corsHeaders(), body: { ok: true, industry: avgQuery, industryAverage } };
+    } catch (e) {
+      return { statusCode: 200, headers: corsHeaders(), body: { ok: true, industry: avgQuery, industryAverage: null } };
+    }
+  }
+
   const id = String(event.id || '').trim();
   // rpa- is the current Rapid Plant Assessment prefix; pl- kept for reports
   // stored before the rebrand so old links keep working.
