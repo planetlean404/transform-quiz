@@ -1209,6 +1209,13 @@
   }
   /* 6-Month plan standalone view (email-only). */
   .plan-standalone { max-width: 860px; margin: 0 auto; padding: 0 24px 60px; }
+  .recap-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .recap-item { background: var(--pl-bg-soft); border: 1px solid var(--pl-border); border-radius: 10px; padding: 14px 16px; }
+  .recap-label { font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--pl-text-muted); margin-bottom: 4px; }
+  .recap-value { font-size: 17px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.2; }
+  .recap-sub { font-size: 13px; line-height: 1.45; color: var(--pl-text-muted); margin-top: 4px; }
+  .plan-recap-divider { margin-top: 30px; }
+  @media (max-width: 640px) { .recap-strip { grid-template-columns: 1fr; } }
   .months-list { margin-top: 4px; }
   .month-card {
     display: flex; gap: 16px; align-items: flex-start;
@@ -1684,7 +1691,24 @@
         <h2 id="planReportTitle"></h2>
         <div class="hero-date" id="planReportDate"></div>
       </div>
-      <div class="section-head"><span class="section-dash">—</span><span class="section-title">6-Month Transformation Plan</span></div>
+      <!-- Scorecard recap so the plan stands on its own in the email link. -->
+      <div class="score-card">
+        <div class="sc-header">Your Scorecard Recap</div>
+        <div class="overview-left grid-bg">
+          <div class="dial-label">LEAN maturity score</div>
+          <div class="dial-row" id="planBigScore"></div>
+          <div class="maturity-badge" id="planMaturityBadge"></div>
+        </div>
+        <div class="overview-bars">
+          <div class="bars-title">Category scores</div>
+          <div id="planBreakdownList"></div>
+        </div>
+      </div>
+      <div class="recap-strip">
+        <div class="recap-item" id="planGap"></div>
+        <div class="recap-item" id="planProfile"></div>
+      </div>
+      <div class="section-head plan-recap-divider"><span class="section-dash">—</span><span class="section-title">6-Month Transformation Plan</span></div>
       <p class="section-intro" id="sixArc"></p>
       <div class="months-list" id="monthsList"></div>
       <div class="plan-outcome" id="sixDestination"></div>
@@ -2499,6 +2523,36 @@
     if (isNaN(reportDate)) reportDate = new Date();
     document.getElementById("planReportTitle").textContent = `${data.firstName}, your 6-month transformation plan`;
     document.getElementById("planReportDate").textContent = reportDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+    // Scorecard recap — reuses the scorecard's dial, pill, bars, gap + profile.
+    const maturityByName = {};
+    (data.principleMaturity || []).forEach(p => maturityByName[p.name] = p.maturity);
+    const areas = (data.principles || []).map(p => ({
+      name: p.name, label: AREA_LABELS[p.name] || p.name, roadmap4: p.score,
+      score100: maturityByName[p.name] != null ? maturityByName[p.name] : 0
+    }));
+    const total100 = data.maturity != null ? data.maturity : Math.round(areas.reduce((a, x) => a + x.score100, 0) / (areas.length || 1));
+    document.getElementById("planBigScore").innerHTML = buildScoreDialSVG(total100);
+    const mb = maturityBand(total100);
+    document.getElementById("planMaturityBadge").innerHTML = `<div class="maturity-badge-label">Where You Stand</div><span class="score-pill ${mb.cls}">${mb.label}</span>`;
+    document.getElementById("planBreakdownList").innerHTML = areas.map(a => `
+      <div class="bar-row">
+        <img class="bar-icon" src="${AREA_ICONS[a.name]}" alt="">
+        <div class="bar-name">${BAR_LABELS[a.name] || a.label}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${a.score100}%;background:${bandColor(a.score100)}"></div>
+          <div class="bar-tick" style="left:50%"></div>
+          <div class="bar-tick" style="left:80%"></div>
+        </div>
+        <div class="bar-score">${a.score100}</div>
+      </div>`).join("");
+    const gap = pickBiggestGap(areas);
+    document.getElementById("planGap").innerHTML =
+      `<div class="recap-label">Biggest gap</div><div class="recap-value" style="color:${bandColor(gap.score100)}">${gap.label}</div><div class="recap-sub">${gap.score100} out of 100 — your lowest-scoring category, and where this plan starts.</div>`;
+    const mp = matchProfile(areas.map(a => ({ name: a.name, maturity: a.score100 })));
+    const prof = PROFILE_CONTENT[mp.name];
+    document.getElementById("planProfile").innerHTML =
+      `<div class="recap-label">Best-fit profile</div><div class="recap-value">${mp.name}</div><div class="recap-sub">${prof ? prof.tagline : ""}</div>`;
 
     const psMat = (data.principleMaturity || []).map(p => ({ name: p.name, maturity: p.maturity }));
     const six = (data.plan6 && Array.isArray(data.plan6.months) && data.plan6.months.length === 6)
