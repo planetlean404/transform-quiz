@@ -1217,17 +1217,17 @@
   .plan-recap-divider { margin-top: 30px; }
   @media (max-width: 640px) { .recap-strip { grid-template-columns: 1fr; } }
 
-  /* Industry comparison view (email-only). */
-  .cmp-overall {
-    background: var(--pl-bg-soft); border: 1px solid var(--pl-border);
-    border-radius: 10px; padding: 16px 18px; margin-bottom: 20px;
-  }
-  .cmp-overall-label { font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--pl-text-muted); margin-bottom: 8px; }
+  /* Industry comparison — two-shaded card (darker header / lighter body),
+     matching the best-fit profile card. */
+  .cmp-card { border: 1px solid var(--pl-border); border-radius: 12px; overflow: hidden; margin-top: 4px; }
+  .cmp-card-header { background: #eaedf0; padding: 15px 20px; border-bottom: 1px solid var(--pl-border); }
+  .cmp-card-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #566573; margin-bottom: 8px; }
+  .cmp-card-body { background: var(--pl-bg-soft); padding: 14px 20px 16px; }
   .cmp-overall-row { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; font-size: 15px; color: var(--pl-text); }
   .cmp-overall-you strong { font-size: 22px; color: var(--pl-accent-dark); }
-  .cmp-overall-avg { color: var(--pl-text-muted); }
+  .cmp-overall-avg { color: #566573; }
   .cmp-overall-avg strong { font-size: 18px; color: var(--pl-accent-dark); }
-  .cmp-list { margin-top: 4px; }
+  .cmp-list { margin-top: 2px; }
   .cmp-row {
     display: grid; grid-template-columns: 28px 110px 1fr auto; gap: 12px;
     align-items: center; padding: 12px 0; border-bottom: 1px solid var(--pl-border);
@@ -2650,16 +2650,20 @@
         </div>`;
     }).join("");
     bodyEl.innerHTML = `
-      <div class="cmp-overall">
-        <div class="cmp-overall-label">Overall maturity vs the industry average</div>
-        <div class="cmp-overall-row">
-          <span class="cmp-overall-you">You <strong>${total100}</strong></span>
-          <span class="cmp-overall-avg">Typical ${industryLabel} plant <strong>${overallAvg}</strong></span>
-          ${deltaEl(total100 - overallAvg)}
+      <div class="cmp-card">
+        <div class="cmp-card-header">
+          <div class="cmp-card-eyebrow">Overall maturity vs the industry average</div>
+          <div class="cmp-overall-row">
+            <span class="cmp-overall-you">You <strong>${total100}</strong></span>
+            <span class="cmp-overall-avg">Typical ${industryLabel} plant <strong>${overallAvg}</strong></span>
+            ${deltaEl(total100 - overallAvg)}
+          </div>
         </div>
-      </div>
-      <div class="cmp-list">${rows}</div>
-      <div class="cmp-legend"><span class="cmp-legend-marker"></span> The marker on each bar is the ${industryLabel} industry average.</div>`;
+        <div class="cmp-card-body">
+          <div class="cmp-list">${rows}</div>
+          <div class="cmp-legend"><span class="cmp-legend-marker"></span> The marker on each bar is the ${industryLabel} industry average.</div>
+        </div>
+      </div>`;
   }
 
   // Instant view has no industryAverage in-hand — fetch just the average for
