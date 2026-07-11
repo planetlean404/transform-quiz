@@ -1215,6 +1215,8 @@
   .recap-value { font-size: 17px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.2; }
   .recap-sub { font-size: 13px; line-height: 1.45; color: var(--pl-text-muted); margin-top: 4px; }
   .plan-recap-divider { margin-top: 30px; }
+  .plan-book-note { margin-top: 24px; font-size: 15px; line-height: 1.55; color: var(--pl-text); }
+  .plan-actions { margin-top: 12px; }
   @media (max-width: 640px) { .recap-strip { grid-template-columns: 1fr; } }
 
   /* Industry comparison — two-shaded card (darker header / lighter body),
@@ -1420,9 +1422,13 @@
       break-after: avoid; page-break-after: avoid;
     }
     /* Each TOC section starts on its own page (chapter-style). Overview is
-       first and holds the report title, so it stays on page 1. */
+       first and holds the report title, so it stays on page 1. The 6-month
+       plan is a single-section standalone page, so it stays on page 1 too. */
     .section { break-before: page; page-break-before: always; padding-top: 6px; }
-    #sec-overview { break-before: auto; page-break-before: auto; }
+    #sec-overview, #sec-sixmonth { break-before: auto; page-break-before: auto; }
+    .month-card, .recap-strip, .cmp-card { page-break-inside: avoid; break-inside: avoid; }
+    /* Plan-view action buttons / booking note don't belong in the PDF. */
+    .plan-book-note, .plan-actions { display: none !important; }
     /* Drop the Download section itself from the printout. */
     #sec-download { display: none !important; }
   }
@@ -1719,7 +1725,7 @@
         <div class="section-head"><span class="section-dash">—</span><span class="section-title">08 / Download</span></div>
         <div class="cta-row">
           <button class="cta-primary" onclick="downloadPdf()">Download PDF Report</button>
-          <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
+          <button class="cta-secondary" onclick="window.open('https://www.planetlean.com/rpa-book','_blank','noopener')">Book a Plant Assessment</button>
         </div>
         <p class="download-note">Opens your browser's print dialog — choose <strong>Save as PDF</strong> as the destination to download your full scoring report.</p>
       </section>
@@ -1756,6 +1762,11 @@
       <p class="section-intro" id="sixArc"></p>
       <div class="months-list" id="monthsList"></div>
       <div class="plan-outcome" id="sixDestination"></div>
+      <p class="plan-book-note">This is a real transformation — and you don't have to run it alone. A planet LEAN plant assessment turns this roadmap into action on your floor.</p>
+      <div class="cta-row plan-actions">
+        <button class="cta-primary" onclick="window.open('https://www.planetlean.com/rpa-book','_blank','noopener')">Book a Plant Assessment</button>
+        <button class="cta-secondary" onclick="downloadPdf()">Download PDF</button>
+      </div>
     </section>
   </div>
 </div>
@@ -2560,6 +2571,9 @@
     document.getElementById("resultsScreen").style.display = "none";
     document.getElementById("planScreen").style.display = "block";
     setReportHeader(data.id || null);
+    // Plan-appropriate PDF filename (setReportHeader defaulted it to the
+    // scorecard name).
+    pdfFileName = "6-Month Plan" + (data.id ? " - " + data.id : "");
     window.scrollTo(0, 0);
 
     let reportDate = new Date(data.date);
