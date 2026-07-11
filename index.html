@@ -559,6 +559,17 @@
     color: var(--pl-text-muted);
     margin-bottom: 22px;
   }
+  .quiz-frame {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--pl-text-muted);
+    background: var(--pl-bg-soft);
+    border-left: 3px solid var(--pl-accent);
+    border-radius: 6px;
+    padding: 11px 14px;
+    margin-bottom: 22px;
+  }
+  .quiz-frame strong { color: var(--pl-accent-dark); font-weight: 700; }
   .quiz-anim { animation: qfade 0.25s ease; }
   @keyframes qfade {
     from { opacity: 0; transform: translateY(8px); }
@@ -1331,6 +1342,7 @@
   <div class="card">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-label" id="progressLabel">Statement 1 of 20</div>
+    <div class="quiz-frame">Answer for how <strong>consistently this actually happens</strong> across your plant &mdash; not how good you think you are. Every plant is a work in progress; there&rsquo;s always room to improve.</div>
     <div class="quiz-anim" id="quizBody">
       <div class="statement" id="questionText"></div>
       <div class="statement-prompt">How true is this in your plant today?</div>
@@ -1796,6 +1808,16 @@
     return Math.min(3, Math.floor(r4) - 1);
   }
 
+  // Overall LEAN maturity band (0–100) → status pill label + class. Shared by
+  // the report scoring box and the landing-page sample card so both show the
+  // same "where you stand" pill (not a roadmap phase).
+  function maturityBand(total100) {
+    if (total100 >= 100) return { label: "Benchmark", cls: "strong" };
+    if (total100 >= 80) return { label: "Building Momentum", cls: "strong" };
+    if (total100 >= 50) return { label: "Gaining Traction", cls: "dev" };
+    return { label: "Early Stage", cls: "gap" };
+  }
+
   function formatScore(score) {
     const truncated = Math.floor(score * 100) / 100;
     return String(truncated);
@@ -2224,10 +2246,7 @@
     document.getElementById("bigScore").innerHTML = buildScoreDialSVG(total100);
     // Overall LEAN maturity label — same bands as the category pills, plus a
     // perfect-score Benchmark (all statements at the top of the scale).
-    const mb = total100 >= 100 ? { label: "Benchmark", cls: "strong" }
-      : total100 >= 80 ? { label: "Building Momentum", cls: "strong" }
-      : total100 >= 50 ? { label: "Gaining Traction", cls: "dev" }
-      : { label: "Early Stage", cls: "gap" };
+    const mb = maturityBand(total100);
     document.getElementById("maturityBadge").innerHTML = `<div class="maturity-badge-label">Where You Stand</div><span class="score-pill ${mb.cls}">${mb.label}</span>`;
     document.getElementById("breakdownList").innerHTML = areas.map(a => `
       <div class="bar-row">
@@ -2609,11 +2628,11 @@
   // are each a separate hardcoded demo value rather than derived from one another.
   (function initSampleCard() {
     const sampleScore = 32; // maturity dial demo value
-    const sampleRoadmap4 = 1.4; // raw 0–4 roadmap demo value → Formative (<2)
     document.getElementById("sampleDialRow").innerHTML = buildScoreDialSVG(sampleScore);
-    const pill = buildPill(sampleRoadmap4);
+    // Same maturity status pill as the real report scoring box (32 → Early Stage).
+    const mb = maturityBand(sampleScore);
     document.getElementById("samplePillRow").innerHTML =
-      `<span class="score-pill" style="background:${pill.color}">${pill.label}</span>`;
+      `<span class="score-pill ${mb.cls}">${mb.label}</span>`;
     // Same 5 demo category scores as before (Standards/Quality/People/
     // Logistics/CI) — segment length = score%, color = its band, icon
     // above each bar ties it to that category.
