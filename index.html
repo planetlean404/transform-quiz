@@ -1240,6 +1240,8 @@
     border-radius: 6px;
     padding: 10px 12px;
   }
+  .download-note { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--pl-text-muted); }
+  .download-note strong { color: var(--pl-accent-dark); }
   .reset {
     display: block;
     margin: 8px auto 24px;
@@ -1293,6 +1295,31 @@
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
     .area-card:last-child { border-bottom: none; }
     .how-it-works h2, .final-cta h2 { font-size: 21px; }
+  }
+
+  /* ---------- Print / "Download PDF" (scoring report) ---------- */
+  @media print {
+    @page { margin: 14mm 12mm; }
+    /* Print the exact colors (dial, bars, pills, tinted boxes). */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    /* Hide app chrome that doesn't belong in the PDF. */
+    .topbar, .toc, .reset, .curve-toggle, .cta-row, .placeholder-note,
+    .section-dash, #plantInfoWrap, #gateWrap, #landingScreen { display: none !important; }
+    /* Full-width single column; drop the huge scroll padding. */
+    .report-layout { display: block !important; }
+    .report-main { padding-bottom: 0 !important; }
+    .results { display: block !important; }
+    body { background: #fff !important; }
+    /* Expand every collapsible so the whole report is captured. */
+    .cat-collapse { display: block !important; margin-top: 10px !important; }
+    .stmt-body { display: block !important; }
+    /* Keep boxes and sections from splitting awkwardly across pages. */
+    .section { page-break-inside: avoid; break-inside: avoid; }
+    .score-card, .profile-card, .cat-box, .stmt-row, .gap-callout,
+    .plan-list li, .curve-box { page-break-inside: avoid; break-inside: avoid; }
+    .section { padding-top: 6px; }
+    /* Drop the Download section itself from the printout. */
+    #sec-download { display: none !important; }
   }
 </style>
 </head>
@@ -1576,10 +1603,10 @@
       <section class="section" id="sec-download">
         <div class="section-head"><span class="section-dash">—</span><span class="section-title">07 / Download</span></div>
         <div class="cta-row">
-          <button class="cta-primary" onclick="alert('PDF generation comes in the next build step.')">Download PDF Report</button>
+          <button class="cta-primary" onclick="window.print()">Download PDF Report</button>
           <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
         </div>
-        <div class="placeholder-note">Prototype note: PDF generation is the next build step.</div>
+        <p class="download-note">Opens your browser's print dialog — choose <strong>Save as PDF</strong> as the destination to download your full scoring report.</p>
       </section>
     </main>
   </div>
