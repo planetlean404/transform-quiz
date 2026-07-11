@@ -1759,7 +1759,7 @@
           principleMaturity: psMat,
           pattern: mp.patternKey,
           profile: mp.name,
-          confidence: mp.confidence,
+          fit: mp.fit,
           answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
           website: document.getElementById("website").value
         })
@@ -1926,17 +1926,18 @@
       .map(([name, shape]) => ({ name, d: rmsd(shape) }))
       .sort((a, b) => a.d - b.d);
     const best = scored[0], second = scored[1];
-    const fit = 100 - best.d;                                    // absolute closeness
-    const sep = second.d > 0 ? 1 - best.d / second.d : 1;        // distinctiveness
-    const confidence = Math.max(0, Math.min(100, Math.round(fit * (0.55 + 0.45 * sep))));
-    let tier;
-    if (confidence >= 72) tier = "strong";
-    else if (confidence >= 52) tier = "good";
-    else tier = "blended";
+    // Headline number = absolute closeness to the nearest archetype (reads high
+    // and consistent for real plants — most land 80-97%). Separation decides
+    // whether the runner-up is close enough to name as a secondary read.
+    const fit = Math.max(0, Math.min(100, Math.round(100 - best.d)));
+    const sep = second.d > 0 ? 1 - best.d / second.d : 1;
+    const hasSecondary = sep < 0.25;                             // runner-up is nearly as close
+    const tier = fit >= 85 ? "strong" : fit >= 72 ? "good" : "blended";
     return {
       name: best.name,
       second: second.name,
-      confidence,
+      fit,
+      hasSecondary,
       tier,
       patternKey: PROFILE_TO_PATTERN[best.name] || "focus-weakest"
     };
@@ -2449,18 +2450,14 @@
     const pattern = PATTERNS[mp.patternKey] || PATTERNS["focus-weakest"];
     const bestFit = mp.name;
     const profile = PROFILE_CONTENT[bestFit];
-    const confNote = mp.tier === "strong" ? ""
-      : mp.tier === "good" ? ` &middot; also resembles ${mp.second}`
-      : ` &middot; nearly ties with ${mp.second}`;
-    const confWord = mp.tier === "strong" ? "Strong fit"
-      : mp.tier === "good" ? "Good fit" : "Blended";
+    const secNote = mp.hasSecondary ? ` &middot; secondary: ${mp.second}` : "";
     document.getElementById("profileFit").innerHTML =
       `<div class="profile-fit-eyebrow">Your LEAN Maturity Profile</div>
        <div class="profile-fit-name">${bestFit}</div>
        ${profile ? `<div class="profile-fit-tagline">${profile.tagline}</div>` : ""}
        <div class="profile-confidence conf-${mp.tier}">
-         <span class="conf-bar"><span class="conf-bar-fill" style="width:${mp.confidence}%"></span></span>
-         <span class="conf-text"><strong>${mp.confidence}% match</strong> &middot; ${confWord}${confNote}</span>
+         <span class="conf-bar"><span class="conf-bar-fill" style="width:${mp.fit}%"></span></span>
+         <span class="conf-text"><strong>${mp.fit}% match</strong>${secNote}</span>
        </div>`;
     document.getElementById("profileDetail").innerHTML = `
       <p class="profile-lead">${pattern.body.replace("{WEAKEST}", sorted[0].label)}</p>
