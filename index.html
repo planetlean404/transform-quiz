@@ -2273,25 +2273,27 @@
     const catStmts = name => STATEMENTS_META.filter(m => m.principle === name).map(m => ({ si: m.si, mat: siMaturity[m.si] }));
 
     // Category Summaries text (Jim's model): Why It Matters is static and
-    // score-independent; Good is built from this category's GREEN/YELLOW
-    // statements (maturity >= 5); Opportunity from its RED statements (< 5).
-    // A section shows only when the category actually has statements of that
-    // kind. Content prefers the AI-written prose (per-report Claude call);
-    // when it's absent — the live post-quiz view or an older link — we compose
-    // from the per-statement strength/weakness text so it still reflects the
-    // real answers. Links that predate stored answers fall back to the
-    // category score band for presence and the static notes for content.
+    // score-independent; Good is built only from this category's GREEN
+    // statements (maturity >= 8 — fully in place); Opportunity from its YELLOW
+    // OR RED statements (< 8 — partial coverage or missing). This aligns the
+    // highlights with Deep Insights, where green is a Bright Spot and anything
+    // below green is a Gap. A section shows only when the category actually has
+    // statements of that kind. Content prefers the AI-written prose (per-report
+    // Claude call); when it's absent — the live post-quiz view or an older
+    // link — we compose from the per-statement strength/weakness text so it
+    // still reflects the real answers. Links that predate stored answers fall
+    // back to the category score band for presence and the static notes.
     const aiText = data.categoryText || {};
-    const hasGood = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat >= 5) : a.score100 >= 50;
-    const hasRed  = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat < 5)  : a.score100 < 80;
-    const composeGood = name => catStmts(name).filter(s => s.mat != null && s.mat >= 5).map(s => STATEMENT_DETAIL[s.si].strength).join(" ");
-    const composeOpp  = name => catStmts(name).filter(s => s.mat != null && s.mat < 5).map(s => STATEMENT_DETAIL[s.si].weakness).join(" ");
+    const hasGood = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat >= 8) : a.score100 >= 80;
+    const hasOpp  = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat < 8)  : a.score100 < 80;
+    const composeGood = name => catStmts(name).filter(s => s.mat != null && s.mat >= 8).map(s => STATEMENT_DETAIL[s.si].strength).join(" ");
+    const composeOpp  = name => catStmts(name).filter(s => s.mat != null && s.mat < 8).map(s => STATEMENT_DETAIL[s.si].weakness).join(" ");
     const goodOf = a => {
       if (!hasGood(a)) return "";
       return (aiText[a.name] && aiText[a.name].good) || (answersPresent ? composeGood(a.name) : STRENGTH_NOTES[a.name]);
     };
     const oppOf = a => {
-      if (!hasRed(a)) return "";
+      if (!hasOpp(a)) return "";
       return (aiText[a.name] && aiText[a.name].opportunity) || (answersPresent ? composeOpp(a.name) : OPP_NOTES[a.name]);
     };
     // Overview highlights: a one-paragraph summary of why the topic matters
