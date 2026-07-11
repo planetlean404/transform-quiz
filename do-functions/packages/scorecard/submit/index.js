@@ -270,15 +270,21 @@ async function appendRow(sheetId, accessToken, row) {
   return match ? Number(match[1]) : null;
 }
 
-async function updateAiCells(sheetId, accessToken, rowNumber, categoryText, plan) {
-  // Patches the two AI columns for this row in one write: U = categoryText,
-  // V = plan. Both are stored as JSON strings.
-  const range = `${SHEET_TAB}%21U${rowNumber}:V${rowNumber}`;
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?valueInputOption=RAW`;
+async function updateAiCells(sheetId, accessToken, rowNumber, categoryText, plan, aiStatus) {
+  // Patches this row's AI columns in one write: U = categoryText, V = plan
+  // (JSON strings), Z = ai_status (human-readable "ok" / failure reason so a
+  // failed Claude call is visible at a glance in the sheet).
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`;
   const res = await fetch(url, {
-    method: 'PUT',
+    method: 'POST',
     headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ values: [[JSON.stringify(categoryText || {}), JSON.stringify(plan || [])]] })
+    body: JSON.stringify({
+      valueInputOption: 'RAW',
+      data: [
+        { range: `${SHEET_TAB}!U${rowNumber}:V${rowNumber}`, values: [[JSON.stringify(categoryText || {}), JSON.stringify(plan || [])]] },
+        { range: `${SHEET_TAB}!Z${rowNumber}`, values: [[aiStatus || '']] }
+      ]
+    })
   });
   const data = await res.json();
   if (!res.ok) throw new Error(`Sheets cell update error: ${JSON.stringify(data)}`);
@@ -512,12 +518,20 @@ async function main(event) {
       const plan = planResult.status === 'fulfilled' ? planResult.value : [];
       if (catResult.status === 'rejected') console.error('Category text generation failed (non-fatal, static fallback):', catResult.reason && catResult.reason.message);
       if (planResult.status === 'rejected') console.error('Plan generation failed (non-fatal, static fallback):', planResult.reason && planResult.reason.message);
-      if (Object.keys(categoryText).length || plan.length) {
-        try {
-          await updateAiCells(process.env.GOOGLE_SHEET_ID, token, rowNumber, categoryText, plan);
-        } catch (err) {
-          console.error('AI cell write failed (non-fatal):', err.message);
-        }
+      // Human-readable status for the sheet's ai_status column (col Z).
+      const shortErr = res => String((res && res.reason && res.reason.message) || 'error').slice(0, 60);
+      const catPart = catResult.status === 'fulfilled'
+        ? (Object.keys(categoryText).length ? 'ok' : 'empty')
+        : `FAIL(${shortErr(catResult)})`;
+      const planPart = planResult.status === 'fulfilled'
+        ? (plan.length ? 'ok' : 'empty')
+        : `FAIL(${shortErr(planResult)})`;
+      const aiStatus = (catPart === 'ok' && planPart === 'ok') ? 'ok' : `category:${catPart} | plan:${planPart}`;
+      // Always write — so a total failure (both empty) still records its status.
+      try {
+        await updateAiCells(process.env.GOOGLE_SHEET_ID, token, rowNumber, categoryText, plan, aiStatus);
+      } catch (err) {
+        console.error('AI cell write failed (non-fatal):', err.message);
       }
     }
   } catch (err) {
