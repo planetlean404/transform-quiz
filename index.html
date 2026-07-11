@@ -1015,8 +1015,6 @@
   }
   .profile-fit-name { font-size: 26px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.15; }
   .profile-fit-tagline { font-size: 14px; color: #566573; margin-top: 4px; line-height: 1.4; }
-  /* Runner-up read, shown under the tagline only when it's genuinely close. */
-  .profile-secondary { font-size: 13px; color: #566573; margin-top: 8px; }
   /* Match dial on the right of the header — ring tinted by tier, % inside. */
   .match-dial { position: relative; width: 84px; height: 84px; flex: 0 0 auto; }
   .match-dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -2482,13 +2480,11 @@
     const bestFit = mp.name;
     const profile = PROFILE_CONTENT[bestFit];
     const TIER_COLOR = { strong: "#4ec583", good: "#f5be2e", blended: "#94a2ac" };
-    const secLine = mp.hasSecondary ? `<div class="profile-secondary">Secondary: ${mp.second}</div>` : "";
     document.getElementById("profileFit").innerHTML =
       `<div class="profile-fit-main">
          <div class="profile-fit-eyebrow">Your LEAN Maturity Profile</div>
          <div class="profile-fit-name">${bestFit}</div>
          ${profile ? `<div class="profile-fit-tagline">${profile.tagline}</div>` : ""}
-         ${secLine}
        </div>
        ${buildMatchDialSVG(mp.fit, TIER_COLOR[mp.tier])}`;
     document.getElementById("profileDetail").innerHTML = `
