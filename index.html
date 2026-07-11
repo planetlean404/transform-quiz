@@ -1749,7 +1749,7 @@
         <div class="next-cta">
           <div class="next-cta-headline" id="nextHeadline">Get 20 focused minutes on your plant.</div>
           <div class="next-cta-body">No pitch, no drawn-out discovery call. Just 20 minutes with the team behind this assessment, talking through what you scored on and the one or two moves that would actually shift the needle in your plant.</div>
-          <button class="next-cta-btn" onclick="window.open('https://www.planetlean.com/rpa-book','_blank','noopener')">Book a free 20-min call&nbsp;&nbsp;→</button>
+          <button class="next-cta-btn" onclick="bookCall('https://www.planetlean.com/rpa-book')">Book a free 20-min call&nbsp;&nbsp;→</button>
           <div class="next-cta-fine">Free · No obligation · Real call · planetlean.com/rpa-book</div>
         </div>
       </section>
@@ -1788,7 +1788,7 @@
       <div class="plan-outcome" id="sixDestination"></div>
       <p class="plan-book-note">This is a real transformation — and you don't have to run it alone. Book a free 20-minute call with planet LEAN to turn this roadmap into action on your floor.</p>
       <div class="cta-row plan-actions">
-        <button class="cta-primary" onclick="window.open('https://www.planetlean.com/rpa-book','_blank','noopener')">Book a free 20-min call</button>
+        <button class="cta-primary" onclick="bookCall('https://www.planetlean.com/rpa-book')">Book a free 20-min call</button>
         <button class="cta-secondary" onclick="downloadPdf()">Download PDF</button>
       </div>
     </section>
@@ -2100,6 +2100,18 @@
     window.print();
   }
 
+  // Booking CTA — set true only when this session's email came back CLEARLY
+  // undeliverable from ZeroBounce (submit's emailBad). Stays false on shared/
+  // emailed links (no submit ran, and their email is already deliverable).
+  let emailFlaggedFake = false;
+  function bookCall(url) {
+    if (emailFlaggedFake) {
+      alert("The email you entered didn't verify as a deliverable address, so we can't confirm a booking to it. Please double-check your email — a valid work email works best.");
+      return;
+    }
+    window.open(url, "_blank", "noopener");
+  }
+
   function submitGate() {
     const name = document.getElementById("firstName").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -2141,6 +2153,7 @@
       const out = await res.json();
       if (out.ok && out.id) {
         setReportId(out.id);
+        emailFlaggedFake = !!out.emailBad;
         try { history.replaceState({}, "", `/r/${out.id}`); } catch (e) { /* file:// etc. */ }
       }
     } catch (err) {

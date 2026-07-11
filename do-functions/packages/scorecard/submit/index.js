@@ -630,7 +630,11 @@ async function main(event) {
     return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: 'storage-failed' } };
   }
 
-  return { statusCode: 200, headers: corsHeaders(), body: { ok: true, id } };
+  // emailBad = the address came back CLEARLY undeliverable (invalid/spamtrap/
+  // abuse/do_not_mail). The frontend uses it to gate the "book a call" CTA.
+  // Catch-all/unknown/valid all pass (good), so real corporate emails aren't
+  // blocked.
+  return { statusCode: 200, headers: corsHeaders(), body: { ok: true, id, emailBad: !emailCheck.good } };
 }
 
 exports.main = main;
