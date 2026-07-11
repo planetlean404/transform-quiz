@@ -861,6 +861,16 @@
   /* On narrow screens the graph is too small to host the button — drop it below. */
   @media (max-width: 640px) {
     .curve-toggle { position: static; display: flex; margin: 12px auto 0; }
+    /* The curve SVG scales down uniformly, so its labels shrink to ~6px on a
+       phone. Bump the in-chart text (CSS overrides the SVG font-size attribute,
+       desktop keeps the attribute values). Sizes are viewBox units — tuned so
+       the roomy labels grow most and the two-line stage headers stay just
+       inside their bands. */
+    #curveSvg .cv-pname { font-size: 21px; }
+    #curveSvg .cv-axis  { font-size: 20px; }
+    #curveSvg .cv-arrow { font-size: 28px; }
+    #curveSvg .cv-tools { font-size: 17px; }
+    #curveSvg .cv-phdr  { font-size: 16px; }
   }
   .curve-toggle:hover { border-color: #1595D3; }
   .curve-toggle[aria-pressed="true"] { background: rgba(21,149,211,0.10); border-color: #1595D3; color: #1595D3; }
@@ -2597,11 +2607,11 @@
       if (i > 0) {
         bands += `<line x1="${bx}" y1="${plot.y0}" x2="${bx}" y2="${plot.y1}" stroke="#dfe3e6" stroke-dasharray="4 4"/>`;
       }
-      headers += `<text x="${cx}" y="${plot.y0 - 44}" text-anchor="middle" font-size="13"
+      headers += `<text class="cv-phdr" x="${cx}" y="${plot.y0 - 44}" text-anchor="middle" font-size="13"
         font-weight="700" fill="${active ? "#1595D3" : "#2c3e50"}">[${i + 1}] ${STAGES[i][0]}</text>`;
-      headers += `<text x="${cx}" y="${plot.y0 - 28}" text-anchor="middle" font-size="13"
+      headers += `<text class="cv-phdr" x="${cx}" y="${plot.y0 - 28}" text-anchor="middle" font-size="13"
         font-weight="700" fill="${active ? "#1595D3" : "#2c3e50"}">${STAGES[i][1]}</text>`;
-      labels += `<text x="${cx}" y="${plot.y0 + 22}" text-anchor="middle"
+      labels += `<text class="cv-pname" x="${cx}" y="${plot.y0 + 22}" text-anchor="middle"
         font-size="15" font-weight="${active ? "700" : "500"}"
         fill="${active ? "#1595D3" : "#7f8c95"}">${p.name.toLowerCase()}</text>`;
     });
@@ -2612,9 +2622,9 @@
       ${headers}
       <line x1="${plot.x0}" y1="${plot.y0}" x2="${plot.x0}" y2="${plot.y1}" stroke="#2c3e50" stroke-width="2"/>
       <line x1="${plot.x0}" y1="${plot.y1}" x2="${plot.x1}" y2="${plot.y1}" stroke="#2c3e50" stroke-width="2"/>
-      <text x="${plot.x0 - 14}" y="${(plot.y0 + plot.y1) / 2}" text-anchor="middle" font-size="14" fill="#2c3e50"
-        transform="rotate(-90 ${plot.x0 - 14} ${(plot.y0 + plot.y1) / 2})">METRICS Improvement <tspan font-size="23" font-weight="700" dy="2">→</tspan></text>
-      <text x="${(plot.x0 + plot.x1) / 2}" y="${plot.y1 + 34}" text-anchor="middle" font-size="14" fill="#2c3e50">Time <tspan font-size="23" font-weight="700" dy="2">→</tspan></text>
+      <text class="cv-axis" x="${plot.x0 - 14}" y="${(plot.y0 + plot.y1) / 2}" text-anchor="middle" font-size="14" fill="#2c3e50"
+        transform="rotate(-90 ${plot.x0 - 14} ${(plot.y0 + plot.y1) / 2})">METRICS Improvement <tspan class="cv-arrow" font-size="23" font-weight="700" dy="2">→</tspan></text>
+      <text class="cv-axis" x="${(plot.x0 + plot.x1) / 2}" y="${plot.y1 + 34}" text-anchor="middle" font-size="14" fill="#2c3e50">Time <tspan class="cv-arrow" font-size="23" font-weight="700" dy="2">→</tspan></text>
       ${bands}
       ${labels}
       <!-- Tools-only trajectory: quick metric boost that fades without culture.
@@ -2623,8 +2633,8 @@
         <path d="M 155,384 C 200,160 320,120 368,200 C 390,238 398,290 400,340" fill="none"
           stroke="#1595D3" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.75"/>
         <path d="M 400,340 l -7,-12 l 14,0 z" fill="#1595D3" opacity="0.75"/>
-        <text x="305" y="262" text-anchor="middle" font-size="12.5" font-style="italic" fill="#1595D3">"Tools only" — quick boost,</text>
-        <text x="305" y="278" text-anchor="middle" font-size="12.5" font-style="italic" fill="#1595D3">fades without culture</text>
+        <text class="cv-tools" x="305" y="262" text-anchor="middle" font-size="12.5" font-style="italic" fill="#1595D3">"Tools only" — quick boost,</text>
+        <text class="cv-tools" x="305" y="278" text-anchor="middle" font-size="12.5" font-style="italic" fill="#1595D3">fades without culture</text>
       </g>
       <!-- The implementation curve (orange, as on the slide) -->
       <path id="curvePathEl" d="${curvePath}" fill="none" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
