@@ -2448,8 +2448,9 @@
   function setReportId(id) {
     const right = document.getElementById("topbarRight");
     right.innerHTML = `<span class="report-id">Report ID — <strong>${id}</strong></span>`;
-    // PDF save-as filename matches the report URL id, e.g. "rpa-C96743EA.pdf".
-    if (id) pdfFileName = id;
+    // PDF save-as filename: descriptive + the report URL id, e.g.
+    // "Rapid Plant Assessment - rpa-C96743EA.pdf".
+    if (id) pdfFileName = "Rapid Plant Assessment - " + id;
   }
 
   function setReportHeader(id) {
