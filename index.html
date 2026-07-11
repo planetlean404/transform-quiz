@@ -1338,6 +1338,20 @@
   }
   .download-note { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--pl-text-muted); }
   .download-note strong { color: var(--pl-accent-dark); }
+  /* 09 — Next Steps: near-black CTA box, white text, blue button. */
+  .next-cta {
+    background: #1a1f26; border-radius: 14px; padding: 34px 32px; text-align: center;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .next-cta-headline { font-size: 24px; font-weight: 800; color: #fff; line-height: 1.25; letter-spacing: -0.3px; margin-bottom: 12px; }
+  .next-cta-body { font-size: 15px; line-height: 1.6; color: #c7ccd1; max-width: 560px; margin: 0 auto 22px; }
+  .next-cta-btn {
+    background: var(--pl-accent); color: #fff; border: none; border-radius: 10px;
+    padding: 15px 30px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .next-cta-btn:hover { background: #1179a8; }
+  .next-cta-fine { margin-top: 16px; font-size: 12.5px; color: #8a939c; }
   .reset {
     display: block;
     margin: 8px auto 24px;
@@ -1639,6 +1653,7 @@
       <a href="#sec-profile"><span class="toc-num">06</span>Best-Fit Profile</a>
       <a href="#sec-plan"><span class="toc-num">07</span>30-Day Plan</a>
       <a href="#sec-download"><span class="toc-num">08</span>Download</a>
+      <a href="#sec-next"><span class="toc-num">09</span>Next Steps</a>
     </aside>
 
     <main class="report-main">
@@ -1725,9 +1740,18 @@
         <div class="section-head"><span class="section-dash">—</span><span class="section-title">08 / Download</span></div>
         <div class="cta-row">
           <button class="cta-primary" onclick="downloadPdf()">Download PDF Report</button>
-          <button class="cta-secondary" onclick="window.open('https://www.planetlean.com/rpa-book','_blank','noopener')">Book a free 20-min call</button>
         </div>
         <p class="download-note">Opens your browser's print dialog — choose <strong>Save as PDF</strong> as the destination to download your full scoring report.</p>
+      </section>
+
+      <section class="section" id="sec-next">
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">09 / Next Steps</span></div>
+        <div class="next-cta">
+          <div class="next-cta-headline" id="nextHeadline">Get 20 focused minutes on your plant.</div>
+          <div class="next-cta-body">No pitch, no drawn-out discovery call. Just 20 minutes with the team behind this assessment, talking through what you scored on and the one or two moves that would actually shift the needle in your plant.</div>
+          <button class="next-cta-btn" onclick="window.open('https://www.planetlean.com/rpa-book','_blank','noopener')">Book a free 20-min call&nbsp;&nbsp;→</button>
+          <div class="next-cta-fine">Free · No obligation · Real call · planetlean.com/rpa-book</div>
+        </div>
       </section>
     </main>
   </div>
@@ -2851,6 +2875,9 @@
     const gapArea = pickBiggestGap(areas);
     highlightBox(document.getElementById("gapCallout"), "Biggest Gap", "gap", gapArea,
       `At ${gapArea.score100} out of 100, this is your lowest-scoring category. ${WHY_MATTERS[gapArea.name]}`);
+    // 09 — Next Steps: personalize the closer to the plant's biggest gap.
+    const nextHead = document.getElementById("nextHeadline");
+    if (nextHead) nextHead.textContent = `Get 20 focused minutes on your ${gapArea.label} gap.`;
     const topGreen = pickByPriority(areas.filter(a => a.score100 >= 80), 1, "highest")[0];
     const strengthCallout = document.getElementById("strengthCallout");
     if (topGreen) highlightBox(strengthCallout, "Where You're Strongest", "strength", topGreen,
