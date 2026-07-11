@@ -2448,6 +2448,8 @@
   function setReportId(id) {
     const right = document.getElementById("topbarRight");
     right.innerHTML = `<span class="report-id">Report ID — <strong>${id}</strong></span>`;
+    // PDF save-as filename matches the report URL id, e.g. "rpa-C96743EA.pdf".
+    if (id) pdfFileName = id;
   }
 
   function setReportHeader(id) {
@@ -2506,11 +2508,6 @@
     if (isNaN(reportDate)) reportDate = new Date(String(data.date || "").replace(/,\s*\d{1,2}:\d{2}.*$/i, "").trim());
     if (isNaN(reportDate)) reportDate = new Date();
     document.getElementById("resultsDate").textContent = reportDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    // Default filename for the "Download PDF" (browser save-as-PDF uses the
-    // document title). e.g. "Rapid Plant Assessment - Dave - 2026-07-11".
-    const fileName = (data.firstName || "").replace(/[^\w \-]/g, "").trim();
-    const fileDate = `${reportDate.getFullYear()}-${String(reportDate.getMonth() + 1).padStart(2, "0")}-${String(reportDate.getDate()).padStart(2, "0")}`;
-    pdfFileName = `Rapid Plant Assessment${fileName ? " - " + fileName : ""} - ${fileDate}`;
     document.getElementById("bigScore").innerHTML = buildScoreDialSVG(total100);
     // Overall LEAN maturity label — same bands as the category pills, plus a
     // perfect-score Benchmark (all statements at the top of the scale).
