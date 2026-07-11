@@ -1004,26 +1004,27 @@
   /* Profile: best-fit headline above the pattern narrative card. */
   /* One card: darker-gray header (name/tagline/match) over the lighter body. */
   .profile-card { border: 1px solid var(--pl-border); border-radius: 12px; overflow: hidden; }
-  .profile-fit { background: #eaedf0; padding: 18px 22px; border-bottom: 1px solid var(--pl-border); }
+  .profile-fit {
+    display: flex; align-items: center; gap: 20px;
+    background: #eaedf0; padding: 18px 22px; border-bottom: 1px solid var(--pl-border);
+  }
+  .profile-fit-main { flex: 1 1 auto; min-width: 0; }
   .profile-fit-eyebrow {
     font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
     color: #566573; margin-bottom: 4px;
   }
   .profile-fit-name { font-size: 26px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.15; }
   .profile-fit-tagline { font-size: 14px; color: #566573; margin-top: 4px; line-height: 1.4; }
-  /* Match-confidence indicator under the profile name — a thin fill bar tinted
-     by tier plus a "NN% match" line naming the runner-up when it's not strong. */
-  .profile-confidence { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-  .conf-bar {
-    flex: 0 0 96px; height: 7px; border-radius: 999px;
-    background: var(--pl-bg-soft); border: 1px solid var(--pl-border); overflow: hidden;
-  }
-  .conf-bar-fill { display: block; height: 100%; border-radius: 999px; }
-  .conf-text { font-size: 13px; color: #566573; }
-  .conf-text strong { color: var(--pl-accent-dark); }
-  .conf-strong .conf-bar-fill { background: #4ec583; }
-  .conf-good   .conf-bar-fill { background: #f5be2e; }
-  .conf-blended .conf-bar-fill { background: #94a2ac; }
+  /* Runner-up read, shown under the tagline only when it's genuinely close. */
+  .profile-secondary { font-size: 13px; color: #566573; margin-top: 8px; }
+  /* Match dial on the right of the header — ring tinted by tier, % inside. */
+  .match-dial { position: relative; width: 84px; height: 84px; flex: 0 0 auto; }
+  .match-dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .match-dial-track { fill: none; stroke: #d3d9de; stroke-width: 9; }
+  .match-dial-fill { fill: none; stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .match-dial-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .match-dial-pct { font-size: 21px; font-weight: 800; line-height: 1; color: var(--pl-accent-dark); }
+  .match-dial-label { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #566573; margin-top: 3px; }
   /* Card body — lighter gray under the darker header. */
   .profile-detail {
     background: var(--pl-bg-soft);
@@ -1506,6 +1507,27 @@
         <div class="dial-text">
           <span class="dial-score">${score100}</span>
           <span class="dial-of">of 100</span>
+        </div>
+      </div>`;
+  }
+
+  // Compact dial for the best-fit "match %" — ring tinted by tier color, the
+  // percentage sitting inside. Used in the profile card header.
+  function buildMatchDialSVG(pct, color) {
+    const r = 42, cx = 50, cy = 50;
+    const circ = 2 * Math.PI * r;
+    const p = Math.max(0, Math.min(100, pct)) / 100;
+    const offset = circ * (1 - p);
+    return `
+      <div class="match-dial">
+        <svg viewBox="0 0 100 100">
+          <circle class="match-dial-track" cx="${cx}" cy="${cy}" r="${r}"></circle>
+          <circle class="match-dial-fill" cx="${cx}" cy="${cy}" r="${r}" style="stroke:${color}"
+            stroke-dasharray="${circ}" stroke-dashoffset="${offset}"></circle>
+        </svg>
+        <div class="match-dial-text">
+          <span class="match-dial-pct">${pct}%</span>
+          <span class="match-dial-label">match</span>
         </div>
       </div>`;
   }
@@ -2459,15 +2481,16 @@
     const pattern = PATTERNS[mp.patternKey] || PATTERNS["focus-weakest"];
     const bestFit = mp.name;
     const profile = PROFILE_CONTENT[bestFit];
-    const secNote = mp.hasSecondary ? ` &middot; secondary: ${mp.second}` : "";
+    const TIER_COLOR = { strong: "#4ec583", good: "#f5be2e", blended: "#94a2ac" };
+    const secLine = mp.hasSecondary ? `<div class="profile-secondary">Secondary: ${mp.second}</div>` : "";
     document.getElementById("profileFit").innerHTML =
-      `<div class="profile-fit-eyebrow">Your LEAN Maturity Profile</div>
-       <div class="profile-fit-name">${bestFit}</div>
-       ${profile ? `<div class="profile-fit-tagline">${profile.tagline}</div>` : ""}
-       <div class="profile-confidence conf-${mp.tier}">
-         <span class="conf-bar"><span class="conf-bar-fill" style="width:${mp.fit}%"></span></span>
-         <span class="conf-text"><strong>${mp.fit}% match</strong>${secNote}</span>
-       </div>`;
+      `<div class="profile-fit-main">
+         <div class="profile-fit-eyebrow">Your LEAN Maturity Profile</div>
+         <div class="profile-fit-name">${bestFit}</div>
+         ${profile ? `<div class="profile-fit-tagline">${profile.tagline}</div>` : ""}
+         ${secLine}
+       </div>
+       ${buildMatchDialSVG(mp.fit, TIER_COLOR[mp.tier])}`;
     document.getElementById("profileDetail").innerHTML = `
       <p class="profile-lead">${pattern.body.replace("{WEAKEST}", sorted[0].label)}</p>
       ${profile ? `
