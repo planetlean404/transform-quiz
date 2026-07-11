@@ -87,20 +87,19 @@ async function main(event) {
       return { statusCode: 404, headers: corsHeaders(), body: { ok: false, error: 'not-found' } };
     }
 
-    // Industry-average comparison record — per-industry tab, row A3:F3
-    // [Standardization, People, Short Lead Time, Built-In Quality, Continuous
-    // Improvement, Overall]. Read LIVE so manual updates to the average show
-    // immediately. Optional: blank industry or a missing tab -> null.
+    // Industry-average comparison record — one "Industry Averages" sheet, one
+    // row per sector: [industry, standardization, people, short_lead_time,
+    // built_in_quality, continuous_improvement, overall]. Read LIVE so manual
+    // updates show immediately. Optional: blank industry or no match -> null.
     const industry = row[23] || '';
     let industryAverage = null;
     if (industry) {
       try {
-        const range = `'${industry.replace(/'/g, "''")}'!A3:F3`;
-        const avgUrl = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${encodeURIComponent(range)}`;
+        const avgUrl = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${encodeURIComponent('Industry Averages!A2:G100')}`;
         const avgRes = await fetch(avgUrl, { headers: { 'Authorization': `Bearer ${token}` } });
-        const avgData = await avgRes.json();
-        const avgRow = (avgData.values || [])[0];
-        if (avgRow && avgRow.length >= 6) industryAverage = avgRow.map(v => Number(v));
+        const avgRows = ((await avgRes.json()).values) || [];
+        const match = avgRows.find(r => (r[0] || '').trim() === industry.trim());
+        if (match && match.length >= 7) industryAverage = match.slice(1, 7).map(v => Number(v));
       } catch (e) { /* no comparison available */ }
     }
 
