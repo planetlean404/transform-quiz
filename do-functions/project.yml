@@ -7,7 +7,7 @@ packages:
         annotations:
           web-custom-options: true
         limits:
-          timeout: 45000
+          timeout: 55000
         environment:
           GOOGLE_SHEET_ID: "${GOOGLE_SHEET_ID}"
           GOOGLE_SERVICE_ACCOUNT_JSON_B64: "${GOOGLE_SERVICE_ACCOUNT_JSON_B64}"

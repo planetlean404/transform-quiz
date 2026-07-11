@@ -26,7 +26,7 @@ const PRINCIPLE_ORDER = [
 // copy if categoryText comes back empty.
 
 const ANTHROPIC_MODEL = 'claude-opus-4-8';
-const ANTHROPIC_CALL_TIMEOUT_MS = 20000;
+const ANTHROPIC_CALL_TIMEOUT_MS = 35000;
 
 function statementStatus(maturity) {
   if (maturity >= 8) return 'green';
