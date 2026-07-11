@@ -87,6 +87,23 @@ async function main(event) {
       return { statusCode: 404, headers: corsHeaders(), body: { ok: false, error: 'not-found' } };
     }
 
+    // Industry-average comparison record — per-industry tab, row A3:F3
+    // [Standardization, People, Short Lead Time, Built-In Quality, Continuous
+    // Improvement, Overall]. Read LIVE so manual updates to the average show
+    // immediately. Optional: blank industry or a missing tab -> null.
+    const industry = row[23] || '';
+    let industryAverage = null;
+    if (industry) {
+      try {
+        const range = `'${industry.replace(/'/g, "''")}'!A3:F3`;
+        const avgUrl = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${encodeURIComponent(range)}`;
+        const avgRes = await fetch(avgUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+        const avgData = await avgRes.json();
+        const avgRow = (avgData.values || [])[0];
+        if (avgRow && avgRow.length >= 6) industryAverage = avgRow.map(v => Number(v));
+      } catch (e) { /* no comparison available */ }
+    }
+
     return {
       statusCode: 200,
       headers: corsHeaders(),
@@ -98,6 +115,8 @@ async function main(event) {
         // row[3] is the email — deliberately never returned
         score: Number(row[4]),
         phase: row[5],
+        industry,
+        industryAverage,
         principles: PRINCIPLE_ORDER.map((name, i) => ({ name, score: Number(row[6 + i]) })),
         pattern: row[11] || '',
         // O–T (maturity + per-principle maturity) are absent on rows written
