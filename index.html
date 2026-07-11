@@ -1343,9 +1343,13 @@
        avoid a break orphaned its heading onto a page by itself). */
     .score-card, .profile-card, .cat-box, .stmt-row, .gap-callout,
     .plan-list li, .plan-head, .plan-outcome, .curve-box { page-break-inside: avoid; break-inside: avoid; }
-    /* Never break right after a section heading or its intro line — keeps the
-       eyebrow + tag phrase attached to the content that follows. */
-    .section-head, .section-intro { break-after: avoid; page-break-after: avoid; }
+    /* Keep the eyebrow + tag phrase whole AND attached to the content that
+       follows: never split them internally (was breaking mid-tagline) and
+       never break right after them. */
+    .section-head, .section-intro {
+      break-inside: avoid; page-break-inside: avoid;
+      break-after: avoid; page-break-after: avoid;
+    }
     .section { padding-top: 6px; }
     /* Drop the Download section itself from the printout. */
     #sec-download { display: none !important; }
