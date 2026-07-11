@@ -655,6 +655,24 @@
     font-family: inherit;
   }
   .gate input:focus { outline: none; border-color: var(--pl-accent); }
+  .gate-hint { font-size: 13px; color: var(--pl-text-muted); margin: 6px 0 12px; }
+  .gate select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--pl-border);
+    border-radius: 10px;
+    font-size: 16px;
+    margin-bottom: 12px;
+    font-family: inherit;
+    color: var(--pl-text);
+    background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1l5 5 5-5' stroke='%237f8c95' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 15px center;
+    background-size: 12px 8px;
+    -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    cursor: pointer;
+  }
+  .gate select:focus { outline: none; border-color: var(--pl-accent); }
+  /* Gray the placeholder option until a real choice is made. */
+  .gate select:not(.chosen) { color: var(--pl-text-muted); }
   .gate button {
     width: 100%;
     padding: 15px;
@@ -1420,6 +1438,39 @@
       <p>Tell us where to send it — your personalized results appear instantly, right here.</p>
       <input type="text" id="firstName" placeholder="First name">
       <input type="email" id="email" placeholder="Email you check frequently">
+      <div class="gate-hint">A few quick details so we can tailor your report:</div>
+      <select id="role" onchange="this.classList.toggle('chosen', !!this.value)">
+        <option value="">Your role</option>
+        <option>Plant Manager</option>
+        <option>Operations Manager / Director</option>
+        <option>Continuous Improvement / Lean Leader</option>
+        <option>Production / Shift Supervisor</option>
+        <option>Quality Manager</option>
+        <option>Engineering</option>
+        <option>Executive / Owner</option>
+        <option>Other</option>
+      </select>
+      <select id="industry" onchange="this.classList.toggle('chosen', !!this.value)">
+        <option value="">Industry</option>
+        <option>Automotive</option>
+        <option>Food &amp; Beverage</option>
+        <option>Medical Device &amp; Pharma</option>
+        <option>Aerospace &amp; Defense</option>
+        <option>Metal Fabrication &amp; Machining</option>
+        <option>Plastics &amp; Rubber</option>
+        <option>Electronics &amp; Electrical</option>
+        <option>Industrial &amp; Heavy Equipment</option>
+        <option>Consumer Goods</option>
+        <option>Other</option>
+      </select>
+      <select id="companySize" onchange="this.classList.toggle('chosen', !!this.value)">
+        <option value="">Company size</option>
+        <option>1&ndash;50 employees</option>
+        <option>51&ndash;200 employees</option>
+        <option>201&ndash;500 employees</option>
+        <option>501&ndash;2,000 employees</option>
+        <option>2,000+ employees</option>
+      </select>
       <input type="text" id="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true">
       <button onclick="submitGate()">Show My Results&nbsp;&nbsp;→</button>
       <div class="privacy">One report, no spam. We never share your email. [PLACEHOLDER — Jim refines privacy line]</div>
@@ -1835,6 +1886,9 @@
           pattern: mp.patternKey,
           profile: mp.name,
           fit: mp.fit,
+          role: document.getElementById("role").value,
+          industry: document.getElementById("industry").value,
+          companySize: document.getElementById("companySize").value,
           answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
           website: document.getElementById("website").value
         })
