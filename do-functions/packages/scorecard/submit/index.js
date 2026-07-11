@@ -484,7 +484,7 @@ async function main(event) {
     const token = await getAccessToken(sa);
     rowNumber = await appendRow(process.env.GOOGLE_SHEET_ID, token, [
       id,
-      new Date().toISOString(),
+      new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' ET',
       v.firstName,
       v.email,
       v.score,
