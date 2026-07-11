@@ -77,7 +77,7 @@ async function main(event) {
   try {
     const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
     const token = await getAccessToken(sa);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:V`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:AA`;
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await res.json();
     if (!res.ok) throw new Error(JSON.stringify(data));
@@ -126,6 +126,12 @@ async function main(event) {
         plan: (() => {
           try { return row[21] ? JSON.parse(row[21]) : []; }
           catch (e) { return []; }
+        })(),
+        // AA (AI 6-month plan) is absent on older rows — the frontend falls
+        // back to its static buildSixMonth() when this comes back {}.
+        plan6: (() => {
+          try { return row[26] ? JSON.parse(row[26]) : {}; }
+          catch (e) { return {}; }
         })()
       }
     };

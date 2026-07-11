@@ -1207,6 +1207,31 @@
     font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
     color: var(--pl-accent-dark); margin-right: 6px;
   }
+  /* 6-Month plan standalone view (email-only). */
+  .plan-standalone { max-width: 860px; margin: 0 auto; padding: 0 24px 60px; }
+  .months-list { margin-top: 4px; }
+  .month-card {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 16px 0; border-bottom: 1px solid var(--pl-border);
+  }
+  .month-card:last-child { border-bottom: none; }
+  .month-num {
+    flex: 0 0 74px; font-size: 12px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--pl-accent); padding-top: 3px;
+  }
+  .month-body { flex: 1 1 auto; min-width: 0; }
+  .month-theme { font-size: 16px; font-weight: 700; color: var(--pl-accent-dark); margin-bottom: 5px; }
+  .month-focus {
+    display: inline-block; font-size: 11px; font-weight: 700; color: var(--pl-accent);
+    background: rgba(21,149,211,0.1); border-radius: 4px; padding: 2px 7px;
+    margin-left: 8px; vertical-align: middle;
+  }
+  .month-text { font-size: 14.5px; line-height: 1.55; color: var(--pl-text); }
+  .month-milestone { margin-top: 7px; font-size: 13px; line-height: 1.5; color: var(--pl-text-muted); }
+  .month-milestone-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--pl-accent-dark); margin-right: 6px;
+  }
   .plan-list { list-style: none; margin: 0; padding: 0; }
   .plan-day {
     display: flex;
@@ -1648,6 +1673,22 @@
         <p class="download-note">Opens your browser's print dialog — choose <strong>Save as PDF</strong> as the destination to download your full scoring report.</p>
       </section>
     </main>
+  </div>
+</div>
+
+<!-- ---------- 6-Month Transformation Plan (email-only view: /r/{id}?v=plan) ---------- -->
+<div class="results" id="planScreen" style="display:none">
+  <div class="report-main plan-standalone">
+    <section class="section" id="sec-sixmonth">
+      <div class="results-header">
+        <h2 id="planReportTitle"></h2>
+        <div class="hero-date" id="planReportDate"></div>
+      </div>
+      <div class="section-head"><span class="section-dash">—</span><span class="section-title">6-Month Transformation Plan</span></div>
+      <p class="section-intro" id="sixArc"></p>
+      <div class="months-list" id="monthsList"></div>
+      <div class="plan-outcome" id="sixDestination"></div>
+    </section>
   </div>
 </div>
 
@@ -2426,6 +2467,57 @@
     };
   }
 
+  // Static fallback for the 6-month plan (AI version comes from the backend).
+  function buildSixMonth(ps, phase) {
+    const sorted = [...ps].sort((a, b) => a.maturity - b.maturity);
+    const weakest = AREA_LABELS[sorted[0].name] || "your weakest area";
+    const second = AREA_LABELS[sorted[1].name] || "your next-weakest area";
+    return {
+      arc: `Prove the model in one area, spread it line by line, then build the habits that hold the gains — moving your plant a clear stage up the lean maturity curve.`,
+      months: [
+        { month: 1, theme: "Prove the model", focus: weakest, text: `Run the 30-day pilot: close one real ${weakest} gap in a single area, with a metric that proves it. One area, one cycle, one measurable win.`, milestone: `One ${weakest} gap closed and holding in the pilot area.` },
+        { month: 2, theme: "Make it stick", focus: weakest, text: `Verify the month-1 fix holds without you standing there, then start the next ${weakest} gap in the same area. Lock the new standard and the review cadence into place.`, milestone: `The pilot area's gain confirmed stable; the next gap underway.` },
+        { month: 3, theme: "Spread to a second area", focus: weakest, text: `Copy the proven method to a second line or value stream. Don't reinvent it — reuse the same standard, check, and cadence that already worked.`, milestone: `A second area running the proven pattern.` },
+        { month: 4, theme: "Close the next gap", focus: second, text: `Turn to ${second}, your next-weakest area. Apply the same pilot-then-standardize sequence, biting on the specific gaps that hold it back.`, milestone: `A ${second} gap closed in a pilot area.` },
+        { month: 5, theme: "Build the sustaining habit", focus: "All", text: `Put the discipline on rails: a fixed leader walk, a real audit cadence, and a weekly problem-solving rhythm the floor owns. This is what stops gains from decaying.`, milestone: `Leader standard work and an audit/review cadence running.` },
+        { month: 6, theme: "Scale and lock in", focus: "All", text: `Extend the proven pattern across the remaining areas and lock the management system in place. Re-measure to see the shift.`, milestone: `The system running without heroics — a measurable move up the curve.` }
+      ],
+      destination: `By month 6 your best area's discipline is the plant's norm rather than the exception — moving you from ${phase || "your current stage"} toward the next stage on the lean maturity curve.`
+    };
+  }
+
+  // ---------- 6-Month plan view (email-only: /r/{id}?v=plan) ----------
+  function renderPlanReport(data) {
+    document.getElementById("landingScreen").style.display = "none";
+    document.getElementById("resultsScreen").style.display = "none";
+    document.getElementById("planScreen").style.display = "block";
+    setReportHeader(data.id || null);
+    window.scrollTo(0, 0);
+
+    let reportDate = new Date(data.date);
+    if (isNaN(reportDate)) reportDate = new Date(String(data.date || "").replace(/,\s*\d{1,2}:\d{2}.*$/i, "").trim());
+    if (isNaN(reportDate)) reportDate = new Date();
+    document.getElementById("planReportTitle").textContent = `${data.firstName}, your 6-month transformation plan`;
+    document.getElementById("planReportDate").textContent = reportDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+    const psMat = (data.principleMaturity || []).map(p => ({ name: p.name, maturity: p.maturity }));
+    const six = (data.plan6 && Array.isArray(data.plan6.months) && data.plan6.months.length === 6)
+      ? data.plan6
+      : buildSixMonth(psMat, data.phase);
+    document.getElementById("sixArc").textContent = six.arc || "";
+    document.getElementById("monthsList").innerHTML = six.months.map(m => `
+      <div class="month-card">
+        <div class="month-num">Month ${m.month}</div>
+        <div class="month-body">
+          <div class="month-theme">${m.theme || ""}${m.focus ? `<span class="month-focus">${m.focus}</span>` : ""}</div>
+          <div class="month-text">${m.text || ""}</div>
+          ${m.milestone ? `<div class="month-milestone"><span class="month-milestone-label">Milestone</span> ${m.milestone}</div>` : ""}
+        </div>
+      </div>`).join("");
+    document.getElementById("sixDestination").innerHTML = six.destination
+      ? `<span class="plan-outcome-label">Where you'll be</span> ${six.destination}` : "";
+  }
+
   // ---------- Results ----------
   function showResults(name) {
     const ps = computePrincipleScores();
@@ -2953,7 +3045,9 @@
       const res = await fetch(`${API_BASE}/report?id=${encodeURIComponent(m[1])}`);
       const out = await res.json();
       if (out.ok) {
-        renderReport(out);
+        const view = new URLSearchParams(location.search).get("v");
+        if (view === "plan") renderPlanReport(out);
+        else renderReport(out);
         return;
       }
     } catch (err) {

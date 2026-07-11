@@ -161,12 +161,13 @@ const PROFILE_PLANS = {
   "The Plateau": "Week 1 (Plan): pick one recurring problem everyone already agrees is worth fixing; define it clearly and identify a likely root cause rather than the symptom. Week 2 (Do): run one real PDCA cycle on it (plan a change, try it small, don't skip the check); require a posted countermeasure — owner and due date — on every red metric in one pilot area. Week 3 (Check): verify whether the fix actually held and whether countermeasures are really being posted before the next shift; start a weekly floor-idea review, even with just two or three ideas. Week 4 (Act): standardize what worked, and lock in the cadence so PDCA and the idea review become routine — the goal is a habit, not a one-time project; then extend it to the next area."
 };
 
-function buildPlanPrompt(profile, answers, principleMaturity) {
-  // Weakest areas first, from the /100 maturity scores.
+// Shared inputs for both plans: category maturity weakest-first, and the
+// specific red statements grouped by category.
+function planInputs(answers, principleMaturity) {
   const areasByScore = [...(principleMaturity || [])].sort((a, b) => Number(a.maturity) - Number(b.maturity));
   const areaLines = areasByScore.map(a => `- ${a.name}: ${Math.round(Number(a.maturity))}/100`).join('\n');
+  const weakest = areasByScore.length ? areasByScore[0].name : '(unknown)';
 
-  // The specific red statements the plan should bite on, grouped by category.
   const redByPrinciple = {};
   (answers || []).forEach(a => {
     const stmt = STATEMENTS[a.si];
@@ -178,6 +179,11 @@ function buildPlanPrompt(profile, answers, principleMaturity) {
         `${p}:\n${list.map(t => `  - "${t}"`).join('\n')}`).join('\n')
     : '(no red statements — every area is at least developing)';
 
+  return { areaLines, redLines, weakest };
+}
+
+function buildPlanPrompt(profile, answers, principleMaturity) {
+  const { areaLines, redLines } = planInputs(answers, principleMaturity);
   return `Best-fit Lean Maturity Profile: ${profile || '(unspecified)'}
 
 This profile's standard first-30-days template:
@@ -187,6 +193,19 @@ This plant's category maturity (weakest first):
 ${areaLines}
 
 This plant's red (lowest-scoring) statements — where the plan should focus:
+${redLines}`;
+}
+
+function build6MonthPrompt(profile, phase, answers, principleMaturity) {
+  const { areaLines, redLines, weakest } = planInputs(answers, principleMaturity);
+  return `Best-fit Lean Maturity Profile: ${profile || '(unspecified)'}
+Current roadmap phase: ${phase || '(unspecified)'}
+The 30-day pilot area (month 1 must match this): ${weakest}
+
+This plant's category maturity (weakest first):
+${areaLines}
+
+This plant's red (lowest-scoring) statements:
 ${redLines}`;
 }
 
@@ -228,6 +247,57 @@ Tone: direct, plainspoken, second-person ("you", "your team"). No preamble, no f
       owner: String(w.owner || '')
     })),
     outcome: String(parsed.outcome || '')
+  };
+}
+
+// ─── AI-generated 6-month plan ───────────────────────────────────────────────
+// Six monthly cycles that continue the 30-day pilot: month 1 = prove the model
+// in the weakest area, then dependency-sequenced spread + sustain. Non-fatal —
+// the frontend falls back to a static buildSixMonth() if this comes back empty.
+async function generate6MonthPlan(profile, phase, answers, principleMaturity, ctx) {
+  if (!Array.isArray(answers) || !answers.length) return {};
+
+  const system = `You write the 6-MONTH transformation plan for a lean-manufacturing plant assessment report, for a plant manager reading their own results.
+
+Produce SIX monthly cycles that move this plant one clear stage up the lean maturity curve. This is the continuation of their 30-day plan, so:
+- MONTH 1 = prove the model in the single weakest area (the same pilot as the 30-day plan), in ONE pilot area.
+- Then sequence months 2-6 with lean dependency logic and the pilot-then-spread pattern:
+  * Foundational gaps first. Standardization is the load-bearing wall — if it's weak it must be strengthened before the things that depend on it: built-in quality checks depend on standard work; continuous-improvement/PDCA depends on a documented standard to compare against. People and flow can advance alongside once a standard exists.
+  * Prove in one area (month 1), then SPREAD the proven method to more lines/value streams (months 2-3).
+  * Close the next dependency-linked gap (month 4).
+  * Build the SUSTAINING mechanisms — leader standard work, an audit/review cadence, a real improvement habit — so gains don't decay (month 5).
+  * Scale and lock in the management system; measure the shift (month 6).
+
+Adapt every month to THIS plant's actual weakest areas and red statements — name them. Month-level themes, NOT weekly detail.
+
+Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
+{
+ "arc": "one sentence framing the journey from their current phase toward the next, as pilot -> spread -> sustain",
+ "months": [
+   {"month":1,"theme":"short title","focus":"area label — Standards, People, Logistics, Quality, Continuous Improvement, or All","text":"2-3 sentences, concrete, second-person","milestone":"the month-end proof point / what exists by month end"},
+   {"month":2,"theme":"...","focus":"...","text":"...","milestone":"..."},
+   {"month":3,"theme":"...","focus":"...","text":"...","milestone":"..."},
+   {"month":4,"theme":"...","focus":"...","text":"...","milestone":"..."},
+   {"month":5,"theme":"...","focus":"...","text":"...","milestone":"..."},
+   {"month":6,"theme":"...","focus":"...","text":"...","milestone":"..."}
+ ],
+ "destination": "1-2 sentences: where the plant should be after 6 months if this held — tie it to moving up the maturity curve"
+}
+
+Tone: direct, plainspoken, second-person. Specific to THIS plant. No preamble, no filler.` + flavorInstruction(ctx);
+
+  const parsed = await callAnthropicJSON(system, build6MonthPrompt(profile, phase, answers, principleMaturity), 2000);
+  if (!parsed || !Array.isArray(parsed.months) || parsed.months.length !== 6) throw new Error('sixmonth-bad-shape');
+  return {
+    arc: String(parsed.arc || ''),
+    months: parsed.months.map(m => ({
+      month: Number(m.month),
+      theme: String(m.theme || ''),
+      focus: String(m.focus || ''),
+      text: String(m.text || ''),
+      milestone: String(m.milestone || '')
+    })),
+    destination: String(parsed.destination || '')
   };
 }
 
@@ -283,10 +353,10 @@ async function appendRow(sheetId, accessToken, row) {
   return match ? Number(match[1]) : null;
 }
 
-async function updateAiCells(sheetId, accessToken, rowNumber, categoryText, plan, aiStatus) {
+async function updateAiCells(sheetId, accessToken, rowNumber, categoryText, plan, aiStatus, plan6) {
   // Patches this row's AI columns in one write: U = categoryText, V = plan
-  // (JSON strings), Z = ai_status (human-readable "ok" / failure reason so a
-  // failed Claude call is visible at a glance in the sheet).
+  // (30-day), Z = ai_status (human-readable "ok"/failure), AA = plan6_json
+  // (6-month plan). All JSON strings except ai_status.
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`;
   const res = await fetch(url, {
     method: 'POST',
@@ -295,7 +365,8 @@ async function updateAiCells(sheetId, accessToken, rowNumber, categoryText, plan
       valueInputOption: 'RAW',
       data: [
         { range: `${SHEET_TAB}!U${rowNumber}:V${rowNumber}`, values: [[JSON.stringify(categoryText || {}), JSON.stringify(plan || {})]] },
-        { range: `${SHEET_TAB}!Z${rowNumber}`, values: [[aiStatus || '']] }
+        { range: `${SHEET_TAB}!Z${rowNumber}`, values: [[aiStatus || '']] },
+        { range: `${SHEET_TAB}!AA${rowNumber}`, values: [[JSON.stringify(plan6 || {})]] }
       ]
     })
   });
@@ -523,14 +594,17 @@ async function main(event) {
 
     if (rowNumber) {
       const ctx = plantContext(v);
-      const [catResult, planResult] = await Promise.allSettled([
+      const [catResult, planResult, sixResult] = await Promise.allSettled([
         generateCategoryText(event.answers, ctx),
-        generatePlan(v.profile, event.answers, v.principleMaturity, ctx)
+        generatePlan(v.profile, event.answers, v.principleMaturity, ctx),
+        generate6MonthPlan(v.profile, v.phase, event.answers, v.principleMaturity, ctx)
       ]);
       const categoryText = catResult.status === 'fulfilled' ? catResult.value : {};
       const plan = planResult.status === 'fulfilled' ? planResult.value : {};
+      const plan6 = sixResult.status === 'fulfilled' ? sixResult.value : {};
       if (catResult.status === 'rejected') console.error('Category text generation failed (non-fatal, static fallback):', catResult.reason && catResult.reason.message);
       if (planResult.status === 'rejected') console.error('Plan generation failed (non-fatal, static fallback):', planResult.reason && planResult.reason.message);
+      if (sixResult.status === 'rejected') console.error('6-month plan generation failed (non-fatal, static fallback):', sixResult.reason && sixResult.reason.message);
       // Human-readable status for the sheet's ai_status column (col Z).
       const shortErr = res => String((res && res.reason && res.reason.message) || 'error').slice(0, 60);
       const catPart = catResult.status === 'fulfilled'
@@ -539,10 +613,14 @@ async function main(event) {
       const planPart = planResult.status === 'fulfilled'
         ? (plan && plan.weeks && plan.weeks.length ? 'ok' : 'empty')
         : `FAIL(${shortErr(planResult)})`;
-      const aiStatus = (catPart === 'ok' && planPart === 'ok') ? 'ok' : `category:${catPart} | plan:${planPart}`;
-      // Always write — so a total failure (both empty) still records its status.
+      const sixPart = sixResult.status === 'fulfilled'
+        ? (plan6 && plan6.months && plan6.months.length ? 'ok' : 'empty')
+        : `FAIL(${shortErr(sixResult)})`;
+      const aiStatus = (catPart === 'ok' && planPart === 'ok' && sixPart === 'ok')
+        ? 'ok' : `category:${catPart} | plan:${planPart} | 6mo:${sixPart}`;
+      // Always write — so a total failure (all empty) still records its status.
       try {
-        await updateAiCells(process.env.GOOGLE_SHEET_ID, token, rowNumber, categoryText, plan, aiStatus);
+        await updateAiCells(process.env.GOOGLE_SHEET_ID, token, rowNumber, categoryText, plan, aiStatus, plan6);
       } catch (err) {
         console.error('AI cell write failed (non-fatal):', err.message);
       }
