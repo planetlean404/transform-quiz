@@ -1338,10 +1338,14 @@
     /* Expand every collapsible so the whole report is captured. */
     .cat-collapse { display: block !important; margin-top: 10px !important; }
     .stmt-body { display: block !important; }
-    /* Keep boxes and sections from splitting awkwardly across pages. */
-    .section { page-break-inside: avoid; break-inside: avoid; }
+    /* Keep individual boxes from splitting across pages (but NOT whole
+       sections — Deep Insights is taller than a page, and forcing it to
+       avoid a break orphaned its heading onto a page by itself). */
     .score-card, .profile-card, .cat-box, .stmt-row, .gap-callout,
-    .plan-list li, .curve-box { page-break-inside: avoid; break-inside: avoid; }
+    .plan-list li, .plan-head, .plan-outcome, .curve-box { page-break-inside: avoid; break-inside: avoid; }
+    /* Never break right after a section heading or its intro line — keeps the
+       eyebrow + tag phrase attached to the content that follows. */
+    .section-head, .section-intro { break-after: avoid; page-break-after: avoid; }
     .section { padding-top: 6px; }
     /* Drop the Download section itself from the printout. */
     #sec-download { display: none !important; }
