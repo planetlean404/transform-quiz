@@ -1002,10 +1002,12 @@
   .stmt-part-label.weak { color: var(--score-red); }
 
   /* Profile: best-fit headline above the pattern narrative card. */
-  .profile-fit { margin-bottom: 16px; }
+  /* One card: darker-gray header (name/tagline/match) over the lighter body. */
+  .profile-card { border: 1px solid var(--pl-border); border-radius: 12px; overflow: hidden; }
+  .profile-fit { background: #eaedf0; padding: 18px 22px; border-bottom: 1px solid var(--pl-border); }
   .profile-fit-eyebrow {
     font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--pl-text-muted); margin-bottom: 4px;
+    color: #566573; margin-bottom: 4px;
   }
   .profile-fit-name { font-size: 26px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.15; }
   .profile-fit-tagline { font-size: 14px; color: #566573; margin-top: 4px; line-height: 1.4; }
@@ -1017,16 +1019,14 @@
     background: var(--pl-bg-soft); border: 1px solid var(--pl-border); overflow: hidden;
   }
   .conf-bar-fill { display: block; height: 100%; border-radius: 999px; }
-  .conf-text { font-size: 13px; color: var(--pl-text-muted); }
+  .conf-text { font-size: 13px; color: #566573; }
   .conf-text strong { color: var(--pl-accent-dark); }
   .conf-strong .conf-bar-fill { background: #4ec583; }
   .conf-good   .conf-bar-fill { background: #f5be2e; }
   .conf-blended .conf-bar-fill { background: #94a2ac; }
-  /* Whole profile body in a gray box (starts below the confidence number). */
+  /* Card body — lighter gray under the darker header. */
   .profile-detail {
     background: var(--pl-bg-soft);
-    border: 1px solid var(--pl-border);
-    border-radius: 12px;
     padding: 20px 22px;
   }
   .profile-lead { font-size: 15px; line-height: 1.6; color: var(--pl-text); margin: 0 0 18px; }
@@ -1459,8 +1459,10 @@
       <section class="section" id="sec-profile">
         <div class="section-head"><span class="section-dash">—</span><span class="section-title">05 / Best-Fit Profile</span></div>
         <p class="section-intro">Plants that score like yours tend to share the same story. Here's your best-fit profile — what it looks like on the floor, and why it happens.</p>
-        <div class="profile-fit" id="profileFit"></div>
-        <div class="profile-detail" id="profileDetail"></div>
+        <div class="profile-card">
+          <div class="profile-fit" id="profileFit"></div>
+          <div class="profile-detail" id="profileDetail"></div>
+        </div>
       </section>
 
       <section class="section" id="sec-plan">
