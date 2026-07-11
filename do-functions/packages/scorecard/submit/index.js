@@ -99,7 +99,25 @@ async function callAnthropicJSON(system, userContent, maxTokens) {
   return JSON.parse(text);
 }
 
-async function generateCategoryText(answers) {
+// Build a one-line plant context string from the optional dropdowns. Empty
+// when nothing usable was provided (so the AI writes stay fully generic).
+function plantContext(v) {
+  const parts = [];
+  if (v.industry && v.industry !== 'Other') parts.push(`sector: ${v.industry}`);
+  if (v.plantSize) parts.push(`plant size: ${v.plantSize}`);
+  if (v.role && v.role !== 'Other') parts.push(`reader's role: ${v.role}`);
+  return parts.join('; ');
+}
+
+// LIGHT sector flavor only — sector-appropriate examples/vocabulary and tone,
+// never invented facts and never a change to substance or scoring.
+function flavorInstruction(ctx) {
+  return ctx
+    ? `\n\nPLANT CONTEXT (light flavor only): ${ctx}. Where it reads naturally, choose sector-appropriate examples and vocabulary and pitch the tone to this reader's role. Do NOT invent sector-specific facts, metrics, regulations, or requirements, and do NOT let this change the substance, the scoring, or which statements count as strengths vs gaps. Ignore any part that is blank.`
+    : '';
+}
+
+async function generateCategoryText(answers, ctx) {
   if (!Array.isArray(answers) || !answers.length) return {};
 
   const system = `You write the "Good" and "Opportunity" sections of a lean-manufacturing plant assessment report, for a plant manager reading their own results.
@@ -115,7 +133,7 @@ Good example: "Standard work, 5S discipline, and a dashboard your team actually 
 Opportunity example (note: no fix steps): "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet, so every gain made elsewhere has to be re-won instead of holding on its own."
 
 Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape with all 5 category names as keys:
-{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}`;
+{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}` + flavorInstruction(ctx);
 
   const parsed = await callAnthropicJSON(system, buildCategoryPrompt(answers), 1500);
   const out = {};
@@ -172,7 +190,7 @@ This plant's red (lowest-scoring) statements — where the plan should focus:
 ${redLines}`;
 }
 
-async function generatePlan(profile, answers, principleMaturity) {
+async function generatePlan(profile, answers, principleMaturity, ctx) {
   if (!Array.isArray(answers) || !answers.length) return [];
 
   const system = `You write the 30-day plan for a lean-manufacturing plant assessment report, for a plant manager reading their own results.
@@ -188,7 +206,7 @@ For each week write:
 Tone example: "Pick your weakest area (Standards) as this month's pilot. Spend real time on the floor there — watch what's actually happening, not what you assume is happening — and write down one specific gap worth closing first."
 
 Return ONLY valid JSON, no markdown fences, no commentary — an array of exactly 4 objects:
-[{"week":1,"title":"Plan","tag":"...","text":"..."},{"week":2,"title":"Do","tag":"...","text":"..."},{"week":3,"title":"Check","tag":"...","text":"..."},{"week":4,"title":"Act","tag":"...","text":"..."}]`;
+[{"week":1,"title":"Plan","tag":"...","text":"..."},{"week":2,"title":"Do","tag":"...","text":"..."},{"week":3,"title":"Check","tag":"...","text":"..."},{"week":4,"title":"Act","tag":"...","text":"..."}]` + flavorInstruction(ctx);
 
   const parsed = await callAnthropicJSON(system, buildPlanPrompt(profile, answers, principleMaturity), 1200);
   if (!Array.isArray(parsed) || parsed.length !== 4) throw new Error('plan-bad-shape');
@@ -398,7 +416,13 @@ function validate(event) {
   // generator falls back to a default template if it's missing or unknown.
   const profile = String(event.profile || '').slice(0, 40);
 
-  return { errors, firstName, email, score, phase, principles, maturity, principleMaturity, pattern, profile };
+  // General plant info (dropdowns) — optional. Stored for benchmarking and
+  // used for light sector flavor in the AI writes. Never affects scoring.
+  const plantSize = String(event.plantSize || '').slice(0, 40);
+  const industry = String(event.industry || '').slice(0, 60);
+  const role = String(event.role || '').slice(0, 60);
+
+  return { errors, firstName, email, score, phase, principles, maturity, principleMaturity, pattern, profile, plantSize, industry, role };
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -472,13 +496,17 @@ async function main(event) {
       v.maturity,
       ...v.principleMaturity.map(p => Number(p.maturity)),
       '{}',
-      '[]'
+      '[]',
+      v.plantSize,
+      v.industry,
+      v.role
     ]);
 
     if (rowNumber) {
+      const ctx = plantContext(v);
       const [catResult, planResult] = await Promise.allSettled([
-        generateCategoryText(event.answers),
-        generatePlan(v.profile, event.answers, v.principleMaturity)
+        generateCategoryText(event.answers, ctx),
+        generatePlan(v.profile, event.answers, v.principleMaturity, ctx)
       ]);
       const categoryText = catResult.status === 'fulfilled' ? catResult.value : {};
       const plan = planResult.status === 'fulfilled' ? planResult.value : [];
