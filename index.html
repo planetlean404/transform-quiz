@@ -1642,7 +1642,7 @@
       <section class="section" id="sec-download">
         <div class="section-head"><span class="section-dash">—</span><span class="section-title">07 / Download</span></div>
         <div class="cta-row">
-          <button class="cta-primary" onclick="window.print()">Download PDF Report</button>
+          <button class="cta-primary" onclick="downloadPdf()">Download PDF Report</button>
           <button class="cta-secondary" onclick="alert('This will link to a planetlean.com plant assessment booking page.')">Book a Plant Assessment</button>
         </div>
         <p class="download-note">Opens your browser's print dialog — choose <strong>Save as PDF</strong> as the destination to download your full scoring report.</p>
@@ -1944,6 +1944,17 @@
 
   // ---------- Backend ----------
   const API_BASE = "https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-ff1b984d-dbbe-4147-97b1-81aea98278a6/scorecard";
+
+  // Default "Save as PDF" filename — browsers derive it from document.title,
+  // so we swap the title in for the duration of the print, then restore it.
+  let pdfFileName = "Rapid Plant Assessment";
+  function downloadPdf() {
+    const original = document.title;
+    document.title = pdfFileName;
+    const restore = () => { document.title = original; window.removeEventListener("afterprint", restore); };
+    window.addEventListener("afterprint", restore);
+    window.print();
+  }
 
   function submitGate() {
     const name = document.getElementById("firstName").value.trim();
@@ -2488,7 +2499,18 @@
     // 01 — Overview: maturity dial left, proportional bars right.
     // The dial is the only number shown anywhere in the report.
     document.getElementById("resultsTitle").textContent = `${data.firstName}, here's how your plant scored`;
-    document.getElementById("resultsDate").textContent = new Date(data.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    // Robust date: live view sends an ISO string; shared /r/ links send the
+    // sheet's friendly "Jul 11, 2026, 2:23 PM ET" (which doesn't parse), so
+    // strip the time/zone and re-parse, then fall back to today.
+    let reportDate = new Date(data.date);
+    if (isNaN(reportDate)) reportDate = new Date(String(data.date || "").replace(/,\s*\d{1,2}:\d{2}.*$/i, "").trim());
+    if (isNaN(reportDate)) reportDate = new Date();
+    document.getElementById("resultsDate").textContent = reportDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    // Default filename for the "Download PDF" (browser save-as-PDF uses the
+    // document title). e.g. "Rapid Plant Assessment - Dave - 2026-07-11".
+    const fileName = (data.firstName || "").replace(/[^\w \-]/g, "").trim();
+    const fileDate = `${reportDate.getFullYear()}-${String(reportDate.getMonth() + 1).padStart(2, "0")}-${String(reportDate.getDate()).padStart(2, "0")}`;
+    pdfFileName = `Rapid Plant Assessment${fileName ? " - " + fileName : ""} - ${fileDate}`;
     document.getElementById("bigScore").innerHTML = buildScoreDialSVG(total100);
     // Overall LEAN maturity label — same bands as the category pills, plus a
     // perfect-score Benchmark (all statements at the top of the scale).
