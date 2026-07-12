@@ -485,10 +485,12 @@ async function pushToKartra({ firstName, email, phase }, id) {
   const createStatus = created.status === 'Success' ? 'created' : 'existing';
 
   // Second call does the rest, and works for both new and existing contacts:
-  //  - update_lead refreshes the report-link custom fields. This MUST be
-  //    update_lead (not create_lead) — on a RETAKE create_lead errors, so the
-  //    links would never update and the re-fired 6plan email would point at the
-  //    visitor's OLD report. update_lead makes every take deliver its own links.
+  //  - edit_lead refreshes the report-link custom fields. This MUST be edit_lead
+  //    (Kartra's documented command to update an existing lead) — NOT create_lead
+  //    (errors on an existing contact) and NOT update_lead (not a real command —
+  //    Kartra silently ignores it and returns Success). On a RETAKE this is what
+  //    makes the re-fired 6plan email carry the visitor's CURRENT report links
+  //    instead of their first take's.
   //  - the tags: "scorecard" = source, phaseN = phase (accumulates across
   //    retakes, by design), "6plan" = the trigger Jim's automation watches.
   //    Re-assigning a tag the contact already has is a harmless no-op.
@@ -497,7 +499,7 @@ async function pushToKartra({ firstName, email, phase }, id) {
     ...auth,
     lead: { email, ...(customFields.length ? { custom_fields: customFields } : {}) },
     actions: [
-      ...(customFields.length ? [{ cmd: 'update_lead' }] : []),
+      ...(customFields.length ? [{ cmd: 'edit_lead' }] : []),
       { cmd: 'assign_tag', tag_name: 'scorecard' },
       { cmd: 'assign_tag', tag_name: `phase${phaseNum}` },
       { cmd: 'assign_tag', tag_name: '6plan' }
