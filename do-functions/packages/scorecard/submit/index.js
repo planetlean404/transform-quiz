@@ -459,15 +459,18 @@ async function pushToKartra({ firstName, email, phase }, id) {
   const createStatus = created.status === 'Success' ? 'created' : 'existing';
 
   // Minimal tag set (Jim's call): "scorecard" identifies the lead source,
-  // phase number tag (phase1–phase4) drives segmented follow-up. The pattern
-  // is stored in the sheet if pattern-level segmentation is ever wanted.
+  // phase number tag (phase1–phase4) drives segmented follow-up, and "6plan"
+  // is the trigger tag Jim's automation watches to email the report + 6-month
+  // plan URLs (the RPAreportURL / RPA6planURL custom fields set above). The
+  // pattern is stored in the sheet if pattern-level segmentation is ever wanted.
   const phaseNum = { 'Formative': 1, 'Localized': 2, 'Broad-based': 3, 'Benchmark': 4 }[phase];
   const tagged = await kartraCall({
     ...auth,
     lead: { email },
     actions: [
       { cmd: 'assign_tag', tag_name: 'scorecard' },
-      { cmd: 'assign_tag', tag_name: `phase${phaseNum}` }
+      { cmd: 'assign_tag', tag_name: `phase${phaseNum}` },
+      { cmd: 'assign_tag', tag_name: '6plan' }
     ]
   });
 
