@@ -884,7 +884,8 @@
        desktop keeps the attribute values). Sizes are viewBox units — tuned so
        the roomy labels grow most and the two-line stage headers stay just
        inside their bands. */
-    #curveSvg .cv-pname { font-size: 21px; }
+    #curveSvg .cv-pnum  { font-size: 13px; }
+    #curveSvg .cv-pname { font-size: 16px; }
     #curveSvg .cv-axis  { font-size: 23px; }
     #curveSvg .cv-arrow { font-size: 34px; }
     #curveSvg .cv-tools { font-size: 17px; }
@@ -1727,7 +1728,7 @@
       </section>
 
       <section class="section" id="sec-roadmap">
-        <div class="section-head"><span class="section-dash">—</span><span class="section-title">04 / Lean Transformation Roadmap</span></div>
+        <div class="section-head"><span class="section-dash">—</span><span class="section-title">04 / LEAN Transformation Roadmap</span></div>
         <p class="section-intro">Lean transformation follows a predictable curve. Knowing which stage your plant is on tells you exactly what to strengthen next.</p>
         <div class="roadmap-head">
           <div class="roadmap-lead" id="roadmapLead"></div>
@@ -1741,7 +1742,6 @@
             <span id="toolsToggleLabel">Show the &ldquo;tools only&rdquo; trajectory</span>
           </button>
         </div>
-        <div class="curve-caption">SQDCPS — Safety, Quality, Delivery, Cost, People, Sustainability</div>
         <div class="narrative" id="narrative"></div>
       </section>
 
@@ -3179,9 +3179,12 @@
       if (i > 0) {
         bands += `<line x1="${bx}" y1="${plot.y0}" x2="${bx}" y2="${plot.y1}" stroke="#dfe3e6" stroke-dasharray="4 4"/>`;
       }
-      labels += `<text class="cv-pname" x="${cx}" y="${plot.y0 + 22}" text-anchor="middle"
+      labels += `<text class="cv-pnum" x="${cx}" y="${plot.y0 + 14}" text-anchor="middle"
+        font-size="11.5" font-weight="600" letter-spacing="0.5"
+        fill="${active ? "#1595D3" : "#9aa4ab"}">Phase ${i + 1}</text>`;
+      labels += `<text class="cv-pname" x="${cx}" y="${plot.y0 + 36}" text-anchor="middle"
         font-size="15" font-weight="${active ? "700" : "500"}"
-        fill="${active ? "#1595D3" : "#7f8c95"}">${p.name.toLowerCase()}</text>`;
+        fill="${active ? "#1595D3" : "#7f8c95"}">${p.name.toUpperCase()}</text>`;
     });
 
     return `
