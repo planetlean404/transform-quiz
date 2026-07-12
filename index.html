@@ -1963,6 +1963,18 @@
     return pickByPriority(areas, 1, "lowest")[0];
   }
 
+  // Weakest-first ordering for the fallback plans, matching the report's
+  // Biggest Gap rule exactly: lowest maturity, ties broken by GAP_PRIORITY (so
+  // the plan pilots the same category the report names). ps items carry
+  // maturity10 (0–10). The AI plans apply the identical rule server-side.
+  function weakestFirst(ps) {
+    return [...ps].sort((a, b) => {
+      const d = a.maturity10 - b.maturity10;
+      if (d !== 0) return d;
+      return GAP_PRIORITY.indexOf(a.name) - GAP_PRIORITY.indexOf(b.name);
+    });
+  }
+
   const PRINCIPLES = [
     {
       name: "Standardization",
@@ -2622,7 +2634,7 @@
   // Follows the same Plan / Do / Check / Act shape as the RPA background
   // doc's master 30-day template, applied to this plant's actual weakest area.
   function buildPlan(ps) {
-    const sorted = [...ps].sort((a, b) => a.roadmap4 - b.roadmap4);
+    const sorted = weakestFirst(ps);
     const weakest = AREA_LABELS[sorted[0].name];
     return {
       pilotArea: weakest,
@@ -2640,7 +2652,7 @@
 
   // Static fallback for the 6-month plan (AI version comes from the backend).
   function buildSixMonth(ps, phase) {
-    const sorted = [...ps].sort((a, b) => a.maturity - b.maturity);
+    const sorted = weakestFirst(ps);
     const weakest = AREA_LABELS[sorted[0].name] || "your weakest area";
     const second = AREA_LABELS[sorted[1].name] || "your next-weakest area";
     return {

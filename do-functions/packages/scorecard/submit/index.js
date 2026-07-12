@@ -18,6 +18,19 @@ const PRINCIPLE_ORDER = [
   'Continuous Improvement'
 ];
 
+// Tie-break priority for picking the single weakest area when categories tie
+// on maturity. MUST stay identical to the frontend's GAP_PRIORITY (index.html)
+// so the plan's pilot area is always the same category the report names as the
+// "Biggest Gap" — note Built-In Quality outranks Short Lead Time here, which is
+// the one place this differs from PRINCIPLE_ORDER.
+const GAP_PRIORITY = [
+  'Standardization',
+  'People Involvement',
+  'Built-In Quality',
+  'Short Lead Time',
+  'Continuous Improvement'
+];
+
 // ─── AI-generated category text (Good / Opportunity) ─────────────────────────
 // Runs once per submission, off the plant's actual per-statement answers, so
 // the report's Good/Opportunity boxes reflect which specific statements
@@ -164,7 +177,11 @@ const PROFILE_PLANS = {
 // Shared inputs for both plans: category maturity weakest-first, and the
 // specific red statements grouped by category.
 function planInputs(answers, principleMaturity) {
-  const areasByScore = [...(principleMaturity || [])].sort((a, b) => Number(a.maturity) - Number(b.maturity));
+  const areasByScore = [...(principleMaturity || [])].sort((a, b) => {
+    const d = Number(a.maturity) - Number(b.maturity);
+    if (d !== 0) return d;
+    return GAP_PRIORITY.indexOf(a.name) - GAP_PRIORITY.indexOf(b.name);
+  });
   const areaLines = areasByScore.map(a => `- ${a.name}: ${Math.round(Number(a.maturity))}/100`).join('\n');
   const weakest = areasByScore.length ? areasByScore[0].name : '(unknown)';
 
@@ -183,11 +200,13 @@ function planInputs(answers, principleMaturity) {
 }
 
 function buildPlanPrompt(profile, answers, principleMaturity) {
-  const { areaLines, redLines } = planInputs(answers, principleMaturity);
+  const { areaLines, redLines, weakest } = planInputs(answers, principleMaturity);
   return `Best-fit Lean Maturity Profile: ${profile || '(unspecified)'}
 
 This profile's standard first-30-days template:
 ${PROFILE_PLANS[profile] || PROFILE_PLANS["The Firefighter"]}
+
+The pilot area for this 30-day plan MUST be ${weakest} — this is the plant's biggest gap and the report names it as such, so the plan has to focus there. Set "pilotArea" to ${weakest}.
 
 This plant's category maturity (weakest first):
 ${areaLines}
@@ -218,7 +237,7 @@ Produce a focused, runnable 30-day project: ONE pilot area, ONE PDCA cycle (Week
 
 Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
 {
- "pilotArea": "the single area to focus — one of: Standards, People, Logistics, Quality, Continuous Improvement (normally the weakest)",
+ "pilotArea": "the single area to focus — set this to the weakest area named in the prompt (the plant's biggest gap); do not choose a different area",
  "objective": "one sentence: the concrete 30-day goal for the pilot area",
  "metric": "the single before/after measure to track (e.g., defect escapes at one step, changeover time, new-operator training time) — one specific measure, not a list",
  "weeks": [
