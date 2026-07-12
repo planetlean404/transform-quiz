@@ -1005,6 +1005,15 @@
       border-radius: 50%; overflow: hidden;
       font-size: 0; line-height: 0; letter-spacing: 0;
     }
+    /* Report header: left name + center wordmark + right Report ID all set to
+       nowrap, so on a phone the Report ID pill collides with the name on the
+       left. Drop the center wordmark (redundant on the report view — the brand
+       is already on the left), tighten the bar padding, and compact the pill so
+       name + ID sit side by side without touching down to ~320px. */
+    .topbar-center { display: none; }
+    .topbar { padding: 0 14px; }
+    .rpa-name { font-size: 13px; }
+    .report-id { font-size: 11px; padding: 3px 9px; }
   }
 
   /* Insights: per-category cards, each with a statement-level drill-down. */
