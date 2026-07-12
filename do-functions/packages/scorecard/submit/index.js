@@ -474,27 +474,30 @@ async function pushToKartra({ firstName, email, phase }, id) {
     { field_identifier: 'RPA6planURL', field_value: `${reportUrl}?v=plan` }
   ] : [];
 
-  // Two separate calls because create_lead ERRORS on an existing contact and
-  // kills every action bundled with it — repeat visitors would lose their
-  // tags. Tags are assigned in their own call, which works for new and
-  // existing leads alike.
+  // create_lead ERRORS on an existing contact and kills every action bundled
+  // with it, so it runs alone with no fields/tags attached — a repeat visitor
+  // simply falls through as 'existing'.
   const created = await kartraCall({
     ...auth,
-    lead: { email, first_name: safeName, ...(customFields.length ? { custom_fields: customFields } : {}) },
+    lead: { email, first_name: safeName },
     actions: [{ cmd: 'create_lead' }]
   });
   const createStatus = created.status === 'Success' ? 'created' : 'existing';
 
-  // Minimal tag set (Jim's call): "scorecard" identifies the lead source,
-  // phase number tag (phase1–phase4) drives segmented follow-up, and "6plan"
-  // is the trigger tag Jim's automation watches to email the report + 6-month
-  // plan URLs (the RPAreportURL / RPA6planURL custom fields set above). The
-  // pattern is stored in the sheet if pattern-level segmentation is ever wanted.
+  // Second call does the rest, and works for both new and existing contacts:
+  //  - update_lead refreshes the report-link custom fields. This MUST be
+  //    update_lead (not create_lead) — on a RETAKE create_lead errors, so the
+  //    links would never update and the re-fired 6plan email would point at the
+  //    visitor's OLD report. update_lead makes every take deliver its own links.
+  //  - the tags: "scorecard" = source, phaseN = phase (accumulates across
+  //    retakes, by design), "6plan" = the trigger Jim's automation watches.
+  //    Re-assigning a tag the contact already has is a harmless no-op.
   const phaseNum = { 'Formative': 1, 'Localized': 2, 'Broad-based': 3, 'Benchmark': 4 }[phase];
   const tagged = await kartraCall({
     ...auth,
-    lead: { email },
+    lead: { email, ...(customFields.length ? { custom_fields: customFields } : {}) },
     actions: [
+      ...(customFields.length ? [{ cmd: 'update_lead' }] : []),
       { cmd: 'assign_tag', tag_name: 'scorecard' },
       { cmd: 'assign_tag', tag_name: `phase${phaseNum}` },
       { cmd: 'assign_tag', tag_name: '6plan' }
