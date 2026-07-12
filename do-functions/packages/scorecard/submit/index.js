@@ -546,6 +546,46 @@ function validate(event) {
   return { errors, firstName, email, score, phase, principles, maturity, principleMaturity, pattern, profile, plantSize, industry, role };
 }
 
+// ─── AI generation (background stage) ────────────────────────────────────────
+
+// Runs the three Claude generations for an already-stored row and patches its
+// AI cells (U categoryText, V plan, Z ai_status, AA plan6). Called by the
+// background `stage:'ai'` request so the main submit can return the id fast.
+// Best-effort: every failure is non-fatal and recorded in ai_status; the report
+// falls back to static copy for any cell that stays empty.
+async function runAiGeneration(sheetId, token, rowNumber, v, event) {
+  const ctx = plantContext(v);
+  const [catResult, planResult, sixResult] = await Promise.allSettled([
+    generateCategoryText(event.answers, ctx),
+    generatePlan(v.profile, event.answers, v.principleMaturity, ctx),
+    generate6MonthPlan(v.profile, v.phase, event.answers, v.principleMaturity, ctx)
+  ]);
+  const categoryText = catResult.status === 'fulfilled' ? catResult.value : {};
+  const plan = planResult.status === 'fulfilled' ? planResult.value : {};
+  const plan6 = sixResult.status === 'fulfilled' ? sixResult.value : {};
+  if (catResult.status === 'rejected') console.error('Category text generation failed (non-fatal, static fallback):', catResult.reason && catResult.reason.message);
+  if (planResult.status === 'rejected') console.error('Plan generation failed (non-fatal, static fallback):', planResult.reason && planResult.reason.message);
+  if (sixResult.status === 'rejected') console.error('6-month plan generation failed (non-fatal, static fallback):', sixResult.reason && sixResult.reason.message);
+  // Human-readable status for the sheet's ai_status column (col Z).
+  const shortErr = res => String((res && res.reason && res.reason.message) || 'error').slice(0, 60);
+  const catPart = catResult.status === 'fulfilled' ? (Object.keys(categoryText).length ? 'ok' : 'empty') : `FAIL(${shortErr(catResult)})`;
+  const planPart = planResult.status === 'fulfilled' ? (plan && plan.weeks && plan.weeks.length ? 'ok' : 'empty') : `FAIL(${shortErr(planResult)})`;
+  const sixPart = sixResult.status === 'fulfilled' ? (plan6 && plan6.months && plan6.months.length ? 'ok' : 'empty') : `FAIL(${shortErr(sixResult)})`;
+  const aiStatus = (catPart === 'ok' && planPart === 'ok' && sixPart === 'ok') ? 'ok' : `category:${catPart} | plan:${planPart} | 6mo:${sixPart}`;
+  // Always write — so a total failure (all empty) still records its status.
+  await updateAiCells(sheetId, token, rowNumber, categoryText, plan, aiStatus, plan6);
+}
+
+// Finds the 1-based sheet row number for a report id (0 if not found).
+async function findRowById(sheetId, token, id) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${SHEET_TAB}%21A:A`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  const rows = data.values || [];
+  const idx = rows.findIndex(r => (r[0] || '').toLowerCase() === id.toLowerCase());
+  return idx >= 0 ? idx + 1 : 0;
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 function corsHeaders() {
@@ -563,6 +603,29 @@ async function main(event) {
   // Honeypot: bots that fill the hidden "website" field get a fake success.
   if (event.website) {
     return { statusCode: 200, headers: corsHeaders(), body: { ok: true, id: 'rpa-' + crypto.randomBytes(4).toString('hex').toUpperCase() } };
+  }
+
+  // Background AI-generation stage: the client fires this as a second request
+  // right after the main submit returns the id, so the id isn't held up ~20s by
+  // the Claude calls. Runs the three generations for the already-stored row and
+  // patches its AI cells. Non-fatal; the report uses static fallbacks until
+  // these land.
+  if (event.stage === 'ai') {
+    const av = validate(event);
+    if (av.errors.length) return { statusCode: 400, headers: corsHeaders(), body: { ok: false, errors: av.errors } };
+    const aiId = String(event.id || '').trim();
+    if (!/^rpa-[A-F0-9]{8}$/i.test(aiId)) return { statusCode: 400, headers: corsHeaders(), body: { ok: false, error: 'bad-id' } };
+    try {
+      const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
+      const token = await getAccessToken(sa);
+      const rowNumber = await findRowById(process.env.GOOGLE_SHEET_ID, token, aiId);
+      if (!rowNumber) return { statusCode: 404, headers: corsHeaders(), body: { ok: false, error: 'not-found' } };
+      await runAiGeneration(process.env.GOOGLE_SHEET_ID, token, rowNumber, av, event);
+      return { statusCode: 200, headers: corsHeaders(), body: { ok: true, id: aiId } };
+    } catch (err) {
+      console.error('AI stage failed (non-fatal):', err.message);
+      return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: 'ai-failed' } };
+    }
   }
 
   const v = validate(event);
@@ -593,17 +656,17 @@ async function main(event) {
   }
   kartraStatus += ` | zb:${emailCheck.status}`;
 
-  // The row lands with empty AI cells first — lead capture must never wait on
-  // or be threatened by an AI call. The two generations (category text +
-  // 30-day plan) can each take up to their own 20s timeout; if that ever ate
-  // into the function's total budget before the sheet write ran, a real lead
-  // could be lost. So we write the row immediately, then run both AI calls in
-  // parallel and best-effort patch columns U (categoryText) and V (plan).
-  let rowNumber;
+  // Write the lead row immediately with empty AI cells ('{}'), then return the
+  // id right away — lead capture must never wait on an AI call. The three
+  // generations (~20s total) are NOT run here; the client fires a separate
+  // `stage:'ai'` request that patches the AI cells in the background, so the
+  // report id comes back in a few seconds instead of ~20s. The on-screen report
+  // is client-rendered and never uses these cells — they only feed the emailed
+  // /r/ link, which falls back to static copy until they land.
   try {
     const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
     const token = await getAccessToken(sa);
-    rowNumber = await appendRow(process.env.GOOGLE_SHEET_ID, token, [
+    await appendRow(process.env.GOOGLE_SHEET_ID, token, [
       id,
       new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' ET',
       v.firstName,
@@ -622,40 +685,6 @@ async function main(event) {
       v.industry,
       v.role
     ]);
-
-    if (rowNumber) {
-      const ctx = plantContext(v);
-      const [catResult, planResult, sixResult] = await Promise.allSettled([
-        generateCategoryText(event.answers, ctx),
-        generatePlan(v.profile, event.answers, v.principleMaturity, ctx),
-        generate6MonthPlan(v.profile, v.phase, event.answers, v.principleMaturity, ctx)
-      ]);
-      const categoryText = catResult.status === 'fulfilled' ? catResult.value : {};
-      const plan = planResult.status === 'fulfilled' ? planResult.value : {};
-      const plan6 = sixResult.status === 'fulfilled' ? sixResult.value : {};
-      if (catResult.status === 'rejected') console.error('Category text generation failed (non-fatal, static fallback):', catResult.reason && catResult.reason.message);
-      if (planResult.status === 'rejected') console.error('Plan generation failed (non-fatal, static fallback):', planResult.reason && planResult.reason.message);
-      if (sixResult.status === 'rejected') console.error('6-month plan generation failed (non-fatal, static fallback):', sixResult.reason && sixResult.reason.message);
-      // Human-readable status for the sheet's ai_status column (col Z).
-      const shortErr = res => String((res && res.reason && res.reason.message) || 'error').slice(0, 60);
-      const catPart = catResult.status === 'fulfilled'
-        ? (Object.keys(categoryText).length ? 'ok' : 'empty')
-        : `FAIL(${shortErr(catResult)})`;
-      const planPart = planResult.status === 'fulfilled'
-        ? (plan && plan.weeks && plan.weeks.length ? 'ok' : 'empty')
-        : `FAIL(${shortErr(planResult)})`;
-      const sixPart = sixResult.status === 'fulfilled'
-        ? (plan6 && plan6.months && plan6.months.length ? 'ok' : 'empty')
-        : `FAIL(${shortErr(sixResult)})`;
-      const aiStatus = (catPart === 'ok' && planPart === 'ok' && sixPart === 'ok')
-        ? 'ok' : `category:${catPart} | plan:${planPart} | 6mo:${sixPart}`;
-      // Always write — so a total failure (all empty) still records its status.
-      try {
-        await updateAiCells(process.env.GOOGLE_SHEET_ID, token, rowNumber, categoryText, plan, aiStatus, plan6);
-      } catch (err) {
-        console.error('AI cell write failed (non-fatal):', err.message);
-      }
-    }
   } catch (err) {
     console.error('Sheet write failed:', err.message);
     return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: 'storage-failed' } };

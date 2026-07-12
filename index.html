@@ -2191,32 +2191,45 @@
       const psMat = ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) }));
       const mp = matchProfile(psMat);
       const curveScore = overallRoadmap4(ps);
+      const payload = {
+        firstName: name,
+        email,
+        score: curveScore,
+        phase: PHASES[phaseIndexForScore(curveScore)].name,
+        principles: ps.map(p => ({ name: p.name, score: p.roadmap4 })),
+        maturity: to100(overallMaturity10(ps)),
+        principleMaturity: psMat,
+        pattern: mp.patternKey,
+        profile: mp.name,
+        fit: mp.fit,
+        role: document.getElementById("role").value,
+        industry: document.getElementById("industry").value,
+        plantSize: document.getElementById("plantSize").value,
+        answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
+        website: document.getElementById("website").value
+      };
+      // First call captures the lead and returns the id fast (~3–4s) — it no
+      // longer waits on the ~20s AI generation.
       const res = await fetch(`${API_BASE}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: name,
-          email,
-          score: curveScore,
-          phase: PHASES[phaseIndexForScore(curveScore)].name,
-          principles: ps.map(p => ({ name: p.name, score: p.roadmap4 })),
-          maturity: to100(overallMaturity10(ps)),
-          principleMaturity: psMat,
-          pattern: mp.patternKey,
-          profile: mp.name,
-          fit: mp.fit,
-          role: document.getElementById("role").value,
-          industry: document.getElementById("industry").value,
-          plantSize: document.getElementById("plantSize").value,
-          answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
-          website: document.getElementById("website").value
-        })
+        body: JSON.stringify(payload)
       });
       const out = await res.json();
       if (out.ok && out.id) {
         setReportId(out.id);
         emailVerdict = !!out.emailBad;
         try { history.replaceState({}, "", `/r/${out.id}`); } catch (e) { /* file:// etc. */ }
+        // Second call runs the AI generations in the background and patches the
+        // sheet's AI cells for the emailed /r/ link. Fire-and-forget — the
+        // on-screen report is already up and doesn't depend on it.
+        try {
+          fetch(`${API_BASE}/submit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...payload, stage: "ai", id: out.id })
+          }).catch(() => {});
+        } catch (e) { /* background best-effort */ }
       } else {
         emailVerdict = null; // unknown -> allow
       }
