@@ -990,6 +990,23 @@
   }
   .score-pill { display: inline-block; font-size: 12.5px; padding: 4px 14px; }
 
+  /* Mobile: the text status pill (absolutely centered on desktop) can't share
+     the narrow header with the category name and score without overlapping, so
+     collapse it to a simple colored status dot (red/amber/green — same palette).
+     The label text stays in the DOM, just visually hidden, so it's still read
+     by screen readers. The dot rides in normal flow between name and score. */
+  @media (max-width: 640px) {
+    .summary-cat .head-spacer, .insight-cat .head-spacer { display: none; }
+    .summary-cat .cat-head strong, .insight-cat .cat-head strong { flex: 1 1 auto; }
+    .summary-cat .cat-pill, .insight-cat .cat-pill {
+      position: static; transform: none; left: auto; top: auto;
+      flex: 0 0 auto; align-self: center;
+      width: 12px; height: 12px; min-width: 12px; padding: 0;
+      border-radius: 50%; overflow: hidden;
+      font-size: 0; line-height: 0; letter-spacing: 0;
+    }
+  }
+
   /* Insights: per-category cards, each with a statement-level drill-down. */
   /* Section lead — kept to at most two lines. */
   .section-intro { font-size: 19px; font-weight: 600; color: var(--pl-accent-dark); margin: 0 0 20px; line-height: 1.35; }
@@ -1405,17 +1422,6 @@
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
     .area-card:last-child { border-bottom: none; }
     .how-it-works h2, .final-cta h2 { font-size: 21px; }
-    /* Category headers: the status pill is absolutely centered on desktop so
-       pills line up across boxes, but on a phone the long category name and
-       the score/chevron collapse toward the middle and collide with it. Drop
-       the pill out of absolute flow onto its own line below the name. */
-    .summary-cat .cat-head, .insight-cat .cat-head { flex-wrap: wrap; }
-    .summary-cat .head-spacer, .insight-cat .head-spacer { display: none; }
-    .summary-cat .cat-head strong, .insight-cat .cat-head strong { flex: 1 1 auto; }
-    .summary-cat .cat-pill, .insight-cat .cat-pill {
-      position: static; transform: none; left: auto; top: auto;
-      order: 6; flex-basis: 100%; max-width: max-content; margin: 8px 0 0;
-    }
   }
 
   /* ---------- Print / "Download PDF" (scoring report) ---------- */
