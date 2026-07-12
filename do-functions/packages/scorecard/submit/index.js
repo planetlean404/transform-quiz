@@ -218,7 +218,6 @@ ${redLines}`;
 function build6MonthPrompt(profile, phase, answers, principleMaturity) {
   const { areaLines, redLines, weakest } = planInputs(answers, principleMaturity);
   return `Best-fit Lean Maturity Profile: ${profile || '(unspecified)'}
-Current roadmap phase: ${phase || '(unspecified)'}
 The 30-day pilot area (month 1 must match this): ${weakest}
 
 This plant's category maturity (weakest first):
@@ -227,6 +226,15 @@ ${areaLines}
 This plant's red (lowest-scoring) statements:
 ${redLines}`;
 }
+
+// Both plans are read by a lead who has only ever seen LEAN MATURITY results —
+// their score /100, category scores, and standing (Early Stage / Gaining
+// Traction / Building Momentum / Benchmark). The roadmap phase names
+// (Formative / Localized / Broad-based) live only under the Roadmap section and
+// mean nothing to them here, so the plan copy must never use them.
+const TERMINOLOGY_RULE = `
+
+TERMINOLOGY — IMPORTANT: The reader only knows their LEAN MATURITY results: a maturity score out of 100, their five category scores, and their overall standing (one of: Early Stage, Gaining Traction, Building Momentum, Benchmark). Write ONLY in that language. Do NOT use the roadmap phase names "Formative", "Localized", or "Broad-based", and do NOT use the word "phase" anywhere — the reader has not been shown that framework and it will confuse them. Frame progress as raising their lean maturity, moving up the maturity levels, or closing category gaps — never as advancing through phases.`;
 
 async function generatePlan(profile, answers, principleMaturity, ctx) {
   if (!Array.isArray(answers) || !answers.length) return {};
@@ -249,7 +257,7 @@ Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
  "outcome": "1-2 sentences: what the plant manager will see if this worked — the proof point, and the pattern they'll carry into month 2. Do NOT begin with 'By day 30' — that label is added automatically."
 }
 
-Tone: direct, plainspoken, second-person ("you", "your team"). No preamble, no filler. Every field specific to THIS plant's weakest area and red statements.` + flavorInstruction(ctx);
+Tone: direct, plainspoken, second-person ("you", "your team"). No preamble, no filler. Every field specific to THIS plant's weakest area and red statements.` + TERMINOLOGY_RULE + flavorInstruction(ctx);
 
   const parsed = await callAnthropicJSON(system, buildPlanPrompt(profile, answers, principleMaturity), 1600);
   if (!parsed || !Array.isArray(parsed.weeks) || parsed.weeks.length !== 4) throw new Error('plan-bad-shape');
@@ -291,7 +299,7 @@ Adapt every month to THIS plant's actual weakest areas and red statements — na
 
 Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
 {
- "arc": "one sentence framing the journey from their current phase toward the next, as pilot -> spread -> sustain",
+ "arc": "one sentence framing the journey as pilot -> spread -> sustain, moving the plant up its lean maturity toward the next level — do NOT name any roadmap phase",
  "months": [
    {"month":1,"theme":"short title","focus":"area label — Standards, People, Logistics, Quality, Continuous Improvement, or All","text":"2-3 sentences, concrete, second-person","milestone":"the month-end proof point / what exists by month end"},
    {"month":2,"theme":"...","focus":"...","text":"...","milestone":"..."},
@@ -303,7 +311,7 @@ Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
  "destination": "1-2 sentences: where the plant should be after 6 months if this held — tie it to moving up the maturity curve"
 }
 
-Tone: direct, plainspoken, second-person. Specific to THIS plant. No preamble, no filler.` + flavorInstruction(ctx);
+Tone: direct, plainspoken, second-person. Specific to THIS plant. No preamble, no filler.` + TERMINOLOGY_RULE + flavorInstruction(ctx);
 
   const parsed = await callAnthropicJSON(system, build6MonthPrompt(profile, phase, answers, principleMaturity), 2000);
   if (!parsed || !Array.isArray(parsed.months) || parsed.months.length !== 6) throw new Error('sixmonth-bad-shape');
