@@ -514,6 +514,37 @@ async function pushToKartra({ firstName, email, phase }, id) {
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
+// The three plant-info fields come from fixed dropdowns. The API can't trust
+// that (a direct POST can send anything), so validate() only accepts these exact
+// values and blanks anything else. This closes the stored-XSS vector — the
+// report renders `industry` into innerHTML, so arbitrary text there could inject
+// markup — and keeps the data clean (industry must match the Industry Averages
+// sheet exactly for the comparison to work). Membership is checked
+// dash-insensitively so the en-dash the browser actually sends still matches a
+// plain-hyphen entry here; the ORIGINAL value is stored so it still matches the
+// sheet character-for-character.
+const ALLOWED_PLANT_SIZES = [
+  '1-50 employees', '51-200 employees', '201-500 employees',
+  '501-2,000 employees', '2,000+ employees'
+];
+const ALLOWED_INDUSTRIES = [
+  'Automotive', 'Food & Beverage', 'Medical Device & Pharma',
+  'Aerospace & Defense', 'Metal Fabrication & Machining', 'Plastics & Rubber',
+  'Electronics & Electrical', 'Industrial & Heavy Equipment', 'Consumer Goods', 'Other'
+];
+const ALLOWED_ROLES = [
+  'Plant Manager', 'Operations Manager / Director',
+  'Continuous Improvement / Lean Leader', 'Production / Shift Supervisor',
+  'Quality Manager', 'Engineering', 'Executive / Owner', 'Other'
+];
+// Normalize any unicode dash variant (en/em/figure/minus) to a plain hyphen for
+// comparison only, so character-encoding differences can't blank a real value.
+const dashNorm = s => String(s || '').replace(/[‐-―−]/g, '-').trim();
+const fromAllowed = (value, list) => {
+  const v = dashNorm(value);
+  return list.some(x => dashNorm(x) === v) ? String(value).trim() : '';
+};
+
 function validate(event) {
   const errors = [];
   const firstName = String(event.firstName || '').trim().slice(0, 60);
@@ -552,9 +583,11 @@ function validate(event) {
 
   // General plant info (dropdowns) — optional. Stored for benchmarking and
   // used for light sector flavor in the AI writes. Never affects scoring.
-  const plantSize = String(event.plantSize || '').slice(0, 40);
-  const industry = String(event.industry || '').slice(0, 60);
-  const role = String(event.role || '').slice(0, 60);
+  // Whitelisted to the known dropdown options; anything else is blanked (see
+  // ALLOWED_* above) — closes the XSS vector and keeps the data clean.
+  const plantSize = fromAllowed(String(event.plantSize || '').slice(0, 40), ALLOWED_PLANT_SIZES);
+  const industry = fromAllowed(String(event.industry || '').slice(0, 60), ALLOWED_INDUSTRIES);
+  const role = fromAllowed(String(event.role || '').slice(0, 60), ALLOWED_ROLES);
 
   return { errors, firstName, email, score, phase, principles, maturity, principleMaturity, pattern, profile, plantSize, industry, role };
 }
