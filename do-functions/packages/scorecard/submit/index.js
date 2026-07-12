@@ -426,7 +426,7 @@ async function kartraCall(params) {
   }
 }
 
-async function pushToKartra({ firstName, email, phase }) {
+async function pushToKartra({ firstName, email, phase }, id) {
   const { KARTRA_API_KEY, KARTRA_API_PASSWORD, KARTRA_APP_ID } = process.env;
   const missing = v => !v || v === 'unset';
   if (missing(KARTRA_API_KEY) || missing(KARTRA_API_PASSWORD) || missing(KARTRA_APP_ID)) {
@@ -438,13 +438,22 @@ async function pushToKartra({ firstName, email, phase }) {
   // for the Kartra copy only (the sheet keeps the original).
   const safeName = firstName.replace(/[<>={}\[\]\\]/g, '').trim().slice(0, 60) || 'Visitor';
 
+  // Custom fields carry the lead's report links so a Kartra automation/email
+  // can send them. Identifiers must already exist in the Kartra account
+  // (RPAreportURL, RPA6planURL) or Kartra silently ignores them.
+  const reportUrl = id ? `https://rpa.planetlean.com/r/${id}` : '';
+  const customFields = reportUrl ? [
+    { field_identifier: 'RPAreportURL', field_value: reportUrl },
+    { field_identifier: 'RPA6planURL', field_value: `${reportUrl}?v=plan` }
+  ] : [];
+
   // Two separate calls because create_lead ERRORS on an existing contact and
   // kills every action bundled with it — repeat visitors would lose their
   // tags. Tags are assigned in their own call, which works for new and
   // existing leads alike.
   const created = await kartraCall({
     ...auth,
-    lead: { email, first_name: safeName },
+    lead: { email, first_name: safeName, ...(customFields.length ? { custom_fields: customFields } : {}) },
     actions: [{ cmd: 'create_lead' }]
   });
   const createStatus = created.status === 'Success' ? 'created' : 'existing';
@@ -552,7 +561,7 @@ async function main(event) {
   let kartraStatus;
   if (emailCheck.good) {
     try {
-      kartraStatus = await pushToKartra(v);
+      kartraStatus = await pushToKartra(v, id);
     } catch (err) {
       console.error('Kartra push failed (non-fatal):', err.message);
       kartraStatus = 'kartra-error: ' + err.message.slice(0, 120);
