@@ -40,6 +40,12 @@ const GAP_PRIORITY = [
 
 const ANTHROPIC_MODEL = 'claude-opus-4-8';
 const ANTHROPIC_CALL_TIMEOUT_MS = 35000;
+// Bound the two blocking third-party calls in the submit path so a hung
+// provider can't stall the whole request up to the function's 55s budget (and
+// lose the lead). Both fail SAFE on timeout: ZeroBounce fails open (email
+// treated as valid), Kartra returns a status the caller records and moves on.
+const ZEROBOUNCE_TIMEOUT_MS = 8000;
+const KARTRA_TIMEOUT_MS = 10000;
 
 function statementStatus(maturity) {
   if (maturity >= 8) return 'green';
@@ -418,8 +424,15 @@ async function verifyEmail(email) {
   if (!key || key === 'unset') return { status: 'skipped-no-key', good: true };
 
   const url = `https://api.zerobounce.net/v2/validate?api_key=${encodeURIComponent(key)}&email=${encodeURIComponent(email)}`;
-  const res = await fetch(url);
-  const data = await res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ZEROBOUNCE_TIMEOUT_MS);
+  let data;
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    data = await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
   if (data.error) return { status: `zb-error: ${String(data.error).slice(0, 80)}`, good: true };
 
   const status = String(data.status || 'unknown');
@@ -442,14 +455,25 @@ function phpEncode(params, prefix, out) {
 }
 
 async function kartraCall(params) {
-  const res = await fetch('https://app.kartra.com/api', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: phpEncode(params, '', new URLSearchParams())
-  });
-  const text = await res.text();
-  try { return JSON.parse(text); } catch (e) {
-    return { status: 'Unparseable', message: text.slice(0, 120) };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), KARTRA_TIMEOUT_MS);
+  try {
+    const res = await fetch('https://app.kartra.com/api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: phpEncode(params, '', new URLSearchParams()),
+      signal: controller.signal
+    });
+    const text = await res.text();
+    try { return JSON.parse(text); } catch (e) {
+      return { status: 'Unparseable', message: text.slice(0, 120) };
+    }
+  } catch (err) {
+    // Timeout or network error — return a status so pushToKartra records it and
+    // the submit continues (the lead is already stored in the sheet).
+    return { status: 'RequestFailed', message: (err.name === 'AbortError' ? 'timeout' : err.message).slice(0, 120) };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -632,6 +656,20 @@ async function findRowById(sheetId, token, id) {
   return idx >= 0 ? idx + 1 : 0;
 }
 
+// Patches the kartra_status column (N) for a row. Used after the Kartra push,
+// which now runs AFTER the row is written, so the row starts with a placeholder
+// and this fills in the real result. Best-effort.
+async function updateKartraStatus(sheetId, token, rowNumber, status) {
+  const range = `${SHEET_TAB}!N${rowNumber}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values: [[status]] })
+  });
+  if (!res.ok) throw new Error(`kartra_status update ${res.status}`);
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 function corsHeaders() {
@@ -689,6 +727,49 @@ async function main(event) {
     emailCheck = { status: 'zb-error: ' + err.message.slice(0, 80), good: true };
   }
 
+  // Sheets auth once for the writes below.
+  let sheetToken;
+  try {
+    const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
+    sheetToken = await getAccessToken(sa);
+  } catch (err) {
+    console.error('Sheets auth failed:', err.message);
+    return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: 'storage-failed' } };
+  }
+
+  // Write the lead row FIRST — before the Kartra push — so the report row (and
+  // its /r/ link) exists before Kartra can fire the 6plan email. If storage
+  // fails we bail here and never touch Kartra, so a lead can't get an email
+  // pointing at a report that doesn't exist. kartra_status starts as a
+  // placeholder and is patched after the push. AI cells start empty ('{}') —
+  // the client's separate stage:'ai' request fills them, so the id returns fast.
+  let rowNumber;
+  try {
+    rowNumber = await appendRow(process.env.GOOGLE_SHEET_ID, sheetToken, [
+      id,
+      new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' ET',
+      v.firstName,
+      v.email,
+      v.score,
+      v.phase,
+      ...v.principles.map(p => Number(p.score)),
+      v.pattern,
+      JSON.stringify(event.answers || []),
+      `pending | zb:${emailCheck.status}`,
+      v.maturity,
+      ...v.principleMaturity.map(p => Number(p.maturity)),
+      '{}',
+      '{}',
+      v.plantSize,
+      v.industry,
+      v.role
+    ]);
+  } catch (err) {
+    console.error('Sheet write failed:', err.message);
+    return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: 'storage-failed' } };
+  }
+
+  // Now push to Kartra — non-fatal, and safe because the row already exists.
   let kartraStatus;
   if (emailCheck.good) {
     try {
@@ -702,38 +783,14 @@ async function main(event) {
   }
   kartraStatus += ` | zb:${emailCheck.status}`;
 
-  // Write the lead row immediately with empty AI cells ('{}'), then return the
-  // id right away — lead capture must never wait on an AI call. The three
-  // generations (~20s total) are NOT run here; the client fires a separate
-  // `stage:'ai'` request that patches the AI cells in the background, so the
-  // report id comes back in a few seconds instead of ~20s. The on-screen report
-  // is client-rendered and never uses these cells — they only feed the emailed
-  // /r/ link, which falls back to static copy until they land.
-  try {
-    const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
-    const token = await getAccessToken(sa);
-    await appendRow(process.env.GOOGLE_SHEET_ID, token, [
-      id,
-      new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' ET',
-      v.firstName,
-      v.email,
-      v.score,
-      v.phase,
-      ...v.principles.map(p => Number(p.score)),
-      v.pattern,
-      JSON.stringify(event.answers || []),
-      kartraStatus,
-      v.maturity,
-      ...v.principleMaturity.map(p => Number(p.maturity)),
-      '{}',
-      '{}',
-      v.plantSize,
-      v.industry,
-      v.role
-    ]);
-  } catch (err) {
-    console.error('Sheet write failed:', err.message);
-    return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: 'storage-failed' } };
+  // Patch the kartra_status column (N) with the real result — best-effort; the
+  // row is already durable, so a failure here just leaves the placeholder.
+  if (rowNumber) {
+    try {
+      await updateKartraStatus(process.env.GOOGLE_SHEET_ID, sheetToken, rowNumber, kartraStatus);
+    } catch (err) {
+      console.error('kartra_status write failed (non-fatal):', err.message);
+    }
   }
 
   // emailBad = the address came back CLEARLY undeliverable (invalid/spamtrap/
