@@ -1280,6 +1280,12 @@
     .cmp-row { grid-template-columns: 24px 1fr; grid-auto-flow: row; }
     .cmp-track { grid-column: 1 / -1; }
     .cmp-nums { grid-column: 1 / -1; text-align: left; }
+    /* The overall row's three items (You / Typical-plant / delta) wrap into a
+       tall mess on a phone with the long industry name — stack them into two
+       clean stat lines instead, and dial the oversized numbers back a touch. */
+    .cmp-overall-row { flex-direction: column; align-items: flex-start; gap: 4px; font-size: 14px; }
+    .cmp-overall-you strong { font-size: 20px; }
+    .cmp-overall-avg strong { font-size: 16px; }
   }
   .months-list { margin-top: 4px; }
   .month-card {
@@ -2755,8 +2761,7 @@
           <div class="cmp-card-eyebrow">Overall maturity vs the industry average</div>
           <div class="cmp-overall-row">
             <span class="cmp-overall-you">You <strong>${total100}</strong></span>
-            <span class="cmp-overall-avg">Typical ${industryLabel} plant <strong>${overallAvg}</strong></span>
-            ${deltaEl(total100 - overallAvg)}
+            <span class="cmp-overall-avg">Typical ${industryLabel} plant <strong>${overallAvg}</strong>${deltaEl(total100 - overallAvg)}</span>
           </div>
         </div>
         <div class="cmp-card-body">
