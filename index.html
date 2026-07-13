@@ -2176,7 +2176,11 @@
   }
 
   // ---------- Backend ----------
-  const API_BASE = "https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-ff1b984d-dbbe-4147-97b1-81aea98278a6/scorecard";
+  // Same-origin API (served by the app's functions component at
+  // rpa.planetlean.com/api/scorecard) — avoids the shared doserverless.co host
+  // that AV/DNS filters blocklist (broke Michigan users, same as the chatbot).
+  // The old doserverless endpoint stays live as a rollback.
+  const API_BASE = "https://rpa.planetlean.com/api/scorecard";
 
   // Default "Save as PDF" filename — browsers derive it from document.title,
   // so we swap the title in for the duration of the print, then restore it.
