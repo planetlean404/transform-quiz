@@ -1477,6 +1477,11 @@
     @page { margin: 14mm 12mm; }
     /* Print the exact colors (dial, bars, pills, tinted boxes). */
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    /* Force the implementation curve fully drawn + marker visible in the PDF,
+       regardless of the scroll-in draw animation's state (overrides the inline
+       hidden state the animation sets). */
+    #curvePathEl { stroke-dashoffset: 0 !important; }
+    #hereMarker { opacity: 1 !important; }
     /* Hide app chrome that doesn't belong in the PDF. */
     .topbar, .toc, .reset, .curve-toggle, .cta-row, .placeholder-note,
     .section-dash, #plantInfoWrap, #gateWrap, #landingScreen { display: none !important; }
@@ -1764,7 +1769,7 @@
         <p class="section-intro">Lean transformation follows a predictable curve. Knowing which stage your plant is on tells you exactly what to strengthen next.</p>
         <div class="roadmap-note">
           <p>This process drives LEAN implementation site-wide through a gated, phased approach. Each phase builds on the previous, with phase transitions achieved through capability development and confirmed through structured checklists. The phase gates prevent regression by ensuring that critical skills are built and cultural commitments are met. Overall LEAN maturity score calibrated through a rigorous assessment process championed by internal subject matter experts (SME's).</p>
-          <p><span class="wordmark">planet <span class="lean">LEAN</span></span> can assist with any aspect of the transformation including project leadership, assessment customization, and/or SME development.</p>
+          <p><span class="wordmark">planet <span class="lean">LEAN</span></span> can assist with any aspect of the transformation including project leadership, assessment customization, and/or SME development — ask us how it maps to your plant.</p>
         </div>
         <div class="roadmap-position">
           <div class="roadmap-lead" id="roadmapLead"></div>
@@ -3156,6 +3161,7 @@
     document.getElementById("phaseTagline").textContent = phase.tagline;
     document.getElementById("curveBox").innerHTML = buildCurveSVG(phaseIdx);
     positionMarker(curveScore);
+    setupCurveAnimation();
 
     // 06 — 30-day plan. Prefer the AI plan generated at submit time (tailored
     // to the best-fit profile's first-30-days template + this plant's actual
@@ -3311,6 +3317,54 @@
     btn.setAttribute("aria-pressed", on ? "true" : "false");
     overlay.style.display = on ? "" : "none";
     label.innerHTML = on ? "Hide the &ldquo;tools only&rdquo; trajectory" : "Show the &ldquo;tools only&rdquo; trajectory";
+  }
+
+  // Draw the implementation curve in when it scrolls into view: the orange
+  // curve strokes on left-to-right, then the "You are here" marker fades in.
+  // Plays once; respects prefers-reduced-motion (leaves it fully drawn).
+  function setupCurveAnimation() {
+    const card = document.querySelector(".curve-card");
+    if (!card) return;
+    const path = card.querySelector("#curvePathEl");
+    const marker = card.querySelector("#hereMarker");
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || !path) return; // leave the curve fully drawn
+
+    // Hidden starting state so there's no flash of the finished curve.
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    if (marker) marker.style.opacity = "0";
+
+    let played = false;
+    const run = () => {
+      if (played) return;
+      played = true;
+      path.getBoundingClientRect(); // force reflow so the transition takes
+      path.style.transition = "stroke-dashoffset 1.2s ease";
+      path.style.strokeDashoffset = "0";
+      if (marker) setTimeout(() => {
+        marker.style.transition = "opacity 0.5s ease";
+        marker.style.opacity = "1";
+      }, 950);
+    };
+
+    const inView = () => {
+      const r = card.getBoundingClientRect();
+      return r.top < window.innerHeight * 0.85 && r.bottom > 0;
+    };
+    if (inView()) { run(); return; } // already visible on render — draw now
+    if ("IntersectionObserver" in window) {
+      const obs = new IntersectionObserver((entries, o) => {
+        if (entries.some(e => e.isIntersecting)) { run(); o.disconnect(); }
+      }, { threshold: 0.25 });
+      obs.observe(card);
+    }
+    // Universal backup: draw when scrolled into view, for any browser/context
+    // where the observer doesn't deliver. run() is idempotent. (Print is
+    // handled separately by a @media print override so the PDF is never blank.)
+    const onScroll = () => { if (inView()) { run(); window.removeEventListener("scroll", onScroll); } };
+    window.addEventListener("scroll", onScroll, { passive: true });
   }
 
   // ---------- TOC navigation ----------
