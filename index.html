@@ -870,6 +870,20 @@
     padding: 16px 20px;
     margin-bottom: 20px;
   }
+  /* Gray descriptive card (process explainer + planet LEAN offer) above the
+     curve — same gray-card treatment as the position card. */
+  .roadmap-note {
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--pl-text);
+  }
+  .roadmap-note p { margin: 0; }
+  .roadmap-note p + p { margin-top: 12px; }
   /* The implementation-curve graph sits in a two-shade card — dark-gray header
      + lighter body — matching the Best-Fit profile card. */
   .curve-card { border: 1px solid var(--pl-border); border-radius: 12px; overflow: hidden; }
@@ -1752,6 +1766,10 @@
           <div class="roadmap-lead" id="roadmapLead"></div>
           <div class="phase-badge" id="phaseBadge"></div>
           <div class="phase-tagline" id="phaseTagline"></div>
+        </div>
+        <div class="roadmap-note">
+          <p>This process drives LEAN implementation site-wide through a gated, phased approach. Each phase builds on the previous, with phase transitions achieved through capability development and confirmed through structured checklists. Overall LEAN maturity score is calibrated through a rigorous assessment process championed by internal subject-matter experts (SMEs).</p>
+          <p><span class="wordmark">planet <span class="lean">LEAN</span></span> can assist with any aspect of the transformation — including project leadership, assessment customization, and/or SME development.</p>
         </div>
         <div class="curve-card">
           <div class="curve-card-header">LEAN Implementation Curve</div>
