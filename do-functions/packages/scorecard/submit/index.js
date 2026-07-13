@@ -46,7 +46,6 @@ const ANTHROPIC_CALL_TIMEOUT_MS = 35000;
 // treated as valid), Kartra returns a status the caller records and moves on.
 const ZEROBOUNCE_TIMEOUT_MS = 8000;
 const KARTRA_TIMEOUT_MS = 10000;
-const TURNSTILE_TIMEOUT_MS = 8000;
 
 function statementStatus(maturity) {
   if (maturity >= 8) return 'green';
@@ -671,34 +670,6 @@ async function updateKartraStatus(sheetId, token, rowNumber, status) {
   if (!res.ok) throw new Error(`kartra_status update ${res.status}`);
 }
 
-// ─── Cloudflare Turnstile (bot check) ────────────────────────────────────────
-// Verifies the widget token with Cloudflare BEFORE any expensive work runs, so
-// scripted bots (no token / bad token) are rejected before they can spend a
-// ZeroBounce credit, a Kartra write, or three Claude calls. Fails OPEN only on a
-// genuine network error to Cloudflare (rare, not attacker-controllable) so a CF
-// blip can't block real leads; a missing or invalid token still fails closed.
-async function verifyTurnstile(secret, token, remoteip) {
-  if (!token) return { ok: false, reason: 'no-token' };
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TURNSTILE_TIMEOUT_MS);
-  try {
-    const body = new URLSearchParams({ secret, response: token });
-    if (remoteip) body.set('remoteip', remoteip);
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-      signal: controller.signal
-    });
-    const data = await res.json();
-    return { ok: !!data.success, reason: (data['error-codes'] || []).join(',') };
-  } catch (e) {
-    return { ok: true, reason: 'verify-error:' + (e.name === 'AbortError' ? 'timeout' : e.message).slice(0, 40) };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 function corsHeaders() {
@@ -746,21 +717,6 @@ async function main(event) {
     } catch (err) {
       console.error('AI stage failed (non-fatal):', err.message);
       return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: 'ai-failed' } };
-    }
-  }
-
-  // Cloudflare Turnstile bot check — gate the main submission before any
-  // expensive work (email verify, Kartra, Claude, sheet writes). Skipped only if
-  // no secret is configured (safe rollout). The stage:'ai' branch above is
-  // exempt: it already requires a valid, existing, un-generated id.
-  const tsSecret = process.env.TURNSTILE_SECRET_KEY;
-  if (tsSecret && tsSecret !== 'unset') {
-    const fwd = (event.__ow_headers && event.__ow_headers['x-forwarded-for']) || '';
-    const remoteip = String(fwd).split(',')[0].trim();
-    const ts = await verifyTurnstile(tsSecret, String(event.turnstileToken || ''), remoteip);
-    if (!ts.ok) {
-      console.error('Turnstile check failed:', ts.reason);
-      return { statusCode: 403, headers: corsHeaders(), body: { ok: false, error: 'human-check-failed' } };
     }
   }
 

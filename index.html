@@ -691,9 +691,6 @@
     color: var(--pl-text-muted);
     margin: 14px 0 0;
   }
-  /* Cloudflare Turnstile widget on the email gate — centered, space reserved so
-     the layout doesn't jump when it renders. */
-  .turnstile-box { display: flex; justify-content: center; min-height: 65px; margin: 4px 0 12px; }
 
   /* ---------- Report: two-column layout with TOC ---------- */
   .results { display: none; }
@@ -1520,7 +1517,6 @@
     #sec-download { display: none !important; }
   }
 </style>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
 
@@ -1708,7 +1704,6 @@
       <input type="text" id="firstName" placeholder="First name">
       <input type="email" id="email" placeholder="Best email — your plan goes here">
       <input type="text" id="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true">
-      <div id="turnstileBox" class="turnstile-box"></div>
       <button onclick="submitGate()">Get My Results + Plan&nbsp;&nbsp;→</button>
       <div class="privacy">No spam, ever. We never share or sell your email.</div>
     </div>
@@ -2178,25 +2173,6 @@
     document.getElementById("plantInfoWrap").style.display = "none";
     document.getElementById("gateWrap").style.display = "block";
     window.scrollTo(0, 0);
-    renderTurnstile();
-  }
-
-  // ---------- Cloudflare Turnstile (bot check on the email gate) ----------
-  const TURNSTILE_SITEKEY = "0x4AAAAAAD1AuU3m9KIZLrQG";
-  let turnstileWidgetId = null;
-  function renderTurnstile() {
-    if (typeof turnstile === "undefined") { setTimeout(renderTurnstile, 200); return; }
-    if (!document.getElementById("turnstileBox")) return;
-    if (turnstileWidgetId !== null) { turnstile.reset(turnstileWidgetId); return; }
-    turnstileWidgetId = turnstile.render("#turnstileBox", { sitekey: TURNSTILE_SITEKEY });
-  }
-  function getTurnstileToken() {
-    try {
-      if (typeof turnstile !== "undefined" && turnstileWidgetId !== null) {
-        return turnstile.getResponse(turnstileWidgetId) || "";
-      }
-    } catch (e) { /* not ready */ }
-    return "";
   }
 
   // ---------- Backend ----------
@@ -2246,21 +2222,15 @@
       alert("Please enter your first name and a valid email.");
       return;
     }
-    const tsToken = getTurnstileToken();
-    if (!tsToken) {
-      alert("One moment while we verify you're human — then tap the button again.");
-      renderTurnstile();
-      return;
-    }
     // Arm the booking-CTA email gate: bookCall() awaits this until ZeroBounce's
     // verdict comes back with the submit response.
     emailVerdict = undefined;
     emailVerdictPromise = new Promise(r => { emailVerdictResolve = r; });
     showResults(name);
-    syncToServer(name, email, tsToken);
+    syncToServer(name, email);
   }
 
-  async function syncToServer(name, email, turnstileToken) {
+  async function syncToServer(name, email) {
     try {
       const ps = computePrincipleScores();
       const psMat = ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) }));
@@ -2281,8 +2251,7 @@
         industry: document.getElementById("industry").value,
         plantSize: document.getElementById("plantSize").value,
         answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
-        website: document.getElementById("website").value,
-        turnstileToken: turnstileToken || ""
+        website: document.getElementById("website").value
       };
       // First call captures the lead and returns the id fast (~3–4s) — it no
       // longer waits on the ~20s AI generation.
