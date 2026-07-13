@@ -852,14 +852,14 @@
     letter-spacing: 0.5px;
     padding: 6px 18px;
     border-radius: 999px;
-    margin: 10px 0 4px;
+    margin: 0 0 8px;
   }
   .phase-tagline { color: var(--pl-text-muted); font-size: 15px; margin-bottom: 0; }
   .roadmap-lead {
     text-align: left;
     font-size: 15px;
     line-height: 1.6;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
   }
   .roadmap-lead strong { color: var(--pl-accent-dark); }
   /* Light-gray "where your plant lands" card, left-justified, above the graph. */
@@ -867,7 +867,7 @@
     background: var(--pl-bg-soft);
     border: 1px solid var(--pl-border);
     border-radius: 12px;
-    padding: 18px 22px;
+    padding: 16px 20px;
     margin-bottom: 20px;
   }
   /* The implementation-curve graph sits in a two-shade card — dark-gray header
@@ -880,8 +880,8 @@
     font-size: 15px; font-weight: 800; letter-spacing: 0.02em;
     color: var(--pl-accent-dark);
   }
-  .curve-card-body { background: var(--pl-bg-soft); padding: 14px 18px 18px; }
-  .curve-box { margin: 8px 0 0; }
+  .curve-card-body { background: var(--pl-bg-soft); padding: 8px 16px 10px; }
+  .curve-box { margin: 0; }
   .curve-box svg { width: 100%; height: auto; display: block; }
   /* On/off switch to reveal the "tools only" trajectory — sits in the empty
      bottom-right corner of the graph (below the rising curve). */
@@ -3209,7 +3209,7 @@
     });
 
     return `
-    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" id="curveSvg" role="img"
+    <svg viewBox="0 66 ${W} ${H - 94}" xmlns="http://www.w3.org/2000/svg" id="curveSvg" role="img"
          aria-label="LEAN Enterprise System implementation curve showing improvements over time across four phases">
       <line x1="${plot.x0}" y1="${plot.y0}" x2="${plot.x0}" y2="${plot.y1}" stroke="#2c3e50" stroke-width="2"/>
       <line x1="${plot.x0}" y1="${plot.y1}" x2="${plot.x1}" y2="${plot.y1}" stroke="#2c3e50" stroke-width="2"/>
