@@ -854,15 +854,33 @@
     border-radius: 999px;
     margin: 10px 0 4px;
   }
-  .phase-tagline { color: var(--pl-text-muted); font-size: 15px; margin-bottom: 24px; }
+  .phase-tagline { color: var(--pl-text-muted); font-size: 15px; margin-bottom: 0; }
   .roadmap-lead {
-    text-align: center;
+    text-align: left;
     font-size: 15px;
     line-height: 1.6;
     margin-bottom: 4px;
   }
   .roadmap-lead strong { color: var(--pl-accent-dark); }
-  .roadmap-head { text-align: center; }
+  /* Light-gray "where your plant lands" card, left-justified, above the graph. */
+  .roadmap-position {
+    background: var(--pl-bg-soft);
+    border: 1px solid var(--pl-border);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+  }
+  /* The implementation-curve graph sits in a two-shade card — dark-gray header
+     + lighter body — matching the Best-Fit profile card. */
+  .curve-card { border: 1px solid var(--pl-border); border-radius: 12px; overflow: hidden; }
+  .curve-card-header {
+    background: #eaedf0;
+    border-bottom: 1px solid var(--pl-border);
+    padding: 14px 22px;
+    font-size: 15px; font-weight: 800; letter-spacing: 0.02em;
+    color: var(--pl-accent-dark);
+  }
+  .curve-card-body { background: var(--pl-bg-soft); padding: 14px 18px 18px; }
   .curve-box { margin: 8px 0 0; }
   .curve-box svg { width: 100%; height: auto; display: block; }
   /* On/off switch to reveal the "tools only" trajectory — sits in the empty
@@ -1730,19 +1748,23 @@
       <section class="section" id="sec-roadmap">
         <div class="section-head"><span class="section-dash">—</span><span class="section-title">04 / LEAN Transformation Roadmap</span></div>
         <p class="section-intro">Lean transformation follows a predictable curve. Knowing which stage your plant is on tells you exactly what to strengthen next.</p>
-        <div class="roadmap-head">
+        <div class="roadmap-position">
           <div class="roadmap-lead" id="roadmapLead"></div>
           <div class="phase-badge" id="phaseBadge"></div>
           <div class="phase-tagline" id="phaseTagline"></div>
         </div>
-        <div class="curve-wrap">
-          <div class="curve-box" id="curveBox"></div>
-          <button type="button" class="curve-toggle" id="toolsToggle" aria-pressed="false" onclick="toggleToolsOnly()">
-            <span class="curve-toggle-switch"></span>
-            <span id="toolsToggleLabel">Show the &ldquo;tools only&rdquo; trajectory</span>
-          </button>
+        <div class="curve-card">
+          <div class="curve-card-header">LEAN Implementation Curve</div>
+          <div class="curve-card-body">
+            <div class="curve-wrap">
+              <div class="curve-box" id="curveBox"></div>
+              <button type="button" class="curve-toggle" id="toolsToggle" aria-pressed="false" onclick="toggleToolsOnly()">
+                <span class="curve-toggle-switch"></span>
+                <span id="toolsToggleLabel">Show the &ldquo;tools only&rdquo; trajectory</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="narrative" id="narrative"></div>
       </section>
 
       <section class="section" id="sec-comparison">
@@ -3114,7 +3136,6 @@
       `Based on your answers, your plant's position on the lean implementation curve places it in the`;
     document.getElementById("phaseBadge").textContent = `${phase.name} Phase`;
     document.getElementById("phaseTagline").textContent = phase.tagline;
-    document.getElementById("narrative").innerHTML = `<h3>What this means</h3>${phase.narrative}`;
     document.getElementById("curveBox").innerHTML = buildCurveSVG(phaseIdx);
     positionMarker(curveScore);
 
