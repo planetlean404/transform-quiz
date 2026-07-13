@@ -3332,6 +3332,7 @@
 
     // Hidden starting state so there's no flash of the finished curve.
     const len = path.getTotalLength();
+    if (!len || !isFinite(len)) return; // not laid out yet (e.g. iOS) — leave it drawn
     path.style.strokeDasharray = len;
     path.style.strokeDashoffset = len;
     if (marker) marker.style.opacity = "0";
