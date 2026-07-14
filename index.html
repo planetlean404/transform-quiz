@@ -1741,7 +1741,11 @@
       <p>Your full scorecard appears instantly on the next screen. We'll also email you a personalized <strong>6-month lean transformation plan</strong> — built from your answers and sequenced month by month for your plant.</p>
       <input type="text" id="firstName" placeholder="First name">
       <input type="email" id="email" placeholder="Best email — your plan goes here">
-      <input type="text" id="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true">
+      <!-- Honeypot: hidden anti-bot field. Neutral id (NOT "website"/"url"/etc.)
+           so password managers and browser autofill don't fill it and silently
+           flag a real visitor as a bot. Only genuine bots that scrape and fill
+           every field will populate it. -->
+      <input type="text" id="hpf" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true">
       <button onclick="submitGate()">Get My Results + Plan&nbsp;&nbsp;→</button>
       <div class="privacy">No spam, ever. We never share or sell your email.</div>
     </div>
@@ -2325,7 +2329,7 @@
         industry: document.getElementById("industry").value,
         plantSize: document.getElementById("plantSize").value,
         answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
-        website: document.getElementById("website").value
+        website: document.getElementById("hpf").value
       };
       // First call captures the lead and returns the id fast (~3–4s) — it no
       // longer waits on the ~20s AI generation.
