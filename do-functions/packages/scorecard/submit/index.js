@@ -65,18 +65,20 @@ function buildCategoryPrompt(answers) {
 
   return PRINCIPLE_ORDER.map(name => {
     const lines = byPrinciple[name].map(({ stmt, status }) => {
-      // Yellow AND red statements both feed the Opportunity section — red is
-      // missing, yellow is happening but not yet consistent plant-wide. Only
-      // green (fully in place) feeds Good. The improvement steps in
-      // stmt.weakness are deliberately NOT sent — the category text names the
-      // gap/cost only; action steps live in the 30-day plan and Deep Insights.
-      if (status === 'red') {
-        return `- [RED] "${stmt.text}"\n  What's missing / what it costs: ${stmt.why}`;
+      // Each statement feeds one side of its category, with the specific
+      // content lanes that side needs. GREEN → Good (principle + connections +
+      // realized payoff). YELLOW/RED → Opportunity (principle + connections +
+      // cost of the gap). The `steps` lane is passed only as context so the AI
+      // understands the gap fully; the Opportunity text must NOT restate it —
+      // action steps live verbatim in the 30-day plan and Deep Insights, and
+      // repeating them here would duplicate the report.
+      if (status === 'green') {
+        return `- [GREEN → feeds Good] "${stmt.text}"\n    Principle: ${stmt.why}\n    Connections: ${stmt.connections}\n    Payoff being realized: ${stmt.strength}`;
       }
-      if (status === 'yellow') {
-        return `- [YELLOW] "${stmt.text}"\n  Happening but not yet consistent across the plant / why fuller, standardized coverage matters: ${stmt.why}`;
-      }
-      return `- [GREEN] "${stmt.text}"\n  Payoff being realized: ${stmt.strength}`;
+      const tag = status === 'red'
+        ? 'RED (missing) → feeds Opportunity'
+        : 'YELLOW (happening but not yet consistent plant-wide) → feeds Opportunity';
+      return `- [${tag}] "${stmt.text}"\n    Principle: ${stmt.why}\n    Connections: ${stmt.connections}\n    Cost of the gap: ${stmt.weakness}\n    (context only — do NOT restate as advice: ${stmt.steps})`;
     }).join('\n');
     return `## ${name}\n${lines || '(no answers recorded for this category)'}`;
   }).join('\n\n');
@@ -139,26 +141,39 @@ function flavorInstruction(ctx) {
 async function generateCategoryText(answers, ctx) {
   if (!Array.isArray(answers) || !answers.length) return {};
 
-  const system = `You write the "Good" and "Opportunity" sections of a lean-manufacturing plant assessment report, for a plant manager reading their own results.
+  const system = `You write the reader-facing summary layers of a lean-manufacturing plant assessment report, for a plant manager reading their own results.
 
-For each of the 5 categories provided, using ONLY the statement content given for that category, write:
-- "good": 2-3 sentences on the concrete benefits the plant is realizing, based ONLY on statements marked GREEN (fully in place across the plant). If the category has NO green statements, use "" (empty string) — do not invent a strength.
-- "opportunity": 2-3 sentences on the statements marked YELLOW or RED and the concrete cost of leaving them where they are. For RED, name the specific missing gap and its cost. For YELLOW, frame it as a practice that is happening but not yet consistent plant-wide, and what standardizing it fully would secure — do not call it missing. If the category has NO yellow or red statements, use "" (empty string) — do not invent a gap.
+The report has three layers that must NOT repeat each other's wording — this is the single most important rule:
+- Deep Insights (written elsewhere) quotes the per-statement source text VERBATIM. You are given that same statement content as input — do NOT copy its phrases. Abstract it into your own words.
+- Category Highlights (you write these) — a "good" and an "opportunity" per category.
+- Overview (you write this) — one short paragraph over the whole plant, pitched ABOVE the category highlights; do not restate their sentences.
 
-CRITICAL: Do NOT include any "how to fix it" steps, action items, or next-move advice in the opportunity text — name the gap/cost only. Improvement steps are handled elsewhere in the report.
+For each of the 5 categories, using ONLY the statement content given for that category, write:
+- "good": 2-3 sentences on the concrete strengths the plant is realizing, based ONLY on statements marked GREEN. Draw on the principle, how the practices connect, and the payoff being realized. If the category has NO green statements, use "" (empty string) — do not invent a strength.
+- "opportunity": 2-3 sentences on the statements marked YELLOW or RED and the concrete cost of leaving them where they are. For RED, name the specific missing gap and its cost. For YELLOW, frame it as a practice happening but not yet consistent plant-wide, and what standardizing it fully would secure — do not call it missing. If the category has NO yellow or red statements, use "" (empty string) — do not invent a gap.
 
-Tone: direct, concrete, specific to what was actually answered — never generic filler. Match this style exactly:
+CRITICAL for "opportunity": name the gap and the stakes ONLY. Do NOT include any "how to fix it" steps, action items, or next-move advice — the first-move context you're given is background so you understand the gap, not text to reproduce. Improvement steps live elsewhere in the report.
+
+Then write:
+- "overview": ONE paragraph (3-4 sentences) for the very top of the report. Summarize where this plant stands overall — its strongest footing and its most important gap — at a higher altitude than the category highlights. Fresh wording; do not repeat sentences you used in the highlights.
+
+Tone: direct, concrete, specific to what was actually answered — never generic filler. Match this style:
 Good example: "Standard work, 5S discipline, and a dashboard your team actually reviews mean your improvements have something to hold onto — this is the foundation most plants skip, and you haven't."
 Opportunity example (note: no fix steps): "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet, so every gain made elsewhere has to be re-won instead of holding on its own."
 
-Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape with all 5 category names as keys:
-{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}` + flavorInstruction(ctx);
+Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
+{"overview":"...","categories":{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}}` + flavorInstruction(ctx);
 
-  const parsed = await callAnthropicJSON(system, buildCategoryPrompt(answers), 1500);
+  const parsed = await callAnthropicJSON(system, buildCategoryPrompt(answers), 2200);
+  const cats = (parsed && parsed.categories) || {};
   const out = {};
   PRINCIPLE_ORDER.forEach(name => {
-    if (parsed[name]) out[name] = { good: String(parsed[name].good || ''), opportunity: String(parsed[name].opportunity || '') };
+    if (cats[name]) out[name] = { good: String(cats[name].good || ''), opportunity: String(cats[name].opportunity || '') };
   });
+  // Overview rides along in the same col-U JSON under a reserved key so no new
+  // sheet column is needed. The report function returns categoryText as-is and
+  // the frontend reads categoryText._overview; old rows simply lack it.
+  out._overview = String((parsed && parsed.overview) || '');
   return out;
 }
 

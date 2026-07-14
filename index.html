@@ -819,6 +819,29 @@
     display: grid;
     grid-template-columns: auto 1fr;
   }
+  /* AI Overview paragraph (top of the report) — the plant-wide "short version"
+     summary. Hidden until the AI text is present; on the instant view it
+     appears when the background generation lands (progressive populate). */
+  .overview-summary {
+    margin: 0 0 20px;
+    padding: 18px 20px;
+    border: 1px solid var(--pl-border);
+    border-left: 4px solid var(--pl-accent);
+    border-radius: 12px;
+    background: var(--pl-bg-soft);
+    font-size: 15px;
+    line-height: 1.62;
+    color: var(--pl-text);
+  }
+  .overview-summary::before {
+    content: "THE SHORT VERSION";
+    display: block;
+    font-size: 11px;
+    letter-spacing: .09em;
+    font-weight: 700;
+    color: var(--pl-accent);
+    margin-bottom: 7px;
+  }
   .sc-header {
     grid-column: 1 / -1;
     background: #eaedf0;
@@ -1761,6 +1784,7 @@
           </div>
           <div class="sc-footer" id="scFooter"></div>
         </div>
+        <div class="overview-summary" id="overviewSummary" style="display:none"></div>
         <div class="highlight-boxes">
           <div class="gap-callout" id="gapCallout"></div>
           <div class="gap-callout" id="strengthCallout" style="display:none"></div>
@@ -2194,6 +2218,10 @@
   // that AV/DNS filters blocklist (broke Michigan users, same as the chatbot).
   // The old doserverless endpoint stays live as a rollback.
   const API_BASE = "https://rpa.planetlean.com/api/scorecard";
+  // Set by renderReport to a closure that re-renders the AI-dependent sections
+  // (Overview summary + Category Highlights) in place. The progressive poller
+  // calls it once the background AI generation lands on the instant view.
+  let progressiveApply = null;
 
   // Default "Save as PDF" filename — browsers derive it from document.title,
   // so we swap the title in for the duration of the print, then restore it.
@@ -2247,6 +2275,35 @@
     syncToServer(name, email);
   }
 
+  // Poll the report endpoint after an instant submission until the background
+  // AI text is written to the sheet, then swap it into the on-screen report
+  // (Option A progressive populate). Best-effort: a stuck/slow generation just
+  // means the composed fallback stays, which is already correct copy.
+  function startProgressivePoll(id) {
+    if (!id || typeof progressiveApply !== "function") return;
+    let tries = 0;
+    const MAX = 14;          // ~14 checks
+    const EVERY = 5000;      // every 5s → ~70s total window
+    const FIRST_DELAY = 8000; // first check after 8s (AI takes ~20-30s)
+    const ready = ct => ct && (
+      (ct._overview && ct._overview.length) ||
+      Object.keys(ct).some(k => k !== "_overview" && ct[k] && (ct[k].good || ct[k].opportunity))
+    );
+    const tick = async () => {
+      tries++;
+      try {
+        const res = await fetch(`${API_BASE}/report?id=${encodeURIComponent(id)}`);
+        const out = await res.json();
+        if (out && out.ok && ready(out.categoryText)) {
+          progressiveApply(out.categoryText);
+          return; // done — stop polling
+        }
+      } catch (e) { /* transient — keep trying */ }
+      if (tries < MAX) setTimeout(tick, EVERY);
+    };
+    setTimeout(tick, FIRST_DELAY);
+  }
+
   async function syncToServer(name, email) {
     try {
       const ps = computePrincipleScores();
@@ -2282,6 +2339,10 @@
         setReportId(out.id);
         emailVerdict = !!out.emailBad;
         try { history.replaceState({}, "", `/r/${out.id}`); } catch (e) { /* file:// etc. */ }
+        // Progressive populate: the background AI (Overview + Category
+        // Highlights) lands ~20-30s after the id. Poll the report endpoint and
+        // swap the on-screen prose in place the moment it's ready.
+        startProgressivePoll(out.id);
         // Second call runs the AI generations in the background and patches the
         // sheet's AI cells for the emailed /r/ link. Fire-and-forget — the
         // on-screen report is already up and doesn't depend on it.
@@ -2992,23 +3053,16 @@
     // highlights with Deep Insights, where green is a Bright Spot and anything
     // below green is a Gap. A section shows only when the category actually has
     // statements of that kind. Content prefers the AI-written prose (per-report
-    // Claude call); when it's absent — the live post-quiz view or an older
-    // link — we compose from the per-statement strength/weakness text so it
-    // still reflects the real answers. Links that predate stored answers fall
-    // back to the category score band for presence and the static notes.
-    const aiText = data.categoryText || {};
+    // Claude call); when it's absent — the live post-quiz view before the AI
+    // lands, or an older link — we compose from the per-statement strength/
+    // weakness text so it still reflects the real answers. Links that predate
+    // stored answers fall back to the category score band and static notes.
+    // hasGood/hasOpp/composeGood/composeOpp don't depend on the AI text; the
+    // AI-preferring selection lives in renderAiSections below so it can re-run.
     const hasGood = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat >= 8) : a.score100 >= 80;
     const hasOpp  = a => answersPresent ? catStmts(a.name).some(s => s.mat != null && s.mat < 8)  : a.score100 < 80;
     const composeGood = name => catStmts(name).filter(s => s.mat != null && s.mat >= 8).map(s => STATEMENT_DETAIL[s.si].strength).join(" ");
     const composeOpp  = name => catStmts(name).filter(s => s.mat != null && s.mat < 8).map(s => STATEMENT_DETAIL[s.si].weakness).join(" ");
-    const goodOf = a => {
-      if (!hasGood(a)) return "";
-      return (aiText[a.name] && aiText[a.name].good) || (answersPresent ? composeGood(a.name) : STRENGTH_NOTES[a.name]);
-    };
-    const oppOf = a => {
-      if (!hasOpp(a)) return "";
-      return (aiText[a.name] && aiText[a.name].opportunity) || (answersPresent ? composeOpp(a.name) : OPP_NOTES[a.name]);
-    };
     // Overview highlights: a one-paragraph summary of why the topic matters
     // and how they scored, in the box's status color. Biggest Gap = lowest
     // area (tie-break logic). Strength = highest GREEN area (>=80); omitted
@@ -3038,48 +3092,82 @@
       `At ${topGreen.score100} out of 100, this is your strongest category. ${WHY_MATTERS[topGreen.name]}`);
     else strengthCallout.style.display = "none";
 
-    // Shared bits for the category boxes / cards.
-    const catSection = (cls, label, body) =>
-      `<div class="cat-section"><div class="cat-section-label ${cls}">${label}</div><div class="cat-section-body">${body}</div></div>`;
-    const catSectionsHTML = a => {
-      let html = catSection("why", "Why It Matters", WHY_MATTERS[a.name]);
-      const good = goodOf(a);
-      const opp = oppOf(a);
-      if (good) html += catSection("good", "Good", good);
-      if (opp) html += catSection("opp", "Opportunity", opp);
-      return html;
-    };
-
-    // True chevron shape (a downward V stroke), used on the collapsible
-    // Deep Insights headers. Rotates to point right when the box is collapsed.
+    // Shared chevron + status pill, used by BOTH the summaries (below) and Deep
+    // Insights (further down), so they stay in renderReport's scope.
+    // True chevron shape (a downward V stroke) on the collapsible headers;
+    // rotates to point right when a box is collapsed.
     const CHEVRON_SVG = `<svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 8.5l7 7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-    // 02 — Category Summaries: all five categories in canonical order (areas
-    // is already in that order), each a collapsible box (default open) with a
-    // status pill and its Why It Matters / Good / Opportunity summary. No
-    // background tint here — just the colored left edge. No statements.
     const bandPill = a => {
       const s = a.score100;
       const cls = s < 50 ? "gap" : (s < 80 ? "dev" : "strong");
       const label = s < 50 ? "Gap" : (s < 80 ? "Developing" : "Strength");
       return `<span class="cat-pill ${cls}">${label}</span>`;
     };
-    // Open the first box, collapse the rest — the lead sees the depth of
-    // content without the whole section fully expanded.
-    const summaryBox = (a, i) => `
-      <div class="cat-box summary-cat${i === 0 ? " open" : ""}" style="border-left-color:${bandColor(a.score100)}">
-        <button class="cat-head" onclick="toggleCat(this)" aria-expanded="${i === 0}">
-          <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
-          <strong>${a.label}</strong>
-          <span class="head-spacer"></span>
-          ${bandPill(a)}
-          <span class="head-spacer"></span>
-          <span class="area-score-inline">${a.score100}</span>
-          ${CHEVRON_SVG}
-        </button>
-        <div class="cat-collapse">${catSectionsHTML(a)}</div>
-      </div>`;
-    document.getElementById("summariesList").innerHTML = areas.map(summaryBox).join("");
+
+    // 01 Overview summary paragraph + 02 Category Highlights, bundled into one
+    // re-callable function so the instant view can PROGRESSIVELY swap in the AI
+    // prose the moment the background generation lands, without disturbing the
+    // rest of the page. Called once now (empty categoryText on the instant view
+    // → composed/static fallback), and again by the progressive poller.
+    function renderAiSections(catText) {
+      const aiText = catText || {};
+      const goodOf = a => {
+        if (!hasGood(a)) return "";
+        return (aiText[a.name] && aiText[a.name].good) || (answersPresent ? composeGood(a.name) : STRENGTH_NOTES[a.name]);
+      };
+      const oppOf = a => {
+        if (!hasOpp(a)) return "";
+        return (aiText[a.name] && aiText[a.name].opportunity) || (answersPresent ? composeOpp(a.name) : OPP_NOTES[a.name]);
+      };
+      const catSection = (cls, label, body) =>
+        `<div class="cat-section"><div class="cat-section-label ${cls}">${label}</div><div class="cat-section-body">${body}</div></div>`;
+      const catSectionsHTML = a => {
+        let html = catSection("why", "Why It Matters", WHY_MATTERS[a.name]);
+        const good = goodOf(a);
+        const opp = oppOf(a);
+        if (good) html += catSection("good", "Good", good);
+        if (opp) html += catSection("opp", "Opportunity", opp);
+        return html;
+      };
+      // Open the first box, collapse the rest — the lead sees the depth of
+      // content without the whole section fully expanded.
+      const summaryBox = (a, i) => `
+        <div class="cat-box summary-cat${i === 0 ? " open" : ""}" style="border-left-color:${bandColor(a.score100)}">
+          <button class="cat-head" onclick="toggleCat(this)" aria-expanded="${i === 0}">
+            <img class="area-icon-inline" src="${AREA_ICONS[a.name]}" alt="">
+            <strong>${a.label}</strong>
+            <span class="head-spacer"></span>
+            ${bandPill(a)}
+            <span class="head-spacer"></span>
+            <span class="area-score-inline">${a.score100}</span>
+            ${CHEVRON_SVG}
+          </button>
+          <div class="cat-collapse">${catSectionsHTML(a)}</div>
+        </div>`;
+      // Preserve which boxes the reader has open across the AI swap so it isn't
+      // jarring; a fresh render (empty list) keeps the default open-first.
+      const list = document.getElementById("summariesList");
+      const prevOpen = Array.from(list.querySelectorAll(".summary-cat")).map(b => b.classList.contains("open"));
+      list.innerHTML = areas.map(summaryBox).join("");
+      if (prevOpen.length === areas.length) {
+        Array.from(list.querySelectorAll(".summary-cat")).forEach((b, i) => {
+          b.classList.toggle("open", prevOpen[i]);
+          const btn = b.querySelector(".cat-head");
+          if (btn) btn.setAttribute("aria-expanded", String(prevOpen[i]));
+        });
+      }
+      // 01 Overview "short version" paragraph — shows only once the AI text is
+      // present (rides in categoryText._overview); stays hidden otherwise.
+      const ov = document.getElementById("overviewSummary");
+      if (ov) {
+        const t = aiText._overview;
+        if (t) { ov.textContent = t; ov.style.display = ""; }
+        else { ov.style.display = "none"; }
+      }
+    }
+    // Expose for the progressive poller, then do the initial render.
+    progressiveApply = renderAiSections;
+    renderAiSections(data.categoryText || {});
 
     // 03 — Deep Insights: same five categories, same order — no summary text.
     // Each is a collapsible box (default closed) whose body lists its four
