@@ -2283,16 +2283,30 @@
   // AI text is written to the sheet, then swap it into the on-screen report
   // (Option A progressive populate). Best-effort: a stuck/slow generation just
   // means the composed fallback stays, which is already correct copy.
-  function startProgressivePoll(id) {
+  function startProgressivePoll(id, aiPayload) {
     if (!id || typeof progressiveApply !== "function") return;
-    let tries = 0;
-    const MAX = 14;          // ~14 checks
-    const EVERY = 5000;      // every 5s → ~70s total window
-    const FIRST_DELAY = 8000; // first check after 8s (AI takes ~20-30s)
+    let tries = 0, refired = false;
+    const MAX = 26;          // ~2 min window (covers a self-heal retry)
+    const EVERY = 5000;      // every 5s
+    const FIRST_DELAY = 8000; // first check after 8s (AI takes ~25-35s)
+    const RETRY_AT = 11;     // ~63s in — if still nothing, re-fire generation once
     const ready = ct => ct && (
       (ct._overview && ct._overview.length) ||
       Object.keys(ct).some(k => k !== "_overview" && ct[k] && (ct[k].good || ct[k].opportunity))
     );
+    // Re-fire the background generation. Used only as a self-heal if the initial
+    // request was lost (dropped/cancelled/blocked) — by RETRY_AT the first run
+    // would have finished, so this can't spawn a concurrent generation.
+    const fireAi = () => {
+      if (!aiPayload) return;
+      try {
+        fetch(`${API_BASE}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(aiPayload)
+        }).catch(() => {});
+      } catch (e) { /* best-effort */ }
+    };
     const tick = async () => {
       tries++;
       try {
@@ -2303,6 +2317,7 @@
           return; // done — stop polling
         }
       } catch (e) { /* transient — keep trying */ }
+      if (!refired && tries >= RETRY_AT) { refired = true; fireAi(); }
       if (tries < MAX) setTimeout(tick, EVERY);
     };
     setTimeout(tick, FIRST_DELAY);
@@ -2359,17 +2374,19 @@
         // Progressive populate: the background AI (Overview + Category
         // Highlights) lands ~20-30s after the id. Poll the report endpoint and
         // swap the on-screen prose in place the moment it's ready.
-        startProgressivePoll(out.id);
         // Second call runs the AI generations in the background and patches the
-        // sheet's AI cells for the emailed /r/ link. Fire-and-forget — the
-        // on-screen report is already up and doesn't depend on it.
+        // sheet's AI cells (used by both the on-screen swap and the emailed /r/
+        // link). Fire it now; the poll re-fires it if it's ever lost, so a
+        // dropped/cancelled request can't strand the report without AI text.
+        const aiPayload = { ...payload, stage: "ai", id: out.id };
         try {
           fetch(`${API_BASE}/submit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...payload, stage: "ai", id: out.id })
+            body: JSON.stringify(aiPayload)
           }).catch(() => {});
         } catch (e) { /* background best-effort */ }
+        startProgressivePoll(out.id, aiPayload);
       } else {
         emailVerdict = null; // unknown -> allow
       }
