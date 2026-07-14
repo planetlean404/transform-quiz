@@ -1,0 +1,22 @@
+name: RPA report backfill
+
+# Regenerate any RPA report whose AI generation never completed (visitor closed
+# the page before it finished). The endpoint is idempotent and token-gated, and
+# does nothing when there's nothing to backfill.
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # every 10 minutes (GitHub cron is best-effort)
+  workflow_dispatch: {}        # allow manual runs from the Actions tab
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger backfill sweep
+        run: |
+          curl -sS -X POST "https://rpa.planetlean.com/api/scorecard/submit" \
+            -H "Content-Type: application/json" \
+            -d "{\"stage\":\"backfill\",\"token\":\"${BACKFILL_TOKEN}\"}" \
+            -w "\nHTTP %{http_code}\n"
+        env:
+          BACKFILL_TOKEN: ${{ secrets.BACKFILL_TOKEN }}
