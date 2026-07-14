@@ -882,13 +882,12 @@ async function main(event) {
     // adding a new build-time env var (DO wouldn't resolve one added after the
     // fact). The public repo shows only the one-way derivation, never a value;
     // the matching hash is stored as the caller's BACKFILL_TOKEN secret.
-    const expected = process.env.ANTHROPIC_API_KEY
-      ? crypto.createHash('sha256').update(process.env.ANTHROPIC_API_KEY.trim()).digest('hex') : null;
-    if (event.token === 'diag') {  // TEMP: safe self-check (no secret leak)
-      const k = process.env.ANTHROPIC_API_KEY || '';
-      return { statusCode: 200, headers: corsHeaders(), body: { keyLen: k.length, keyTrimLen: k.trim().length, expPrefix: expected ? expected.slice(0, 12) : null } };
-    }
-    if (!expected || event.token !== expected) {
+    // Gate: sha256 of a random secret. The plaintext secret lives only in the
+    // GitHub Actions secret BACKFILL_TOKEN; only its (one-way) hash is in the repo.
+    const BACKFILL_TOKEN_HASH = '83d9290cfc870e125b41e923b30d38e536ce9884bcad82d036b6a2d7fe265ebe';
+    const provided = event.token
+      ? crypto.createHash('sha256').update(String(event.token).trim()).digest('hex') : null;
+    if (!provided || provided !== BACKFILL_TOKEN_HASH) {
       return { statusCode: 403, headers: corsHeaders(), body: { ok: false, error: 'forbidden' } };
     }
     try {
