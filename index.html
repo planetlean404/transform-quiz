@@ -2289,14 +2289,18 @@
     const MAX = 26;          // ~2 min window (covers a self-heal retry)
     const EVERY = 5000;      // every 5s
     const FIRST_DELAY = 8000; // first check after 8s (AI takes ~25-35s)
-    const RETRY_AT = 11;     // ~63s in — if still nothing, re-fire generation once
-    const ready = ct => ct && (
+    const RETRY_AT = 11;     // ~63s in — if not fully done, re-fire generation once
+    // Something worth showing on screen (overview or any category highlight).
+    const hasAny = ct => ct && (
       (ct._overview && ct._overview.length) ||
-      Object.keys(ct).some(k => k !== "_overview" && ct[k] && (ct[k].good || ct[k].opportunity))
+      Object.keys(ct).some(k => k[0] !== "_" && ct[k] && (ct[k].good || ct[k].opportunity))
     );
+    // Fully done = overview + the Biggest Gap paragraph are both present. (Top
+    // Strength is optional — a plant with no strong category never gets one.)
+    const complete = ct => ct && ct._overview && ct._overview.length && ct._biggestGap && ct._biggestGap.length;
     // Re-fire the background generation. Used only as a self-heal if the initial
-    // request was lost (dropped/cancelled/blocked) — by RETRY_AT the first run
-    // would have finished, so this can't spawn a concurrent generation.
+    // request was lost, or a piece (e.g. the focus paragraphs) failed — by
+    // RETRY_AT the first run has finished, so this can't spawn a concurrent one.
     const fireAi = () => {
       if (!aiPayload) return;
       try {
@@ -2309,14 +2313,15 @@
     };
     const tick = async () => {
       tries++;
+      let ct = null;
       try {
-        const res = await fetch(`${API_BASE}/report?id=${encodeURIComponent(id)}`);
-        const out = await res.json();
-        if (out && out.ok && ready(out.categoryText)) {
-          progressiveApply(out.categoryText);
-          return; // done — stop polling
-        }
+        const out = await (await fetch(`${API_BASE}/report?id=${encodeURIComponent(id)}`)).json();
+        if (out && out.ok) ct = out.categoryText;
       } catch (e) { /* transient — keep trying */ }
+      // Show what we have as soon as it exists (progressive), but keep polling
+      // until the Biggest Gap paragraph lands too.
+      if (hasAny(ct)) progressiveApply(ct);
+      if (complete(ct)) return; // fully done — stop
       if (!refired && tries >= RETRY_AT) { refired = true; fireAi(); }
       if (tries < MAX) setTimeout(tick, EVERY);
     };

@@ -105,6 +105,21 @@ function buildFocusBlock(answers, categoryName) {
   }).join('\n');
 }
 
+// Tolerant JSON parse for model output: handles a clean object, one wrapped in
+// ```json fences, or one with a stray preamble / trailing character (the model
+// occasionally adds a word or a code fence). Falls back to slicing the
+// outermost {...}. Throws only if no JSON object can be recovered at all.
+function parseModelJSON(text) {
+  let t = String(text || '').trim();
+  const fence = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fence) t = fence[1].trim();
+  try { return JSON.parse(t); } catch (e) { /* fall through to extraction */ }
+  const first = t.indexOf('{');
+  const last = t.lastIndexOf('}');
+  if (first >= 0 && last > first) return JSON.parse(t.slice(first, last + 1));
+  throw new Error('no JSON object in model output: ' + t.slice(0, 60));
+}
+
 // Shared Anthropic call — posts one message, returns the parsed JSON from the
 // model's text (throws on HTTP error, timeout, or unparseable JSON). Callers
 // wrap it in try/catch so any failure is non-fatal.
@@ -138,7 +153,7 @@ async function callAnthropicJSON(system, userContent, maxTokens) {
   const data = await res.json();
   if (!res.ok) throw new Error(`Anthropic error: ${JSON.stringify(data).slice(0, 200)}`);
   const text = (data.content || []).map(b => b.text || '').join('');
-  return JSON.parse(text);
+  return parseModelJSON(text);
 }
 
 // Build a one-line plant context string from the optional dropdowns. Empty
@@ -814,7 +829,10 @@ async function main(event) {
       const listRows = ((await (await fetch(listUrl, { headers: { Authorization: `Bearer ${token}` } })).json()).values) || [];
       const idx = listRows.findIndex(r => (r[0] || '').toLowerCase() === aiId.toLowerCase());
       if (idx < 0) return { statusCode: 404, headers: corsHeaders(), body: { ok: false, error: 'not-found' } };
-      if ((listRows[idx][25] || '').trim()) {
+      // Skip regeneration only if a PRIOR run fully succeeded (ai_status 'ok').
+      // A partial/failed status ('category:ok | focus:FAIL...') is allowed to
+      // regenerate, so a self-heal re-fire can fix the missing piece.
+      if ((listRows[idx][25] || '').trim() === 'ok') {
         return { statusCode: 200, headers: corsHeaders(), body: { ok: true, id: aiId, note: 'already-generated' } };
       }
       await runAiGeneration(process.env.GOOGLE_SHEET_ID, token, idx + 1, av, event);
