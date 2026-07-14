@@ -114,10 +114,22 @@ function parseModelJSON(text) {
   const fence = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
   if (fence) t = fence[1].trim();
   try { return JSON.parse(t); } catch (e) { /* fall through to extraction */ }
-  const first = t.indexOf('{');
-  const last = t.lastIndexOf('}');
-  if (first >= 0 && last > first) return JSON.parse(t.slice(first, last + 1));
-  throw new Error('no JSON object in model output: ' + t.slice(0, 60));
+  // Extract the FIRST complete, brace-balanced {...} object (string/escape
+  // aware) so a stray preamble, a trailing note, or a second object after the
+  // JSON can't break parsing.
+  const start = t.indexOf('{');
+  if (start >= 0) {
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < t.length; i++) {
+      const c = t[i];
+      if (inStr) {
+        if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false;
+      } else if (c === '"') { inStr = true; }
+      else if (c === '{') { depth++; }
+      else if (c === '}') { if (--depth === 0) return JSON.parse(t.slice(start, i + 1)); }
+    }
+  }
+  throw new Error('no parseable JSON object in model output: ' + t.slice(0, 80));
 }
 
 // Shared Anthropic call — posts one message, returns the parsed JSON from the
