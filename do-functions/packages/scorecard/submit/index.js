@@ -833,6 +833,25 @@ async function updateKartraStatus(sheetId, token, rowNumber, status) {
   if (!res.ok) throw new Error(`kartra_status update ${res.status}`);
 }
 
+// Rebuild a submit event from a stored sheet row — used by the backfill sweep
+// to regenerate the AI for a row whose original generation never completed. The
+// biggest-gap / top-strength categories aren't stored, but runAiGeneration
+// derives them from principleMaturity; profile isn't stored either, so the plan
+// falls back to its default template (fine for a rescued row).
+function rowToEvent(r) {
+  let answers = [];
+  try { answers = r[12] ? JSON.parse(r[12]) : []; } catch (e) { answers = []; }
+  return {
+    firstName: r[2], email: r[3], score: Number(r[4]), phase: r[5],
+    principles: PRINCIPLE_ORDER.map((n, i) => ({ name: n, score: Number(r[6 + i]) })),
+    pattern: r[11],
+    answers,
+    maturity: Number(r[14]),
+    principleMaturity: PRINCIPLE_ORDER.map((n, i) => ({ name: n, maturity: Number(r[15 + i]) })),
+    plantSize: r[22] || '', industry: r[23] || '', role: r[24] || ''
+  };
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 function corsHeaders() {
@@ -852,6 +871,44 @@ async function main(event) {
   // real leads whose browser or password manager autofilled it. Instead the row
   // is saved and the report generates as usual, and only the Kartra push is
   // skipped, so a genuine bot still can't reach the CRM or the 6plan email.
+
+  // Scheduled backfill sweep (a cron hits this): regenerate rows whose AI never
+  // completed — so a report is never left stranded on the composed fallback just
+  // because the visitor closed the page before the ~40s generation finished.
+  // Token-gated, idempotent (skips rows already 'ok'), and bounded per run to
+  // stay within the function timeout.
+  if (event.stage === 'backfill') {
+    if (!process.env.BACKFILL_TOKEN || event.token !== process.env.BACKFILL_TOKEN) {
+      return { statusCode: 403, headers: corsHeaders(), body: { ok: false, error: 'forbidden' } };
+    }
+    try {
+      const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
+      const token = await getAccessToken(sa);
+      const listUrl = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:AB`;
+      const rows = ((await (await fetch(listUrl, { headers: { Authorization: `Bearer ${token}` } })).json()).values) || [];
+      const cands = [];
+      for (let i = 1; i < rows.length; i++) {                 // skip the header row
+        if (i === rows.length - 1) continue;                  // skip the freshest row (may still be generating)
+        const r = rows[i];
+        if (!/^rpa-[A-F0-9]{8}$/i.test(r[0] || '')) continue;
+        if ((r[25] || '').trim() === 'ok') continue;          // col Z ai_status — already fully generated
+        cands.push({ r, rowNumber: i + 1 });
+      }
+      const batch = cands.slice(0, 2);                        // bound per run (2 * 4 parallel AI calls) to fit the timeout
+      const settled = await Promise.allSettled(batch.map(async c => {
+        const ev = rowToEvent(c.r);
+        const v = validate(ev);
+        if (v.errors.length) return { id: c.r[0], skipped: v.errors[0] };
+        await runAiGeneration(process.env.GOOGLE_SHEET_ID, token, c.rowNumber, v, ev);
+        return { id: c.r[0], done: true };
+      }));
+      const processed = settled.map(x => x.status === 'fulfilled' ? x.value : { error: String(x.reason && x.reason.message).slice(0, 80) });
+      return { statusCode: 200, headers: corsHeaders(), body: { ok: true, pending: cands.length, processed } };
+    } catch (err) {
+      console.error('Backfill sweep failed:', err.message);
+      return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: err.message.slice(0, 120) } };
+    }
+  }
 
   // Background AI-generation stage: the client fires this as a second request
   // right after the main submit returns the id, so the id isn't held up ~20s by
