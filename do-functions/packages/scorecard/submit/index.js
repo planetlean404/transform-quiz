@@ -788,10 +788,11 @@ async function main(event) {
   const method = (event.__ow_method || '').toLowerCase();
   if (method === 'options') return { statusCode: 200, headers: corsHeaders() };
 
-  // Honeypot: bots that fill the hidden "website" field get a fake success.
-  if (event.website) {
-    return { statusCode: 200, headers: corsHeaders(), body: { ok: true, id: 'rpa-' + crypto.randomBytes(4).toString('hex').toUpperCase() } };
-  }
+  // Honeypot is handled NON-destructively in the normal submit path below. A
+  // filled hidden field no longer silently drops the submission — that cost
+  // real leads whose browser or password manager autofilled it. Instead the row
+  // is saved and the report generates as usual, and only the Kartra push is
+  // skipped, so a genuine bot still can't reach the CRM or the 6plan email.
 
   // Background AI-generation stage: the client fires this as a second request
   // right after the main submit returns the id, so the id isn't held up ~20s by
@@ -828,6 +829,11 @@ async function main(event) {
   if (v.errors.length) {
     return { statusCode: 400, headers: corsHeaders(), body: { ok: false, errors: v.errors } };
   }
+
+  // Suspected bot = the hidden honeypot field came back filled. We no longer
+  // drop these (autofill trips it for real people); the row is still written and
+  // the report still generates — only the Kartra push is skipped below.
+  const suspectedBot = !!event.website;
 
   const id = 'rpa-' + crypto.randomBytes(4).toString('hex').toUpperCase();
 
@@ -882,8 +888,12 @@ async function main(event) {
   }
 
   // Now push to Kartra — non-fatal, and safe because the row already exists.
+  // Skipped for a suspected bot (honeypot filled): the row and report still
+  // exist, but no CRM contact is created and no 6plan email fires.
   let kartraStatus;
-  if (emailCheck.good) {
+  if (suspectedBot) {
+    kartraStatus = 'kartra-skipped-honeypot';
+  } else if (emailCheck.good) {
     try {
       kartraStatus = await pushToKartra(v, id);
     } catch (err) {
