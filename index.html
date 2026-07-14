@@ -864,6 +864,37 @@
   }
   @keyframes ai-spin { to { transform: rotate(360deg); } }
   @media print { .ai-building::before { display: none; } }
+  /* Unified report-building loader: after submit, the score card shows and
+     everything below it is hidden behind this loader until the AI is ready,
+     then the whole report reveals at once. */
+  #reportBuildingLoader { display: none; }
+  #resultsScreen.report-building #reportBuildingLoader { display: flex; }
+  #resultsScreen.report-building .report-main .section:not(#sec-overview),
+  #resultsScreen.report-building #overviewSummary,
+  #resultsScreen.report-building .highlight-boxes { display: none !important; }
+  #reportBuildingLoader {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 12px;
+    padding: 54px 24px 60px;
+    margin: 20px 0 8px;
+  }
+  #reportBuildingLoader .rbl-spinner {
+    width: 34px; height: 34px;
+    border: 3px solid var(--pl-border);
+    border-top-color: var(--pl-accent);
+    border-radius: 50%;
+    animation: ai-spin .75s linear infinite;
+  }
+  #reportBuildingLoader .rbl-title {
+    font-size: 18px; font-weight: 700; color: var(--pl-accent-dark);
+  }
+  #reportBuildingLoader .rbl-step {
+    font-size: 15px; color: var(--pl-text-muted); font-style: italic;
+    min-height: 20px; transition: opacity .3s ease;
+  }
   .sc-header {
     grid-column: 1 / -1;
     background: #eaedf0;
@@ -1810,6 +1841,14 @@
           </div>
           <div class="sc-footer" id="scFooter"></div>
         </div>
+        <!-- Unified "building your report" loader — shown (via #resultsScreen
+             .report-building) after the instant score card while the AI
+             generates, then removed to reveal the whole report at once. -->
+        <div id="reportBuildingLoader">
+          <div class="rbl-spinner"></div>
+          <div class="rbl-title">Building your report</div>
+          <div class="rbl-step" id="rblStep">Scoring your responses&hellip;</div>
+        </div>
         <div class="overview-summary" id="overviewSummary" style="display:none"></div>
         <div class="highlight-boxes">
           <div class="gap-callout" id="gapCallout"></div>
@@ -2256,6 +2295,36 @@
   let aiPending = false;
   const AI_BUILDING = '<span class="ai-building">Building your personalized analysis&hellip;</span>';
 
+  // Unified reveal: after submit, the score card shows immediately and the rest
+  // of the report is held behind #reportBuildingLoader until the AI is ready,
+  // then the whole report reveals at once (so nothing looks half-built).
+  let buildMsgTimer = null;
+  function startBuildingScreen() {
+    const rs = document.getElementById("resultsScreen");
+    if (rs) rs.classList.add("report-building");
+    const stepEl = document.getElementById("rblStep");
+    const steps = [
+      "Scoring your 20 responses…",
+      "Pinpointing your biggest gap…",
+      "Writing your personalized analysis…",
+      "Building your 30-day plan…",
+      "Almost there…"
+    ];
+    let i = 0;
+    if (stepEl) stepEl.textContent = steps[0];
+    clearInterval(buildMsgTimer);
+    buildMsgTimer = setInterval(() => {
+      i = Math.min(i + 1, steps.length - 1);
+      if (stepEl) { stepEl.style.opacity = "0"; setTimeout(() => { stepEl.textContent = steps[i]; stepEl.style.opacity = "1"; }, 300); }
+      if (i >= steps.length - 1) clearInterval(buildMsgTimer);
+    }, 4500);
+  }
+  function revealReport() {
+    clearInterval(buildMsgTimer); buildMsgTimer = null;
+    const rs = document.getElementById("resultsScreen");
+    if (rs) rs.classList.remove("report-building");
+  }
+
   // Default "Save as PDF" filename — browsers derive it from document.title,
   // so we swap the title in for the duration of the print, then restore it.
   let pdfFileName = "Rapid Plant Assessment";
@@ -2314,11 +2383,12 @@
   // means the composed fallback stays, which is already correct copy.
   function startProgressivePoll(id, aiPayload) {
     if (!id || typeof progressiveApply !== "function") return;
-    let tries = 0, refired = false;
+    let tries = 0, refired = false, revealed = false;
     const MAX = 26;          // ~2 min window (covers a self-heal retry)
     const EVERY = 5000;      // every 5s
     const FIRST_DELAY = 8000; // first check after 8s (AI takes ~25-35s)
     const RETRY_AT = 11;     // ~63s in — if not fully done, re-fire generation once
+    const REVEAL_BY = 15;    // ~78s in — reveal the report even if not fully done
     // Something worth showing on screen (overview or any category highlight).
     const hasAny = ct => ct && (
       (ct._overview && ct._overview.length) ||
@@ -2340,6 +2410,14 @@
         }).catch(() => {});
       } catch (e) { /* best-effort */ }
     };
+    // Reveal the whole report at once (removes the building loader), applying
+    // whatever AI text we have — full when complete, composed fallback for any
+    // piece that never arrived.
+    const reveal = (ct) => {
+      aiPending = false;
+      progressiveApply(ct || {});
+      if (!revealed) { revealed = true; revealReport(); }
+    };
     const tick = async () => {
       tries++;
       let ct = null;
@@ -2347,13 +2425,12 @@
         const out = await (await fetch(`${API_BASE}/report?id=${encodeURIComponent(id)}`)).json();
         if (out && out.ok) ct = out.categoryText;
       } catch (e) { /* transient — keep trying */ }
-      // Show what we have as soon as it exists (progressive), but keep polling
-      // until the Biggest Gap paragraph lands too.
-      if (complete(ct)) { aiPending = false; progressiveApply(ct); return; } // fully done — stop
-      if (hasAny(ct)) progressiveApply(ct);
+      if (complete(ct)) { reveal(ct); return; }          // fully done — reveal + stop
+      if (revealed && hasAny(ct)) progressiveApply(ct);  // already revealed — swap a late piece in silently
       if (!refired && tries >= RETRY_AT) { refired = true; fireAi(); }
+      if (!revealed && tries >= REVEAL_BY) reveal(ct);    // waited long enough — reveal with what we have
       if (tries < MAX) setTimeout(tick, EVERY);
-      else { aiPending = false; progressiveApply(ct || {}); } // gave up — resolve "building" to composed fallback
+      else if (!revealed) reveal(ct);                    // safety net
     };
     setTimeout(tick, FIRST_DELAY);
   }
@@ -3022,6 +3099,9 @@
       // gets the same array back from the report API.
       answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si }))
     });
+    // Hold the report behind the unified building loader until the AI lands (the
+    // poll calls revealReport on complete / timeout / give-up).
+    startBuildingScreen();
   }
 
   function setReportId(id) {
