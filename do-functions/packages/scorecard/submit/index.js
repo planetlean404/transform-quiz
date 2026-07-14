@@ -878,7 +878,13 @@ async function main(event) {
   // Token-gated, idempotent (skips rows already 'ok'), and bounded per run to
   // stay within the function timeout.
   if (event.stage === 'backfill') {
-    if (!process.env.BACKFILL_TOKEN || event.token !== process.env.BACKFILL_TOKEN) {
+    // Gate token = SHA-256 of the (already-resolving) ANTHROPIC_API_KEY. Avoids
+    // adding a new build-time env var (DO wouldn't resolve one added after the
+    // fact). The public repo shows only the one-way derivation, never a value;
+    // the matching hash is stored as the caller's BACKFILL_TOKEN secret.
+    const expected = process.env.ANTHROPIC_API_KEY
+      ? crypto.createHash('sha256').update(process.env.ANTHROPIC_API_KEY).digest('hex') : null;
+    if (!expected || event.token !== expected) {
       return { statusCode: 403, headers: corsHeaders(), body: { ok: false, error: 'forbidden' } };
     }
     try {
