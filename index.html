@@ -2115,8 +2115,16 @@
   // the plan pilots the same category the report names). ps items carry
   // maturity10 (0–10). The AI plans apply the identical rule server-side.
   function weakestFirst(ps) {
+    // Tolerant maturity accessor: callers variously carry maturity10 (0–10),
+    // score100/maturity (0–100). Normalize to one scale so the weakest area is
+    // picked correctly regardless of which field the caller passes. (Missing all
+    // three used to yield NaN → sort no-op → wrong default to the first area.)
+    const mat = p => p.maturity10 != null ? p.maturity10
+      : p.score100 != null ? p.score100 / 10
+      : p.maturity != null ? p.maturity / 10
+      : 0;
     return [...ps].sort((a, b) => {
-      const d = a.maturity10 - b.maturity10;
+      const d = mat(a) - mat(b);
       if (d !== 0) return d;
       return GAP_PRIORITY.indexOf(a.name) - GAP_PRIORITY.indexOf(b.name);
     });
@@ -3441,7 +3449,7 @@
     // report link or a failed generation).
     const plan = (data.plan && Array.isArray(data.plan.weeks) && data.plan.weeks.length === 4)
       ? data.plan
-      : buildPlan(areas.map(a => ({ name: a.name, roadmap4: a.roadmap4 })));
+      : buildPlan(areas.map(a => ({ name: a.name, score100: a.score100 })));
     document.getElementById("planHead").innerHTML = `
       <div class="plan-meta"><span class="plan-meta-label">Pilot area</span><strong>${plan.pilotArea || ""}</strong></div>
       <div class="plan-meta"><span class="plan-meta-label">30-day objective</span>${plan.objective || ""}</div>
