@@ -842,6 +842,28 @@
     color: var(--pl-accent);
     margin-bottom: 7px;
   }
+  /* "Building your personalized analysis…" placeholder shown on the AI-written
+     sections while the background generation is still running. */
+  .ai-building {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--pl-text-muted);
+    font-style: italic;
+    font-size: 14.5px;
+  }
+  .ai-building::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    border: 2px solid var(--pl-border);
+    border-top-color: var(--pl-accent);
+    border-radius: 50%;
+    animation: ai-spin .7s linear infinite;
+  }
+  @keyframes ai-spin { to { transform: rotate(360deg); } }
+  @media print { .ai-building::before { display: none; } }
   .sc-header {
     grid-column: 1 / -1;
     background: #eaedf0;
@@ -2226,6 +2248,13 @@
   // (Overview summary + Category Highlights) in place. The progressive poller
   // calls it once the background AI generation lands on the instant view.
   let progressiveApply = null;
+  // While the background AI is still generating (the instant-submit path), the
+  // AI-written sections show a "building" placeholder instead of a composed
+  // one-liner, so the wait is obvious and nothing looks prematurely final.
+  // Resolves to the AI text when it lands, or to the composed fallback if the
+  // generation never arrives (poll gives up).
+  let aiPending = false;
+  const AI_BUILDING = '<span class="ai-building">Building your personalized analysis&hellip;</span>';
 
   // Default "Save as PDF" filename — browsers derive it from document.title,
   // so we swap the title in for the duration of the print, then restore it.
@@ -2320,10 +2349,11 @@
       } catch (e) { /* transient — keep trying */ }
       // Show what we have as soon as it exists (progressive), but keep polling
       // until the Biggest Gap paragraph lands too.
+      if (complete(ct)) { aiPending = false; progressiveApply(ct); return; } // fully done — stop
       if (hasAny(ct)) progressiveApply(ct);
-      if (complete(ct)) return; // fully done — stop
       if (!refired && tries >= RETRY_AT) { refired = true; fireAi(); }
       if (tries < MAX) setTimeout(tick, EVERY);
+      else { aiPending = false; progressiveApply(ct || {}); } // gave up — resolve "building" to composed fallback
     };
     setTimeout(tick, FIRST_DELAY);
   }
@@ -2971,6 +3001,9 @@
 
   // ---------- Results ----------
   function showResults(name) {
+    // Instant post-quiz path: the AI text is about to be generated + polled, so
+    // the AI sections should render their "building" state until it lands.
+    aiPending = true;
     const ps = computePrincipleScores();
     const psMat = ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) }));
     renderReport({
@@ -3154,11 +3187,13 @@
       const aiText = catText || {};
       const goodOf = a => {
         if (!hasGood(a)) return "";
-        return (aiText[a.name] && aiText[a.name].good) || (answersPresent ? composeGood(a.name) : STRENGTH_NOTES[a.name]);
+        if (aiText[a.name] && aiText[a.name].good) return aiText[a.name].good;
+        return aiPending ? AI_BUILDING : (answersPresent ? composeGood(a.name) : STRENGTH_NOTES[a.name]);
       };
       const oppOf = a => {
         if (!hasOpp(a)) return "";
-        return (aiText[a.name] && aiText[a.name].opportunity) || (answersPresent ? composeOpp(a.name) : OPP_NOTES[a.name]);
+        if (aiText[a.name] && aiText[a.name].opportunity) return aiText[a.name].opportunity;
+        return aiPending ? AI_BUILDING : (answersPresent ? composeOpp(a.name) : OPP_NOTES[a.name]);
       };
       const catSection = (cls, label, body) =>
         `<div class="cat-section"><div class="cat-section-label ${cls}">${label}</div><div class="cat-section-body">${body}</div></div>`;
@@ -3197,20 +3232,25 @@
           if (btn) btn.setAttribute("aria-expanded", String(prevOpen[i]));
         });
       }
-      // 01 Overview "short version" paragraph — shows only once the AI text is
-      // present (rides in categoryText._overview); stays hidden otherwise.
+      // 01 Overview "short version" paragraph — the AI text when present, a
+      // "building" placeholder while it generates, hidden otherwise.
       const ov = document.getElementById("overviewSummary");
       if (ov) {
-        const t = aiText._overview;
-        if (t) { ov.textContent = t; ov.style.display = ""; }
-        else { ov.style.display = "none"; }
+        if (aiText._overview) { ov.textContent = aiText._overview; ov.style.display = ""; }
+        else if (aiPending) { ov.innerHTML = AI_BUILDING; ov.style.display = ""; }
+        else { ov.textContent = ""; ov.style.display = "none"; }
       }
       // 01 Biggest Gap / Where You're Strongest callouts — rich AI paragraph
-      // when present, else a short generic line (no WHY_MATTERS reuse).
-      highlightBox(document.getElementById("gapCallout"), "Biggest Gap", "gap", gapArea,
-        aiText._biggestGap || `This is your lowest-scoring category, at ${gapArea.score100} out of 100 — your highest-leverage place to focus first.`);
-      if (topGreen) highlightBox(strengthCallout, "Where You're Strongest", "strength", topGreen,
-        aiText._topStrength || `This is your strongest category, at ${topGreen.score100} out of 100.`);
+      // when present, a "building" placeholder while generating, else a short
+      // generic line (no WHY_MATTERS reuse).
+      const gapText = aiText._biggestGap || (aiPending ? AI_BUILDING
+        : `This is your lowest-scoring category, at ${gapArea.score100} out of 100 — your highest-leverage place to focus first.`);
+      highlightBox(document.getElementById("gapCallout"), "Biggest Gap", "gap", gapArea, gapText);
+      if (topGreen) {
+        const strText = aiText._topStrength || (aiPending ? AI_BUILDING
+          : `This is your strongest category, at ${topGreen.score100} out of 100.`);
+        highlightBox(strengthCallout, "Where You're Strongest", "strength", topGreen, strText);
+      }
     }
     // Expose for the progressive poller, then do the initial render.
     progressiveApply = renderAiSections;
