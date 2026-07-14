@@ -470,6 +470,21 @@ async function updateAiCells(sheetId, accessToken, rowNumber, categoryText, plan
   if (!res.ok) throw new Error(`Sheets cell update error: ${JSON.stringify(data)}`);
 }
 
+// Writes ONLY col U (categoryText) — used to land the on-screen report's AI
+// text (overview + highlights + gap/strength paragraphs) as soon as it's ready,
+// without waiting on the slower 30-day / 6-month plan generations that share the
+// stage:'ai' call. The plans get written afterward by updateAiCells.
+async function updateCategoryCell(sheetId, accessToken, rowNumber, categoryText) {
+  const range = `${SHEET_TAB}!U${rowNumber}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values: [[JSON.stringify(categoryText || {})]] })
+  });
+  if (!res.ok) throw new Error(`category cell update ${res.status}`);
+}
+
 // ─── Email verification (ZeroBounce) ─────────────────────────────────────────
 // Runs before the Kartra push only — never blocks or delays the visitor's
 // results, which render from the submitted answers before this even starts.
@@ -692,12 +707,17 @@ async function runAiGeneration(sheetId, token, rowNumber, v, event) {
   // report's callouts use) and sends the names so the AI paragraph matches the
   // callout label. Invalid/absent names just skip that focus paragraph.
   const focus = { gap: event.biggestGapCat, strength: event.topStrengthCat };
-  const [catResult, focusResult, planResult, sixResult] = await Promise.allSettled([
-    generateCategoryText(event.answers, ctx),
-    generateFocusText(event.answers, ctx, focus),
-    generatePlan(v.profile, event.answers, v.principleMaturity, ctx),
-    generate6MonthPlan(v.profile, v.phase, event.answers, v.principleMaturity, ctx)
-  ]);
+  // Start all four generations at once, but DON'T wait on the slower plan
+  // generations before saving the category text — the on-screen report polls
+  // col U, so writing it the moment category + focus are ready (~25s) makes it
+  // land fast instead of being gated behind the 30-day/6-month plans (~50s+).
+  const catP = generateCategoryText(event.answers, ctx);
+  const focusP = generateFocusText(event.answers, ctx, focus);
+  const planP = generatePlan(v.profile, event.answers, v.principleMaturity, ctx);
+  const sixP = generate6MonthPlan(v.profile, v.phase, event.answers, v.principleMaturity, ctx);
+
+  // Phase 1 — category text (overview + highlights + gap/strength paragraphs).
+  const [catResult, focusResult] = await Promise.allSettled([catP, focusP]);
   const categoryText = catResult.status === 'fulfilled' ? catResult.value : {};
   // Merge the two focus paragraphs into the same col-U object (reserved keys).
   // Independent of the category call: if that failed, the callouts still get
@@ -706,10 +726,17 @@ async function runAiGeneration(sheetId, token, rowNumber, v, event) {
     categoryText._biggestGap = focusResult.value._biggestGap || '';
     categoryText._topStrength = focusResult.value._topStrength || '';
   }
-  const plan = planResult.status === 'fulfilled' ? planResult.value : {};
-  const plan6 = sixResult.status === 'fulfilled' ? sixResult.value : {};
   if (catResult.status === 'rejected') console.error('Category text generation failed (non-fatal, static fallback):', catResult.reason && catResult.reason.message);
   if (focusResult.status === 'rejected') console.error('Focus paragraphs generation failed (non-fatal, static fallback):', focusResult.reason && focusResult.reason.message);
+  // Write col U now so the on-screen report can pick it up without waiting on
+  // the plans. Best-effort — the final updateAiCells rewrites it anyway.
+  try { await updateCategoryCell(sheetId, token, rowNumber, categoryText); }
+  catch (err) { console.error('Early category-cell write failed (non-fatal):', err.message); }
+
+  // Phase 2 — the plans (slower), then the final combined write + ai_status.
+  const [planResult, sixResult] = await Promise.allSettled([planP, sixP]);
+  const plan = planResult.status === 'fulfilled' ? planResult.value : {};
+  const plan6 = sixResult.status === 'fulfilled' ? sixResult.value : {};
   if (planResult.status === 'rejected') console.error('Plan generation failed (non-fatal, static fallback):', planResult.reason && planResult.reason.message);
   if (sixResult.status === 'rejected') console.error('6-month plan generation failed (non-fatal, static fallback):', sixResult.reason && sixResult.reason.message);
   // Human-readable status for the sheet's ai_status column (col Z).
