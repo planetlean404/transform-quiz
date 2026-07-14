@@ -31,6 +31,22 @@ const GAP_PRIORITY = [
   'Continuous Improvement'
 ];
 
+// Derive the biggest-gap / top-strength categories from the maturity scores —
+// the same lowest / highest(>=80) + GAP_PRIORITY rule the report callouts use.
+// Used as a fallback when the frontend didn't send the category names, so the
+// AI focus paragraphs still generate for the right categories (e.g. an older
+// cached page that omits topStrengthCat).
+function deriveFocus(principleMaturity) {
+  const pm = (principleMaturity || []).filter(p => p && p.name);
+  if (!pm.length) return { gap: '', strength: '' };
+  const sorted = dir => [...pm].sort((a, b) => {
+    const d = (dir === 'hi' ? -1 : 1) * (Number(a.maturity) - Number(b.maturity));
+    return d !== 0 ? d : GAP_PRIORITY.indexOf(a.name) - GAP_PRIORITY.indexOf(b.name);
+  });
+  const strong = sorted('hi').find(p => Number(p.maturity) >= 80);
+  return { gap: sorted('lo')[0].name, strength: strong ? strong.name : '' };
+}
+
 // ─── AI-generated category text (Good / Opportunity) ─────────────────────────
 // Runs once per submission, off the plant's actual per-statement answers, so
 // the report's Good/Opportunity boxes reflect which specific statements
@@ -246,10 +262,18 @@ Return ONLY valid JSON, no markdown fences, no commentary, exactly: {"biggestGap
   if (strengthCat) userContent += `===== TOP STRENGTH FOCUS — ${strengthCat} (write "topStrength" from this) =====\n${buildFocusBlock(answers, strengthCat)}`;
 
   const parsed = await callAnthropicJSON(system, userContent, 1500);
-  return {
-    _biggestGap: String((parsed && parsed.biggestGap) || ''),
-    _topStrength: String((parsed && parsed.topStrength) || '')
-  };
+  let biggestGap = String((parsed && parsed.biggestGap) || '');
+  let topStrength = String((parsed && parsed.topStrength) || '');
+  // Retry once if a requested paragraph came back empty (rare model miss where
+  // it returns "" despite being given the focus block).
+  if ((gapCat && !biggestGap) || (strengthCat && !topStrength)) {
+    try {
+      const p2 = await callAnthropicJSON(system, userContent, 1500);
+      if (gapCat && !biggestGap) biggestGap = String((p2 && p2.biggestGap) || '');
+      if (strengthCat && !topStrength) topStrength = String((p2 && p2.topStrength) || '');
+    } catch (e) { /* keep what we have */ }
+  }
+  return { _biggestGap: biggestGap, _topStrength: topStrength };
 }
 
 // ─── AI-generated 30-day plan ────────────────────────────────────────────────
@@ -733,7 +757,15 @@ async function runAiGeneration(sheetId, token, rowNumber, v, event) {
   // The frontend picks the biggest-gap / top-strength category (same rule the
   // report's callouts use) and sends the names so the AI paragraph matches the
   // callout label. Invalid/absent names just skip that focus paragraph.
-  const focus = { gap: event.biggestGapCat, strength: event.topStrengthCat };
+  // Prefer the categories the frontend picked (so the AI paragraph matches the
+  // callout label), but fall back to deriving them from the scores if either is
+  // missing/invalid — that's why Billy's report generated a Biggest Gap but no
+  // Top Strength (topStrengthCat didn't come through).
+  const derived = deriveFocus(v.principleMaturity);
+  const focus = {
+    gap: PRINCIPLE_ORDER.includes(event.biggestGapCat) ? event.biggestGapCat : derived.gap,
+    strength: PRINCIPLE_ORDER.includes(event.topStrengthCat) ? event.topStrengthCat : derived.strength
+  };
   // Start all four generations at once, but DON'T wait on the slower plan
   // generations before saving the category text — the on-screen report polls
   // col U, so writing it the moment category + focus are ready (~25s) makes it
