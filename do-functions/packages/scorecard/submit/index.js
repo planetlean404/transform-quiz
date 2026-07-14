@@ -159,14 +159,8 @@ function flavorInstruction(ctx) {
     : '';
 }
 
-async function generateCategoryText(answers, ctx, focus) {
+async function generateCategoryText(answers, ctx) {
   if (!Array.isArray(answers) || !answers.length) return {};
-
-  // focus = { gap, strength } category names (from the frontend, which picks
-  // them so the labels match). Only generate a focus paragraph for a valid
-  // category name; strength may be absent when the plant has no strong category.
-  const gapCat = focus && PRINCIPLE_ORDER.includes(focus.gap) ? focus.gap : null;
-  const strengthCat = focus && PRINCIPLE_ORDER.includes(focus.strength) ? focus.strength : null;
 
   const system = `You write the reader-facing summary layers of a lean-manufacturing plant assessment report, for a plant manager reading their own results.
 
@@ -174,7 +168,6 @@ The report has several layers that must NOT repeat each other's wording — this
 - Deep Insights (written elsewhere) quotes the per-statement source text VERBATIM. You are given that same content as input — do NOT copy its phrases; abstract into your own words.
 - Category Highlights (you write) — a short "good" and "opportunity" per category.
 - Overview (you write) — one short paragraph over the whole plant, above the highlights.
-- Biggest Gap / Top Strength (you write) — one rich paragraph each on the single weakest / strongest category.
 
 For each of the 5 categories, using ONLY the statement content given for that category, write:
 - "good": 2-3 sentences on the concrete strengths the plant is realizing, based ONLY on statements marked GREEN. Draw on the principle, how the practices connect, and the payoff being realized. If the category has NO green statements, use "" — do not invent a strength.
@@ -182,35 +175,54 @@ For each of the 5 categories, using ONLY the statement content given for that ca
 
 - "overview": ONE paragraph (3-4 sentences) for the very top of the report — where this plant stands overall, its strongest footing and its most important gap, at a higher altitude than the highlights. Fresh wording.
 
-- "biggestGap": ONE rich paragraph (4-6 sentences) on the plant's single biggest-gap category${gapCat ? ` (${gapCat})` : ''}, using the "BIGGEST GAP FOCUS" content block. This is the report's most prominent gap analysis and has four statements of material to draw on, so it must NEVER lean on a generic "why it matters." Weave together why this category matters, how its practices reinforce each other, what the plant already has in place (green) versus what is missing or inconsistent (yellow/red), and what that gap is costing them. It must read as a DIFFERENT piece from that category's terse "opportunity" highlight — holistic and prioritized, sharing no sentences with it. If no focus block is given, use "".
-
-- "topStrength": ONE paragraph (3-5 sentences) on the plant's single strongest category${strengthCat ? ` (${strengthCat})` : ''}, using the "TOP STRENGTH FOCUS" content block — what it has in place, how those practices connect, and what that foundation enables. Distinct from that category's "good" highlight. If no focus block is given, use "".
-
 Tone: direct, concrete, specific to what was actually answered — never generic filler. Match this style:
 Good example: "Standard work, 5S discipline, and a dashboard your team actually reviews mean your improvements have something to hold onto — this is the foundation most plants skip, and you haven't."
 Opportunity example (no fix steps): "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet, so every gain made elsewhere has to be re-won instead of holding on its own."
 
 Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
-{"overview":"...","biggestGap":"...","topStrength":"...","categories":{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}}` + flavorInstruction(ctx);
+{"overview":"...","categories":{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}}` + flavorInstruction(ctx);
 
-  let userContent = buildCategoryPrompt(answers);
-  if (gapCat) userContent += `\n\n===== BIGGEST GAP FOCUS — ${gapCat} (write "biggestGap" from this) =====\n${buildFocusBlock(answers, gapCat)}`;
-  if (strengthCat) userContent += `\n\n===== TOP STRENGTH FOCUS — ${strengthCat} (write "topStrength" from this) =====\n${buildFocusBlock(answers, strengthCat)}`;
-
-  const parsed = await callAnthropicJSON(system, userContent, 3000);
+  const parsed = await callAnthropicJSON(system, buildCategoryPrompt(answers), 2500);
   const cats = (parsed && parsed.categories) || {};
   const out = {};
   PRINCIPLE_ORDER.forEach(name => {
     if (cats[name]) out[name] = { good: String(cats[name].good || ''), opportunity: String(cats[name].opportunity || '') };
   });
-  // Overview + the two focus paragraphs ride along in the same col-U JSON under
-  // reserved keys so no new sheet columns are needed. The report function
-  // returns categoryText as-is; the frontend reads categoryText._overview /
-  // ._biggestGap / ._topStrength. Old rows simply lack them (static fallback).
+  // Overview rides along in the same col-U JSON under a reserved key.
   out._overview = String((parsed && parsed.overview) || '');
-  out._biggestGap = String((parsed && parsed.biggestGap) || '');
-  out._topStrength = String((parsed && parsed.topStrength) || '');
   return out;
+}
+
+// The two prominent focus paragraphs (Biggest Gap + Top Strength) are a SEPARATE
+// Claude call — kept out of generateCategoryText so neither response is large
+// enough to risk truncation (a single combined call overflowed and broke the
+// whole JSON). They run in parallel, so this adds no wall-clock time, and a
+// failure here can't take the category text down with it. focus = { gap,
+// strength } category names picked by the frontend so the labels match.
+async function generateFocusText(answers, ctx, focus) {
+  if (!Array.isArray(answers) || !answers.length) return {};
+  const gapCat = focus && PRINCIPLE_ORDER.includes(focus.gap) ? focus.gap : null;
+  const strengthCat = focus && PRINCIPLE_ORDER.includes(focus.strength) ? focus.strength : null;
+  if (!gapCat && !strengthCat) return {};
+
+  const system = `You write two prominent paragraphs of a lean-manufacturing plant assessment report, for a plant manager reading their own results. Each is built from the FULL content of one category (all its statements). Abstract that content into your own words — do NOT copy the source phrases verbatim (they appear elsewhere in the report), and share no sentences between the two paragraphs.
+
+- "biggestGap": ONE rich paragraph (4-6 sentences) on the plant's single biggest-gap category${gapCat ? ` (${gapCat})` : ''}, from the "BIGGEST GAP FOCUS" block. This is the report's most prominent gap analysis and has four statements of material to draw on, so it must NEVER lean on a generic "why it matters." Weave together why this category matters, how its practices reinforce each other, what the plant already has in place (GREEN) versus what is missing or inconsistent (YELLOW/RED), and what that gap is costing them — holistic and prioritized. If no focus block is given, use "".
+- "topStrength": ONE paragraph (3-5 sentences) on the plant's single strongest category${strengthCat ? ` (${strengthCat})` : ''}, from the "TOP STRENGTH FOCUS" block — what it has in place, how those practices connect, and what that foundation enables. If no focus block is given, use "".
+
+Tone: direct, concrete, specific — never generic filler.
+
+Return ONLY valid JSON, no markdown fences, no commentary, exactly: {"biggestGap":"...","topStrength":"..."}` + flavorInstruction(ctx);
+
+  let userContent = '';
+  if (gapCat) userContent += `===== BIGGEST GAP FOCUS — ${gapCat} (write "biggestGap" from this) =====\n${buildFocusBlock(answers, gapCat)}\n\n`;
+  if (strengthCat) userContent += `===== TOP STRENGTH FOCUS — ${strengthCat} (write "topStrength" from this) =====\n${buildFocusBlock(answers, strengthCat)}`;
+
+  const parsed = await callAnthropicJSON(system, userContent, 1500);
+  return {
+    _biggestGap: String((parsed && parsed.biggestGap) || ''),
+    _topStrength: String((parsed && parsed.topStrength) || '')
+  };
 }
 
 // ─── AI-generated 30-day plan ────────────────────────────────────────────────
@@ -680,23 +692,33 @@ async function runAiGeneration(sheetId, token, rowNumber, v, event) {
   // report's callouts use) and sends the names so the AI paragraph matches the
   // callout label. Invalid/absent names just skip that focus paragraph.
   const focus = { gap: event.biggestGapCat, strength: event.topStrengthCat };
-  const [catResult, planResult, sixResult] = await Promise.allSettled([
-    generateCategoryText(event.answers, ctx, focus),
+  const [catResult, focusResult, planResult, sixResult] = await Promise.allSettled([
+    generateCategoryText(event.answers, ctx),
+    generateFocusText(event.answers, ctx, focus),
     generatePlan(v.profile, event.answers, v.principleMaturity, ctx),
     generate6MonthPlan(v.profile, v.phase, event.answers, v.principleMaturity, ctx)
   ]);
   const categoryText = catResult.status === 'fulfilled' ? catResult.value : {};
+  // Merge the two focus paragraphs into the same col-U object (reserved keys).
+  // Independent of the category call: if that failed, the callouts still get
+  // their AI text; if this failed, the highlights/overview are unaffected.
+  if (focusResult.status === 'fulfilled' && focusResult.value) {
+    categoryText._biggestGap = focusResult.value._biggestGap || '';
+    categoryText._topStrength = focusResult.value._topStrength || '';
+  }
   const plan = planResult.status === 'fulfilled' ? planResult.value : {};
   const plan6 = sixResult.status === 'fulfilled' ? sixResult.value : {};
   if (catResult.status === 'rejected') console.error('Category text generation failed (non-fatal, static fallback):', catResult.reason && catResult.reason.message);
+  if (focusResult.status === 'rejected') console.error('Focus paragraphs generation failed (non-fatal, static fallback):', focusResult.reason && focusResult.reason.message);
   if (planResult.status === 'rejected') console.error('Plan generation failed (non-fatal, static fallback):', planResult.reason && planResult.reason.message);
   if (sixResult.status === 'rejected') console.error('6-month plan generation failed (non-fatal, static fallback):', sixResult.reason && sixResult.reason.message);
   // Human-readable status for the sheet's ai_status column (col Z).
   const shortErr = res => String((res && res.reason && res.reason.message) || 'error').slice(0, 60);
+  const focusPart = focusResult.status === 'fulfilled' ? ((categoryText._biggestGap || categoryText._topStrength) ? 'ok' : 'empty') : `FAIL(${shortErr(focusResult)})`;
   const catPart = catResult.status === 'fulfilled' ? (Object.keys(categoryText).length ? 'ok' : 'empty') : `FAIL(${shortErr(catResult)})`;
   const planPart = planResult.status === 'fulfilled' ? (plan && plan.weeks && plan.weeks.length ? 'ok' : 'empty') : `FAIL(${shortErr(planResult)})`;
   const sixPart = sixResult.status === 'fulfilled' ? (plan6 && plan6.months && plan6.months.length ? 'ok' : 'empty') : `FAIL(${shortErr(sixResult)})`;
-  const aiStatus = (catPart === 'ok' && planPart === 'ok' && sixPart === 'ok') ? 'ok' : `category:${catPart} | plan:${planPart} | 6mo:${sixPart}`;
+  const aiStatus = (catPart === 'ok' && focusPart === 'ok' && planPart === 'ok' && sixPart === 'ok') ? 'ok' : `category:${catPart} | focus:${focusPart} | plan:${planPart} | 6mo:${sixPart}`;
   // Always write — so a total failure (all empty) still records its status.
   await updateAiCells(sheetId, token, rowNumber, categoryText, plan, aiStatus, plan6);
 }
