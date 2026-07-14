@@ -2314,6 +2314,17 @@
       const psMat = ps.map(p => ({ name: p.name, maturity: to100(p.maturity10) }));
       const mp = matchProfile(psMat);
       const curveScore = overallRoadmap4(ps);
+      // Pick the biggest-gap and top-strength categories with the SAME rule the
+      // report callouts use (lowest / highest score100, ties broken by
+      // GAP_PRIORITY), and send them so the AI writes each rich focus paragraph
+      // for exactly the category its callout is labeled with.
+      const focusSort = dir => [...psMat].sort((a, b) => {
+        const d = (dir === "highest" ? -1 : 1) * (a.maturity - b.maturity);
+        return d !== 0 ? d : GAP_PRIORITY.indexOf(a.name) - GAP_PRIORITY.indexOf(b.name);
+      });
+      const biggestGapCat = focusSort("lowest")[0].name;
+      const topGreen = focusSort("highest").find(p => p.maturity >= 80);
+      const topStrengthCat = topGreen ? topGreen.name : "";
       const payload = {
         firstName: name,
         email,
@@ -2329,6 +2340,8 @@
         industry: document.getElementById("industry").value,
         plantSize: document.getElementById("plantSize").value,
         answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
+        biggestGapCat,
+        topStrengthCat,
         website: document.getElementById("hpf").value
       };
       // First call captures the lead and returns the id fast (~3–4s) — it no
@@ -3085,16 +3098,18 @@
         <div class="gap-text">${para}</div>`;
     };
     const gapArea = pickBiggestGap(areas);
-    highlightBox(document.getElementById("gapCallout"), "Biggest Gap", "gap", gapArea,
-      `At ${gapArea.score100} out of 100, this is your lowest-scoring category. ${WHY_MATTERS[gapArea.name]}`);
     // 09 — Next Steps: personalize the closer to the plant's biggest gap.
     const nextHead = document.getElementById("nextHeadline");
     if (nextHead) nextHead.textContent = `Get 20 focused minutes on your ${gapArea.label} gap.`;
     const topGreen = pickByPriority(areas.filter(a => a.score100 >= 80), 1, "highest")[0];
     const strengthCallout = document.getElementById("strengthCallout");
-    if (topGreen) highlightBox(strengthCallout, "Where You're Strongest", "strength", topGreen,
-      `At ${topGreen.score100} out of 100, this is your strongest category. ${WHY_MATTERS[topGreen.name]}`);
-    else strengthCallout.style.display = "none";
+    if (!topGreen) strengthCallout.style.display = "none";
+    // The Biggest Gap / Where You're Strongest callout PARAGRAPHS are AI-written
+    // (rich, drawn from all four of the category's statements) and populate
+    // progressively — rendered inside renderAiSections below so they refresh
+    // when the AI lands. Until then a short generic line stands in (never the
+    // static WHY_MATTERS, which now lives only in Category Highlights, so the
+    // callout and that category's highlight can never show identical text).
 
     // Shared chevron + status pill, used by BOTH the summaries (below) and Deep
     // Insights (further down), so they stay in renderReport's scope.
@@ -3168,6 +3183,12 @@
         if (t) { ov.textContent = t; ov.style.display = ""; }
         else { ov.style.display = "none"; }
       }
+      // 01 Biggest Gap / Where You're Strongest callouts — rich AI paragraph
+      // when present, else a short generic line (no WHY_MATTERS reuse).
+      highlightBox(document.getElementById("gapCallout"), "Biggest Gap", "gap", gapArea,
+        aiText._biggestGap || `This is your lowest-scoring category, at ${gapArea.score100} out of 100 — your highest-leverage place to focus first.`);
+      if (topGreen) highlightBox(strengthCallout, "Where You're Strongest", "strength", topGreen,
+        aiText._topStrength || `This is your strongest category, at ${topGreen.score100} out of 100.`);
     }
     // Expose for the progressive poller, then do the initial render.
     progressiveApply = renderAiSections;

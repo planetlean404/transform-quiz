@@ -39,7 +39,7 @@ const GAP_PRIORITY = [
 // copy if categoryText comes back empty.
 
 const ANTHROPIC_MODEL = 'claude-opus-4-8';
-const ANTHROPIC_CALL_TIMEOUT_MS = 35000;
+const ANTHROPIC_CALL_TIMEOUT_MS = 45000;
 // Bound the two blocking third-party calls in the submit path so a hung
 // provider can't stall the whole request up to the function's 55s budget (and
 // lose the lead). Both fail SAFE on timeout: ZeroBounce fails open (email
@@ -82,6 +82,27 @@ function buildCategoryPrompt(answers) {
     }).join('\n');
     return `## ${name}\n${lines || '(no answers recorded for this category)'}`;
   }).join('\n\n');
+}
+
+// Full per-statement content for ONE category, used to write the rich Biggest
+// Gap / Top Strength paragraphs. Unlike buildCategoryPrompt (which sends the
+// side each statement feeds), this sends EVERY lane for every statement in the
+// category — why + connections for all, plus strength for greens and
+// weakness + first-move for yellow/red — so the AI has the whole picture to
+// summarize the category holistically.
+function buildFocusBlock(answers, categoryName) {
+  const items = (answers || [])
+    .map(a => ({ stmt: STATEMENTS[a.si], status: statementStatus(Number(a.m)) }))
+    .filter(x => x.stmt && x.stmt.principle === categoryName);
+  return items.map(({ stmt, status }) => {
+    const head = status === 'green' ? 'GREEN (in place)'
+      : status === 'red' ? 'RED (missing)'
+      : 'YELLOW (present but not yet consistent plant-wide)';
+    let s = `- [${head}] "${stmt.text}"\n    Why it matters: ${stmt.why}\n    Connects to: ${stmt.connections}`;
+    if (status === 'green') s += `\n    Strength realized: ${stmt.strength}`;
+    else s += `\n    Cost of the gap: ${stmt.weakness}\n    First move: ${stmt.steps}`;
+    return s;
+  }).join('\n');
 }
 
 // Shared Anthropic call — posts one message, returns the parsed JSON from the
@@ -138,42 +159,57 @@ function flavorInstruction(ctx) {
     : '';
 }
 
-async function generateCategoryText(answers, ctx) {
+async function generateCategoryText(answers, ctx, focus) {
   if (!Array.isArray(answers) || !answers.length) return {};
+
+  // focus = { gap, strength } category names (from the frontend, which picks
+  // them so the labels match). Only generate a focus paragraph for a valid
+  // category name; strength may be absent when the plant has no strong category.
+  const gapCat = focus && PRINCIPLE_ORDER.includes(focus.gap) ? focus.gap : null;
+  const strengthCat = focus && PRINCIPLE_ORDER.includes(focus.strength) ? focus.strength : null;
 
   const system = `You write the reader-facing summary layers of a lean-manufacturing plant assessment report, for a plant manager reading their own results.
 
-The report has three layers that must NOT repeat each other's wording — this is the single most important rule:
-- Deep Insights (written elsewhere) quotes the per-statement source text VERBATIM. You are given that same statement content as input — do NOT copy its phrases. Abstract it into your own words.
-- Category Highlights (you write these) — a "good" and an "opportunity" per category.
-- Overview (you write this) — one short paragraph over the whole plant, pitched ABOVE the category highlights; do not restate their sentences.
+The report has several layers that must NOT repeat each other's wording — this is the single most important rule. Every layer is written from the same underlying statement content, so you must vary altitude and angle, never sentences:
+- Deep Insights (written elsewhere) quotes the per-statement source text VERBATIM. You are given that same content as input — do NOT copy its phrases; abstract into your own words.
+- Category Highlights (you write) — a short "good" and "opportunity" per category.
+- Overview (you write) — one short paragraph over the whole plant, above the highlights.
+- Biggest Gap / Top Strength (you write) — one rich paragraph each on the single weakest / strongest category.
 
 For each of the 5 categories, using ONLY the statement content given for that category, write:
-- "good": 2-3 sentences on the concrete strengths the plant is realizing, based ONLY on statements marked GREEN. Draw on the principle, how the practices connect, and the payoff being realized. If the category has NO green statements, use "" (empty string) — do not invent a strength.
-- "opportunity": 2-3 sentences on the statements marked YELLOW or RED and the concrete cost of leaving them where they are. For RED, name the specific missing gap and its cost. For YELLOW, frame it as a practice happening but not yet consistent plant-wide, and what standardizing it fully would secure — do not call it missing. If the category has NO yellow or red statements, use "" (empty string) — do not invent a gap.
+- "good": 2-3 sentences on the concrete strengths the plant is realizing, based ONLY on statements marked GREEN. Draw on the principle, how the practices connect, and the payoff being realized. If the category has NO green statements, use "" — do not invent a strength.
+- "opportunity": 2-3 sentences on the statements marked YELLOW or RED and the concrete cost of leaving them where they are. For RED, name the specific missing gap and its cost. For YELLOW, frame it as a practice happening but not yet consistent plant-wide, and what standardizing it fully would secure — do not call it missing. If the category has NO yellow or red statements, use "" — do not invent a gap. Name the gap and stakes ONLY — no fix steps.
 
-CRITICAL for "opportunity": name the gap and the stakes ONLY. Do NOT include any "how to fix it" steps, action items, or next-move advice — the first-move context you're given is background so you understand the gap, not text to reproduce. Improvement steps live elsewhere in the report.
+- "overview": ONE paragraph (3-4 sentences) for the very top of the report — where this plant stands overall, its strongest footing and its most important gap, at a higher altitude than the highlights. Fresh wording.
 
-Then write:
-- "overview": ONE paragraph (3-4 sentences) for the very top of the report. Summarize where this plant stands overall — its strongest footing and its most important gap — at a higher altitude than the category highlights. Fresh wording; do not repeat sentences you used in the highlights.
+- "biggestGap": ONE rich paragraph (4-6 sentences) on the plant's single biggest-gap category${gapCat ? ` (${gapCat})` : ''}, using the "BIGGEST GAP FOCUS" content block. This is the report's most prominent gap analysis and has four statements of material to draw on, so it must NEVER lean on a generic "why it matters." Weave together why this category matters, how its practices reinforce each other, what the plant already has in place (green) versus what is missing or inconsistent (yellow/red), and what that gap is costing them. It must read as a DIFFERENT piece from that category's terse "opportunity" highlight — holistic and prioritized, sharing no sentences with it. If no focus block is given, use "".
+
+- "topStrength": ONE paragraph (3-5 sentences) on the plant's single strongest category${strengthCat ? ` (${strengthCat})` : ''}, using the "TOP STRENGTH FOCUS" content block — what it has in place, how those practices connect, and what that foundation enables. Distinct from that category's "good" highlight. If no focus block is given, use "".
 
 Tone: direct, concrete, specific to what was actually answered — never generic filler. Match this style:
 Good example: "Standard work, 5S discipline, and a dashboard your team actually reviews mean your improvements have something to hold onto — this is the foundation most plants skip, and you haven't."
-Opportunity example (note: no fix steps): "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet, so every gain made elsewhere has to be re-won instead of holding on its own."
+Opportunity example (no fix steps): "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet, so every gain made elsewhere has to be re-won instead of holding on its own."
 
 Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
-{"overview":"...","categories":{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}}` + flavorInstruction(ctx);
+{"overview":"...","biggestGap":"...","topStrength":"...","categories":{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}}` + flavorInstruction(ctx);
 
-  const parsed = await callAnthropicJSON(system, buildCategoryPrompt(answers), 2200);
+  let userContent = buildCategoryPrompt(answers);
+  if (gapCat) userContent += `\n\n===== BIGGEST GAP FOCUS — ${gapCat} (write "biggestGap" from this) =====\n${buildFocusBlock(answers, gapCat)}`;
+  if (strengthCat) userContent += `\n\n===== TOP STRENGTH FOCUS — ${strengthCat} (write "topStrength" from this) =====\n${buildFocusBlock(answers, strengthCat)}`;
+
+  const parsed = await callAnthropicJSON(system, userContent, 3000);
   const cats = (parsed && parsed.categories) || {};
   const out = {};
   PRINCIPLE_ORDER.forEach(name => {
     if (cats[name]) out[name] = { good: String(cats[name].good || ''), opportunity: String(cats[name].opportunity || '') };
   });
-  // Overview rides along in the same col-U JSON under a reserved key so no new
-  // sheet column is needed. The report function returns categoryText as-is and
-  // the frontend reads categoryText._overview; old rows simply lack it.
+  // Overview + the two focus paragraphs ride along in the same col-U JSON under
+  // reserved keys so no new sheet columns are needed. The report function
+  // returns categoryText as-is; the frontend reads categoryText._overview /
+  // ._biggestGap / ._topStrength. Old rows simply lack them (static fallback).
   out._overview = String((parsed && parsed.overview) || '');
+  out._biggestGap = String((parsed && parsed.biggestGap) || '');
+  out._topStrength = String((parsed && parsed.topStrength) || '');
   return out;
 }
 
@@ -640,8 +676,12 @@ function validate(event) {
 // falls back to static copy for any cell that stays empty.
 async function runAiGeneration(sheetId, token, rowNumber, v, event) {
   const ctx = plantContext(v);
+  // The frontend picks the biggest-gap / top-strength category (same rule the
+  // report's callouts use) and sends the names so the AI paragraph matches the
+  // callout label. Invalid/absent names just skip that focus paragraph.
+  const focus = { gap: event.biggestGapCat, strength: event.topStrengthCat };
   const [catResult, planResult, sixResult] = await Promise.allSettled([
-    generateCategoryText(event.answers, ctx),
+    generateCategoryText(event.answers, ctx, focus),
     generatePlan(v.profile, event.answers, v.principleMaturity, ctx),
     generate6MonthPlan(v.profile, v.phase, event.answers, v.principleMaturity, ctx)
   ]);
