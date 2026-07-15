@@ -1532,15 +1532,28 @@
     .area-card:nth-child(2n) { border-right: none; }
     .area-card:last-child { border-bottom: none; }
     .report-layout { grid-template-columns: 1fr; gap: 18px; }
+    /* Freeze the TOC strip just under the sticky header, like a second bar. */
     .toc {
-      position: static;
+      position: sticky;
+      top: 56px;
+      z-index: 40;
       display: flex;
       gap: 8px;
       overflow-x: auto;
-      padding-bottom: 6px;
+      margin: 0 -24px;
+      padding: 9px 24px;
+      background: var(--pl-bg);
+      border-bottom: 1px solid var(--pl-border);
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .toc::-webkit-scrollbar { display: none; }
     .toc-title { display: none; }
-    .toc a { flex: 0 0 auto; border: 1px solid var(--pl-border); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; }
+    .toc a { flex: 0 0 auto; border: 1px solid var(--pl-border); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; white-space: nowrap; }
+    .toc a.active { background: var(--pl-accent); color: #fff; border-color: var(--pl-accent); }
+    .toc a.active .toc-num { color: rgba(255,255,255,0.85); }
+    /* Sections must clear the header + the frozen TOC strip on a jump. */
+    .section { scroll-margin-top: 114px; }
     .landing-cards { grid-template-columns: 1fr; }
     .steps-grid { grid-template-columns: 1fr; }
     .step-card { border-right: none; border-bottom: 1px solid var(--pl-border); }
@@ -3648,19 +3661,58 @@
     window.addEventListener("scroll", onScroll, { passive: true });
   }
 
-  // ---------- TOC navigation ----------
-  // Sections are always open now, so a TOC click just scrolls the target to
-  // the top. scroll-margin-top on .section clears the sticky topbar; the
-  // report-main trailing padding guarantees room to lift lower sections up.
-  document.querySelectorAll("#reportToc a").forEach(a => {
-    a.addEventListener("click", (e) => {
-      e.preventDefault();
-      document.querySelectorAll("#reportToc a").forEach(x => x.classList.remove("active"));
+  // ---------- TOC navigation + scroll-spy ----------
+  // A click scrolls the target to the top; scrolling the report highlights the
+  // section currently at the top (scroll-spy) so the TOC always reflects where
+  // you are. On mobile the TOC is a frozen horizontal strip, so the active pill
+  // is auto-centered into view as it changes.
+  (function tocSpy() {
+    const toc = document.getElementById("reportToc");
+    if (!toc) return;
+    const links = [...toc.querySelectorAll("a")];
+    const pairs = links
+      .map(a => ({ a, sec: document.getElementById(a.getAttribute("href").slice(1)) }))
+      .filter(p => p.sec);
+    let suppressUntil = 0;
+
+    function setActive(a) {
+      if (a.classList.contains("active")) return;
+      links.forEach(x => x.classList.remove("active"));
       a.classList.add("active");
-      const sec = document.querySelector(a.getAttribute("href"));
+      // Keep the active pill visible in the mobile strip (horizontal scroll of
+      // the TOC only — never moves the page).
+      if (window.innerWidth <= 900) {
+        const target = a.offsetLeft - toc.clientWidth / 2 + a.clientWidth / 2;
+        toc.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+      }
+    }
+
+    links.forEach(a => a.addEventListener("click", (e) => {
+      e.preventDefault();
+      setActive(a);
+      suppressUntil = Date.now() + 700; // let the smooth scroll settle before spy resumes
+      const sec = document.getElementById(a.getAttribute("href").slice(1));
       if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  });
+    }));
+
+    let ticking = false;
+    function updateSpy() {
+      ticking = false;
+      if (!toc.offsetParent) return;         // report screen not visible
+      if (Date.now() < suppressUntil) return;
+      // header (+ frozen TOC strip on mobile) — the y-line a section is "at".
+      const offset = window.innerWidth <= 900 ? 110 : 88;
+      let current = pairs[0] && pairs[0].a;
+      for (const p of pairs) {
+        if (p.sec.getBoundingClientRect().top - offset <= 4) current = p.a; else break;
+      }
+      if (current) setActive(current);
+    }
+    window.addEventListener("scroll", () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(updateSpy); }
+    }, { passive: true });
+    window.addEventListener("resize", updateSpy, { passive: true });
+  })();
 
   function resetQuiz() {
     clearTimeout(gateTimer);
