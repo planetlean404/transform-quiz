@@ -202,6 +202,20 @@ function flavorInstruction(ctx) {
     : '';
 }
 
+// Shared voice rules for all reader-facing prose. The reader is a busy plant/ops
+// manager who skims — short, plainspoken sentences survive that; dense multi-clause
+// sentences ("list-in-a-sentence") do not. Appended to every generation prompt so
+// the whole report reads in one consistent voice.
+const WRITING_STYLE = `
+
+WRITING STYLE — this governs every sentence you write, and matters as much as the content:
+- Short, plain sentences, ONE idea each. Most sentences under ~18 words. Where you'd reach for "because", "which", "so that", or a second em-dash in one sentence, use a period and start a new one instead.
+- VARY the rhythm on purpose. Mostly short sentences, with an occasional medium one to breathe, and now and then a very short 2-4 word sentence to land a point ("That's rare." / "You didn't."). Never a machine-gun run of identically clipped sentences — that reads as dumbed-down.
+- Break the list-in-a-sentence apart. If you catch yourself stacking three or four items behind a colon or joined by commas and "and", make them separate short sentences.
+- Keep the real lean vocabulary — standard work, PDCA, pull system, built-in quality, continuous improvement, help chain, 5S, standard work adherence. These exact terms are credibility with this reader; never soften them into vague paraphrases.
+- Lead with what's working, then name what to fix as a short PRIORITIZED SEQUENCE ("fix X first, then Y"), not a long pile of weaknesses. The reader should feel pointed at one or two things, never handed an audit checklist.
+- Read like a sharp coach talking to the plant manager — direct, concrete, specific to what they actually answered. No preamble, no generic filler.`;
+
 async function generateCategoryText(answers, ctx) {
   if (!Array.isArray(answers) || !answers.length) return {};
 
@@ -218,12 +232,12 @@ For each of the 5 categories, using ONLY the statement content given for that ca
 
 - "overview": ONE paragraph (3-4 sentences) for the very top of the report (the "Executive Summary"). Structure it deliberately in this order: (1) OPEN on the plant's genuine strength or foundation — the most legitimate thing it has going for it. If the plant is weak across the board with no real strength, open by honestly naming the starting point (e.g., an early-stage plant with a clean slate to build on) rather than inventing praise. (2) PIVOT to the single most important gap. (3) END on that gap and what closing it would unlock. Keep it a higher altitude than the category highlights, fresh wording, no sentences repeated from elsewhere.
 
-Tone: direct, concrete, specific to what was actually answered — never generic filler. Match this style:
-Good example: "Standard work, 5S discipline, and a dashboard your team actually reviews mean your improvements have something to hold onto — this is the foundation most plants skip, and you haven't."
-Opportunity example (no fix steps): "Without a documented, followed standard, nothing else in your plant has anywhere to attach — quality checks, problem-solving, and daily dashboards all depend on a stable baseline that isn't there yet, so every gain made elsewhere has to be re-won instead of holding on its own."
+Match this style (short sentences, varied rhythm, lean vocabulary):
+Good example: "Standard work, 5S, and a dashboard your team actually uses give your improvements something to hold onto. Most plants skip that foundation. You didn't."
+Opportunity example (no fix steps): "Without a documented standard people actually follow, nothing else has anywhere to attach. Quality checks, problem-solving, the daily dashboard — they all lean on a stable baseline. Right now it isn't there. So every gain you make elsewhere has to be re-won instead of holding on its own."
 
 Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
-{"overview":"...","categories":{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}}` + flavorInstruction(ctx);
+{"overview":"...","categories":{"Standardization":{"good":"...","opportunity":"..."},"People Involvement":{"good":"...","opportunity":"..."},"Short Lead Time":{"good":"...","opportunity":"..."},"Built-In Quality":{"good":"...","opportunity":"..."},"Continuous Improvement":{"good":"...","opportunity":"..."}}}` + WRITING_STYLE + flavorInstruction(ctx);
 
   const parsed = await callAnthropicJSON(system, buildCategoryPrompt(answers), 2500);
   const cats = (parsed && parsed.categories) || {};
@@ -253,9 +267,7 @@ async function generateFocusText(answers, ctx, focus) {
 - "biggestGap": ONE rich paragraph (4-6 sentences) on the plant's single biggest-gap category${gapCat ? ` (${gapCat})` : ''}, from the "BIGGEST GAP FOCUS" block. This is the report's most prominent gap analysis and has four statements of material to draw on, so it must NEVER lean on a generic "why it matters." Weave together why this category matters, how its practices reinforce each other, what the plant already has in place (GREEN) versus what is missing or inconsistent (YELLOW/RED), and what that gap is costing them — holistic and prioritized. If no focus block is given, use "".
 - "topStrength": ONE paragraph (3-5 sentences) on the plant's single strongest category${strengthCat ? ` (${strengthCat})` : ''}, from the "TOP STRENGTH FOCUS" block — what it has in place, how those practices connect, and what that foundation enables. If no focus block is given, use "".
 
-Tone: direct, concrete, specific — never generic filler.
-
-Return ONLY valid JSON, no markdown fences, no commentary, exactly: {"biggestGap":"...","topStrength":"..."}` + flavorInstruction(ctx);
+Return ONLY valid JSON, no markdown fences, no commentary, exactly: {"biggestGap":"...","topStrength":"..."}` + WRITING_STYLE + flavorInstruction(ctx);
 
   let userContent = '';
   if (gapCat) userContent += `===== BIGGEST GAP FOCUS — ${gapCat} (write "biggestGap" from this) =====\n${buildFocusBlock(answers, gapCat)}\n\n`;
@@ -377,7 +389,7 @@ Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
  "outcome": "1-2 sentences: what the plant manager will see if this worked — the proof point, and the pattern they'll carry into month 2. Do NOT begin with 'By day 30' — that label is added automatically."
 }
 
-Tone: direct, plainspoken, second-person ("you", "your team"). No preamble, no filler. Every field specific to THIS plant's weakest area and red statements.` + TERMINOLOGY_RULE + flavorInstruction(ctx);
+Tone: direct, plainspoken, second-person ("you", "your team"). No preamble, no filler. Every field specific to THIS plant's weakest area and red statements.` + TERMINOLOGY_RULE + WRITING_STYLE + flavorInstruction(ctx);
 
   const parsed = await callAnthropicJSON(system, buildPlanPrompt(profile, answers, principleMaturity), 1600);
   if (!parsed || !Array.isArray(parsed.weeks) || parsed.weeks.length !== 4) throw new Error('plan-bad-shape');
@@ -431,7 +443,7 @@ Return ONLY valid JSON, no markdown fences, no commentary, exactly this shape:
  "destination": "1-2 sentences: where the plant should be after 6 months if this held — tie it to moving up the maturity curve"
 }
 
-Tone: direct, plainspoken, second-person. Specific to THIS plant. No preamble, no filler.` + TERMINOLOGY_RULE + flavorInstruction(ctx);
+Tone: direct, plainspoken, second-person. Specific to THIS plant. No preamble, no filler.` + TERMINOLOGY_RULE + WRITING_STYLE + flavorInstruction(ctx);
 
   const parsed = await callAnthropicJSON(system, build6MonthPrompt(profile, phase, answers, principleMaturity), 2000);
   if (!parsed || !Array.isArray(parsed.months) || parsed.months.length !== 6) throw new Error('sixmonth-bad-shape');
