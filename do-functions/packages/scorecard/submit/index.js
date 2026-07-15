@@ -919,6 +919,46 @@ async function main(event) {
     }
   }
 
+  // Admin list: returns a compact roster of all report rows (id, date, name,
+  // email, main score) for the internal /admin page. Passcode-gated because it
+  // exposes lead emails (PII) and the endpoint is public — same one-way-hash
+  // scheme as the backfill gate (plaintext passcode never lives in the repo).
+  if (event.stage === 'adminlist') {
+    const ADMIN_TOKEN_HASH = '9b2ac4783f6bbc401d4f999f60073a13f845e326af5074682779c0fa3c876801';
+    const provided = event.token
+      ? crypto.createHash('sha256').update(String(event.token).trim()).digest('hex') : null;
+    if (!provided || provided !== ADMIN_TOKEN_HASH) {
+      return { statusCode: 403, headers: corsHeaders(), body: { ok: false, error: 'forbidden' } };
+    }
+    try {
+      const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
+      const token = await getAccessToken(sa);
+      const listUrl = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:Z`;
+      const rows = ((await (await fetch(listUrl, { headers: { Authorization: `Bearer ${token}` } })).json()).values) || [];
+      const out = [];
+      for (let i = 1; i < rows.length; i++) {                  // skip the header row
+        const r = rows[i];
+        if (!/^(?:rpa|pl)-[A-F0-9]{8}$/i.test(r[0] || '')) continue;
+        const num = v => { const n = parseFloat(r[v]); return Number.isFinite(n) ? Math.round(n) : null; };
+        out.push({
+          id: r[0],
+          ts: r[1] || '',                                       // friendly "...ET" string
+          firstName: r[2] || '',
+          email: r[3] || '',
+          score: num(14),                                       // col O maturity_overall (the headline dial score)
+          phase: r[5] || '',                                    // col F phase
+          industry: r[23] || '',                                // col X
+          aiStatus: (r[25] || '').trim()                        // col Z
+        });
+      }
+      out.reverse();                                            // newest first
+      return { statusCode: 200, headers: corsHeaders(), body: { ok: true, count: out.length, rows: out } };
+    } catch (err) {
+      console.error('Admin list failed:', err.message);
+      return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: err.message.slice(0, 120) } };
+    }
+  }
+
   // Background AI-generation stage: the client fires this as a second request
   // right after the main submit returns the id, so the id isn't held up ~20s by
   // the Claude calls. Runs the three generations for the already-stored row and

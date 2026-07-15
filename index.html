@@ -3768,6 +3768,110 @@
     });
   })();
 
+  // ---------- Admin roster (/admin) ----------
+  // Passcode-gated list of all reports (date, name, email, score) pulled live
+  // from the backend adminlist stage. Passcode is held in sessionStorage so a
+  // refresh doesn't re-prompt within the same tab session.
+  (function adminPage() {
+    if (!/^\/admin\/?$/.test(location.pathname)) return;
+    document.getElementById("landingScreen").style.display = "none";
+    const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const scoreColor = n => n == null ? "var(--pl-text-muted)" : n >= 75 ? "var(--score-green)" : n >= 50 ? "var(--score-yellow)" : "var(--score-red)";
+
+    const root = document.createElement("div");
+    root.style.cssText = "max-width:1000px;margin:0 auto;padding:28px 20px 60px;";
+    document.body.appendChild(root);
+
+    function renderGate(msg) {
+      root.innerHTML = `
+        <div style="max-width:420px;margin:6vh auto 0;background:var(--pl-bg);border:1px solid var(--pl-border);border-radius:14px;padding:30px 26px;box-shadow:0 4px 24px rgba(44,62,80,.06);">
+          <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--pl-accent);font-weight:700;margin-bottom:6px;">Admin</div>
+          <h2 style="margin:0 0 14px;font-size:21px;color:var(--pl-text);">Report roster</h2>
+          <form id="agForm" style="display:flex;flex-direction:column;gap:12px;">
+            <input id="agPass" type="password" autocomplete="off" placeholder="Passcode"
+              style="width:100%;box-sizing:border-box;padding:12px 14px;font-size:16px;font-family:inherit;border:1.5px solid var(--pl-border);border-radius:9px;color:var(--pl-text);outline:none;" />
+            ${msg ? `<div style="font-size:13px;color:var(--score-red);">${esc(msg)}</div>` : ""}
+            <button type="submit" style="padding:12px 16px;font-size:15px;font-weight:700;font-family:inherit;color:#fff;background:var(--pl-accent);border:none;border-radius:9px;cursor:pointer;">Unlock →</button>
+          </form>
+        </div>`;
+      const inp = root.querySelector("#agPass");
+      inp.focus();
+      root.querySelector("#agForm").addEventListener("submit", e => {
+        e.preventDefault();
+        const pass = inp.value.trim();
+        if (pass) load(pass);
+      });
+    }
+
+    function renderList(data, pass) {
+      const rowsHtml = data.rows.map(r => `
+        <tr data-id="${esc(r.id)}" style="cursor:pointer;border-top:1px solid var(--pl-border);">
+          <td style="padding:9px 10px;white-space:nowrap;color:var(--pl-text-muted);font-size:12px;">${esc(r.ts)}</td>
+          <td style="padding:9px 10px;color:var(--pl-text);">${esc(r.firstName)}</td>
+          <td style="padding:9px 10px;color:var(--pl-text);">${esc(r.email)}</td>
+          <td style="padding:9px 10px;text-align:center;font-weight:700;color:${scoreColor(r.score)};">${r.score == null ? "—" : r.score}</td>
+          <td style="padding:9px 10px;color:var(--pl-text-muted);font-size:13px;">${esc(r.phase)}</td>
+          <td style="padding:9px 10px;color:var(--pl-text-muted);font-size:12px;">${esc(r.industry)}</td>
+          <td style="padding:9px 10px;text-align:center;font-size:12px;color:${r.aiStatus === "ok" ? "var(--score-green)" : "var(--score-yellow)"};">${r.aiStatus === "ok" ? "✓" : (r.aiStatus ? "…" : "—")}</td>
+        </tr>`).join("");
+      root.innerHTML = `
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+          <h2 style="margin:0;font-size:22px;color:var(--pl-text);">Report roster <span style="font-size:14px;font-weight:500;color:var(--pl-text-muted);">(${data.count})</span></h2>
+          <input id="agFilter" type="text" placeholder="Filter by name, email, or ID…"
+            style="flex:1;min-width:200px;max-width:320px;box-sizing:border-box;padding:9px 12px;font-size:14px;font-family:inherit;border:1.5px solid var(--pl-border);border-radius:8px;color:var(--pl-text);outline:none;" />
+        </div>
+        <div style="overflow:auto;max-height:72vh;border:1px solid var(--pl-border);border-radius:12px;">
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead><tr style="position:sticky;top:0;background:var(--pl-bg-soft);z-index:1;">
+              <th style="padding:10px;text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Date</th>
+              <th style="padding:10px;text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Name</th>
+              <th style="padding:10px;text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Email</th>
+              <th style="padding:10px;text-align:center;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Score</th>
+              <th style="padding:10px;text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Phase</th>
+              <th style="padding:10px;text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Industry</th>
+              <th style="padding:10px;text-align:center;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">AI</th>
+            </tr></thead>
+            <tbody id="agBody">${rowsHtml}</tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--pl-text-muted);">Click a row to open its report. Score = LEAN maturity (0–100). AI ✓ = full report generated.</div>`;
+      // Row click → open report
+      root.querySelector("#agBody").addEventListener("click", e => {
+        const tr = e.target.closest("tr[data-id]");
+        if (tr) window.open("/r/" + tr.getAttribute("data-id"), "_blank");
+      });
+      // Live filter
+      const filter = root.querySelector("#agFilter");
+      filter.addEventListener("input", () => {
+        const q = filter.value.trim().toLowerCase();
+        root.querySelectorAll("#agBody tr").forEach(tr => {
+          tr.style.display = !q || tr.innerText.toLowerCase().includes(q) ? "" : "none";
+        });
+      });
+    }
+
+    async function load(pass) {
+      root.innerHTML = `<div style="text-align:center;padding:12vh 0;color:var(--pl-text-muted);">Loading…</div>`;
+      try {
+        const res = await fetch(`${API_BASE}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stage: "adminlist", token: pass })
+        });
+        if (res.status === 403) { sessionStorage.removeItem("rpaAdminPass"); renderGate("Wrong passcode."); return; }
+        const data = await res.json();
+        if (!data.ok) { renderGate("Couldn't load the roster. Try again."); return; }
+        sessionStorage.setItem("rpaAdminPass", pass);
+        renderList(data, pass);
+      } catch (err) {
+        renderGate("Network error. Try again.");
+      }
+    }
+
+    const saved = sessionStorage.getItem("rpaAdminPass");
+    if (saved) load(saved); else renderGate("");
+  })();
+
   // ---------- Shareable report URLs (/r/rpa-XXXX, legacy /r/pl-XXXX) ----------
   (async function loadReportFromUrl() {
     const m = location.pathname.match(/\/r\/((?:rpa|pl)-[A-Fa-f0-9]{8})$/);
