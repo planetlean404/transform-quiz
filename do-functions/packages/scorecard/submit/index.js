@@ -924,7 +924,7 @@ async function main(event) {
   // exposes lead emails (PII) and the endpoint is public — same one-way-hash
   // scheme as the backfill gate (plaintext passcode never lives in the repo).
   if (event.stage === 'adminlist') {
-    const ADMIN_TOKEN_HASH = '9b2ac4783f6bbc401d4f999f60073a13f845e326af5074682779c0fa3c876801';
+    const ADMIN_TOKEN_HASH = 'c90c9960e766cea26f9e9cdfd556a60e86155db5eb02e6cc28ca88cc0b466a23';
     const provided = event.token
       ? crypto.createHash('sha256').update(String(event.token).trim()).digest('hex') : null;
     if (!provided || provided !== ADMIN_TOKEN_HASH) {
