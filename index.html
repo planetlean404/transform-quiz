@@ -3714,6 +3714,60 @@
     ).join("");
   })();
 
+  // ---------- Report lookup page (/id) ----------
+  // A tiny internal tool: paste a full report ID (or the whole report URL) and
+  // jump to /r/{id}. Tolerant of case, a missing "rpa-" prefix, and pasted URLs.
+  function normalizeReportId(raw) {
+    const s = (raw || "").trim();
+    // Full id with prefix (rpa-XXXXXXXX / pl-XXXXXXXX), anywhere in the string.
+    let m = s.match(/(rpa|pl)[-\s]?([0-9A-Fa-f]{8})/i);
+    if (m) return m[1].toLowerCase() + "-" + m[2].toUpperCase();
+    // Bare 8-hex — assume the current rpa- scheme.
+    m = s.match(/(?:^|[^0-9A-Fa-f])([0-9A-Fa-f]{8})(?:[^0-9A-Fa-f]|$)/);
+    if (m) return "rpa-" + m[1].toUpperCase();
+    return null;
+  }
+  (function reportLookupPage() {
+    if (!/^\/id\/?$/.test(location.pathname)) return;
+    document.getElementById("landingScreen").style.display = "none";
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "min-height:70vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;";
+    wrap.innerHTML = `
+      <div style="width:100%;max-width:480px;background:var(--pl-bg);border:1px solid var(--pl-border);border-radius:14px;padding:32px 28px;box-shadow:0 4px 24px rgba(44,62,80,.06);">
+        <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--pl-accent);font-weight:700;margin-bottom:6px;">Report lookup</div>
+        <h2 style="margin:0 0 6px;font-size:22px;color:var(--pl-text);">Open a report by ID</h2>
+        <p style="margin:0 0 18px;font-size:14px;color:var(--pl-text-muted);line-height:1.5;">Paste a report ID (e.g. <code>rpa-5F732AE6</code>) or a full report link.</p>
+        <form id="lookupForm" style="display:flex;flex-direction:column;gap:12px;">
+          <input id="lookupInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+            placeholder="rpa-XXXXXXXX"
+            style="width:100%;box-sizing:border-box;padding:13px 14px;font-size:16px;font-family:inherit;border:1.5px solid var(--pl-border);border-radius:9px;color:var(--pl-text);outline:none;" />
+          <div id="lookupErr" style="display:none;font-size:13px;color:var(--score-red);"></div>
+          <button type="submit"
+            style="padding:13px 16px;font-size:15px;font-weight:700;font-family:inherit;color:#fff;background:var(--pl-accent);border:none;border-radius:9px;cursor:pointer;">Open report →</button>
+        </form>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:var(--pl-text-muted);cursor:pointer;">
+          <input type="checkbox" id="lookupPlan" style="cursor:pointer;" /> Open the 6-month plan view
+        </label>
+      </div>`;
+    document.body.appendChild(wrap);
+    const input = wrap.querySelector("#lookupInput");
+    const err = wrap.querySelector("#lookupErr");
+    input.focus();
+    input.addEventListener("focus", () => { input.style.borderColor = "var(--pl-accent)"; });
+    input.addEventListener("blur", () => { input.style.borderColor = "var(--pl-border)"; });
+    wrap.querySelector("#lookupForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const id = normalizeReportId(input.value);
+      if (!id) {
+        err.textContent = "That doesn't look like a report ID. Expected something like rpa-5F732AE6.";
+        err.style.display = "block";
+        return;
+      }
+      const plan = wrap.querySelector("#lookupPlan").checked ? "?v=plan" : "";
+      window.location.href = "/r/" + id + plan;
+    });
+  })();
+
   // ---------- Shareable report URLs (/r/rpa-XXXX, legacy /r/pl-XXXX) ----------
   (async function loadReportFromUrl() {
     const m = location.pathname.match(/\/r\/((?:rpa|pl)-[A-Fa-f0-9]{8})$/);
