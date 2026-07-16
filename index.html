@@ -2105,6 +2105,7 @@
     amount: ["None", "Some", "Most", "All"],
     leaders: ["No leaders", "Some leaders", "Most leaders", "All leaders"],
     employees: ["No employees", "Some employees", "Most employees", "All employees"],
+    operators: ["No operators", "Some operators", "Most operators", "All operators"],
     stations: ["No stations", "Some stations", "Most stations", "All stations"]
   };
   // Two independent per-statement scales (Jim's spec):
@@ -2186,7 +2187,7 @@
     {
       name: "People Involvement",
       statements: [
-        { text: "Production operators participate in team-based weekly problem solving using a standard form / process posted in their area.", scale: "freq" },
+        { text: "Production operators participate in team-based weekly problem solving using a standard form / process posted in their area.", scale: "operators" },
         { text: "Leaders coach and teach through daily participation in dashboard reviews as well as formal instruction of the company's production / operating system.", scale: "leaders" },
         { text: "Employees have a clearly defined help chain and a call for help mechanism along with an agreed escalation process and documented acceptable response times.", scale: "employees" },
         { text: "Employees have clearly defined roles and responsibilities for their position, which includes the requirement to participate in continuous improvement of their job.", scale: "employees" }
