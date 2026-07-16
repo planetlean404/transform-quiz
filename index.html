@@ -2102,7 +2102,7 @@
   // Maturity colors: <50 red, 50–<80 yellow, 80+ green.
   const SCALES = {
     freq: ["Never", "Sometimes", "Most of the time", "Always"],
-    amount: ["None", "Some", "Most", "All"],
+    locations: ["No locations", "Some locations", "Most locations", "All locations"],
     leaders: ["No leaders", "Some leaders", "Most leaders", "All leaders"],
     employees: ["No employees", "Some employees", "Most employees", "All employees"],
     operators: ["No operators", "Some operators", "Most operators", "All operators"],
@@ -2197,7 +2197,7 @@
       name: "Short Lead Time",
       statements: [
         { text: "Material flows directly from one operation to the next without interim staging or double handling with clearly defined and adhered to buffer min / max rules.", scale: "freq" },
-        { text: "Inventory locations (raw, WIP, finished) are clearly labeled (part number, min/max) with limits followed and correct location used.", scale: "amount" },
+        { text: "Inventory locations (raw, WIP, finished) are clearly labeled (part number, min/max) with limits followed and correct location used.", scale: "locations" },
         { text: "Material replenishment is triggered by actual consumption via Electronic Pull System (EPS) or Kanban, not by pushing to a schedule.", scale: "freq" },
         { text: "Production areas are actively (weekly progress) working to reduce tool / equipment changeover times and batch processing.", scale: "freq" }
       ]
