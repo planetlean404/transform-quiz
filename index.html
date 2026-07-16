@@ -934,8 +934,11 @@
     color: var(--pl-text-muted);
     margin-bottom: 14px;
   }
-  /* Larger labels in the main report scoring box (not the landing sample). */
-  .overview-left .dial-label { font-size: 14px; margin-bottom: 6px; }
+  /* Larger labels in the main report scoring box (not the landing sample).
+     text-transform:none drops the base rule's uppercase so this reads
+     "LEAN maturity score" — matching the landing sample card's casing. Covers
+     both the report score card and the 6-month plan's recap card. */
+  .overview-left .dial-label { font-size: 14px; margin-bottom: 6px; text-transform: none; }
   /* Tighter margins around the dial in the report box (scoped so the landing
      sample card keeps its own spacing). */
   .overview-left .dial-row { margin: 2px 0 8px; }
