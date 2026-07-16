@@ -1592,7 +1592,12 @@
     /* Full-width single column; drop the huge scroll padding. */
     .report-layout { display: block !important; }
     .report-main { padding-bottom: 0 !important; }
-    .results { display: block !important; }
+    /* NOTE: do NOT force `.results { display: block }` here. Both #resultsScreen
+       and #planScreen carry .results, and only one is ever on screen — the
+       active one already sets an inline display:block, which beats the base
+       `.results { display: none }`. Forcing them all visible printed the HIDDEN
+       screen too, dumping the 6-month plan's empty headings ("YOUR SCORECARD
+       RECAP" / "6-MONTH TRANSFORMATION PLAN") onto the end of the PDF. */
     body { background: #fff !important; }
     /* Expand every collapsible so the whole report is captured. */
     .cat-collapse { display: block !important; margin-top: 10px !important; }
