@@ -281,7 +281,13 @@
     display: inline-block;
   }
   .sample-body { padding: 22px 24px 18px; }
-  .sample-body .dial-label { text-transform: none; }
+  /* Landing hero's sample card label — deliberately larger than the base
+     dial-label, and normal-case rather than small-caps. The base 1.4px tracking
+     is a small-caps device for 11.5px; at 23px it just eats ~17px of width, so
+     tighten it. That keeps the label on one line down to ~360px phones, and it
+     wraps gracefully below that. The card sits in a fixed hero column, so this
+     can't widen the grid the way the report score card's auto column would. */
+  .sample-body .dial-label { text-transform: none; font-size: 23px; letter-spacing: 0.5px; }
 
   /* Phase-status pill (Formative/Localized/Broad-based/Benchmark), shown
      centered beneath the dial. */
@@ -928,19 +934,8 @@
     color: var(--pl-text-muted);
     margin-bottom: 14px;
   }
-  /* Larger labels in the main report scoring box (not the landing sample).
-     The score card is `grid-template-columns: auto 1fr`, so this label — not the
-     dial — sets the left column's width. At 28px with the base small-caps
-     tracking (1.4px) it runs 363px on one line, pushing the left column to 432px
-     and squeezing the category bars 600px -> 432px. Tightening the tracking and
-     capping the width to wrap it onto two lines keeps the bars at 575px. */
-  .overview-left .dial-label {
-    font-size: 28px;
-    letter-spacing: 0.5px;
-    line-height: 1.15;
-    max-width: 240px;
-    margin: 0 auto 6px;
-  }
+  /* Larger labels in the main report scoring box (not the landing sample). */
+  .overview-left .dial-label { font-size: 14px; margin-bottom: 6px; }
   /* Tighter margins around the dial in the report box (scoped so the landing
      sample card keeps its own spacing). */
   .overview-left .dial-row { margin: 2px 0 8px; }
@@ -1256,7 +1251,7 @@
   /* Overview: dial + pill on the left, proportional area bars on the right. */
   .overview-left {
     text-align: center;
-    padding: 16px 24px;
+    padding: 16px 34px;
     border-right: 1px solid var(--pl-border);
     display: flex;
     flex-direction: column;
