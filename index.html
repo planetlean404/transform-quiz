@@ -934,11 +934,21 @@
     color: var(--pl-text-muted);
     margin-bottom: 14px;
   }
-  /* Larger labels in the main report scoring box (not the landing sample).
-     text-transform:none drops the base rule's uppercase so this reads
-     "LEAN maturity score" — matching the landing sample card's casing. Covers
-     both the report score card and the 6-month plan's recap card. */
-  .overview-left .dial-label { font-size: 14px; margin-bottom: 6px; text-transform: none; }
+  /* Labels in the main report scoring box (not the landing sample). Covers both
+     the report score card and the 6-month plan's recap card.
+       - text-transform:none + 0.5px tracking match the landing sample card, so
+         this reads "LEAN maturity score" in the same label language.
+       - 18px is the deliberate midpoint between the old 14px and the sample's
+         23px. The score card is `grid-template-columns: auto 1fr`, so once this
+         label is wider than the 188px dial it starts eating the category bars:
+         18px -> 193px wide, costing the bars just 5px, where 23px -> 244px would
+         cost 56px (-16%). 18px also stays on ONE line down to a 320px phone. */
+  .overview-left .dial-label {
+    font-size: 18px;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    text-transform: none;
+  }
   /* Tighter margins around the dial in the report box (scoped so the landing
      sample card keeps its own spacing). */
   .overview-left .dial-row { margin: 2px 0 8px; }
