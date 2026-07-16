@@ -1010,10 +1010,15 @@ async function main(event) {
     return { statusCode: 400, headers: corsHeaders(), body: { ok: false, errors: v.errors } };
   }
 
-  // Suspected bot = the hidden honeypot field came back filled. We no longer
-  // drop these (autofill trips it for real people); the row is still written and
-  // the report still generates — only the Kartra push is skipped below.
-  const suspectedBot = !!event.website;
+  // Honeypot filled = POSSIBLE bot, but browser/password-manager autofill trips
+  // it for real people too (it caught ~half of Jim's own submissions, and the
+  // address was never added to Kartra as a result). It is now recorded for
+  // visibility ONLY — it no longer drops the row and no longer skips the Kartra
+  // push, because a false positive silently costs a real lead their CRM contact
+  // AND the 6-month plan email the gate copy promises them. A bot would still
+  // have to answer 20 statements and pass ZeroBounce to get this far, so the
+  // honeypot was adding almost nothing on top of those filters.
+  const honeypotFilled = !!event.website;
 
   const id = 'rpa-' + crypto.randomBytes(4).toString('hex').toUpperCase();
 
@@ -1068,12 +1073,10 @@ async function main(event) {
   }
 
   // Now push to Kartra — non-fatal, and safe because the row already exists.
-  // Skipped for a suspected bot (honeypot filled): the row and report still
-  // exist, but no CRM contact is created and no 6plan email fires.
+  // A filled honeypot no longer blocks this; it is only appended to the status
+  // so a genuinely suspicious row is still greppable in the sheet.
   let kartraStatus;
-  if (suspectedBot) {
-    kartraStatus = 'kartra-skipped-honeypot';
-  } else if (emailCheck.good) {
+  if (emailCheck.good) {
     try {
       kartraStatus = await pushToKartra(v, id);
     } catch (err) {
@@ -1084,6 +1087,7 @@ async function main(event) {
     kartraStatus = `kartra-skipped-bad-email(${emailCheck.status})`;
   }
   kartraStatus += ` | zb:${emailCheck.status}`;
+  if (honeypotFilled) kartraStatus += ' | hp-flag';
 
   // Patch the kartra_status column (N) with the real result — best-effort; the
   // row is already durable, so a failure here just leaves the placeholder.

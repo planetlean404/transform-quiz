@@ -1819,10 +1819,16 @@
       <input type="text" id="firstName" placeholder="First name">
       <input type="email" id="email" placeholder="Best email — your plan goes here">
       <!-- Honeypot: hidden anti-bot field. Neutral id (NOT "website"/"url"/etc.)
-           so password managers and browser autofill don't fill it and silently
-           flag a real visitor as a bot. Only genuine bots that scrape and fill
-           every field will populate it. -->
-      <input type="text" id="hpf" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true">
+           so autofill has no field-name heuristic to latch onto. `autocomplete="off"`
+           alone is NOT enough — Chrome and password managers routinely ignore it,
+           and this field was being autofilled for real people (about half of Jim's
+           own submissions), so the explicit per-manager opt-outs below are what
+           actually keep it empty. It is informational only now: a filled honeypot
+           is recorded on the row ("hp-flag") but never blocks the lead. -->
+      <input type="text" id="hpf" tabindex="-1" aria-hidden="true"
+             autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore
+             data-form-type="other" data-dashlane-ignore="true"
+             style="position:absolute;left:-9999px">
       <button onclick="submitGate()">Get My Results + Plan&nbsp;&nbsp;→</button>
       <div class="privacy">No spam, ever. We never share or sell your email.</div>
     </div>
