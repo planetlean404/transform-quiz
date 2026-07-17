@@ -3810,6 +3810,15 @@
     if (m) return "rpa-" + m[1].toUpperCase();
     return null;
   }
+  // ---------- Deep link straight into the assessment (/start) ----------
+  // For traffic arriving from a page that has ALREADY done the selling (e.g. a
+  // landing section on planetlean.com). Skips this site's landing page and drops
+  // the visitor on statement 1, so they aren't pitched twice.
+  (function startPage() {
+    if (!/^\/start\/?$/.test(location.pathname)) return;
+    startQuiz();   // hides the landing screen, shuffles, renders statement 1
+  })();
+
   (function reportLookupPage() {
     if (!/^\/id\/?$/.test(location.pathname)) return;
     document.getElementById("landingScreen").style.display = "none";
