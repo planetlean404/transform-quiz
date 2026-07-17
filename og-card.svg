@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <!-- arrowhead, auto-rotated to the final upward stroke (like the logo's) -->
+    <marker id="tip" viewBox="0 0 10 10" refX="2.2" refY="5"
+            markerWidth="3.4" markerHeight="3.4" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff8c00"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="630" fill="#ffffff"/>
+  <rect x="0" y="0" width="14" height="630" fill="#1595D3"/>
+
+  <!-- Performance line: volatile up-and-down, each peak and trough higher than
+       the last, finishing on a long climb into an arrowhead — the planet LEAN
+       logo's gesture. Mitered joins keep the peaks sharp like the logo. -->
+  <path d="M 700 535 L 748 462 L 792 512 L 846 420 L 890 470 L 946 372 L 990 422 L 1046 318 L 1086 366 L 1128 208"
+        fill="none" stroke="#ff8c00" stroke-width="14"
+        stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="6"
+        marker-end="url(#tip)"/>
+
+  <text x="80" y="120" font-family="Arial" font-size="42" font-weight="bold" fill="#22303F">planet <tspan fill="#1595D3">LEAN</tspan></text>
+  <text x="80" y="192" font-family="Arial" font-size="25" font-weight="bold" fill="#8A97A2" letter-spacing="2">RAPID PLANT ASSESSMENT</text>
+  <text x="80" y="292" font-family="Arial" font-size="70" font-weight="bold" fill="#22303F">How lean is your</text>
+  <text x="80" y="374" font-family="Arial" font-size="70" font-weight="bold" fill="#22303F">plant, <tspan fill="#1595D3">really?</tspan></text>
+  <text x="80" y="462" font-family="Arial" font-size="29" fill="#566573">Free 5-minute lean maturity scorecard,</text>
+  <text x="80" y="503" font-family="Arial" font-size="29" fill="#566573">an industry comparison + a 6-month plan.</text>
+  <text x="80" y="578" font-family="Arial" font-size="26" font-weight="bold" fill="#1595D3">rpa.planetlean.com</text>
+</svg>
