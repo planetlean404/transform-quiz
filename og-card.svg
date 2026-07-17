@@ -3,7 +3,7 @@
     <!-- arrowhead, auto-rotated to the final upward stroke (like the logo's) -->
     <marker id="tip" viewBox="0 0 10 10" refX="2.2" refY="5"
             markerWidth="3.4" markerHeight="3.4" orient="auto" markerUnits="strokeWidth">
-      <path d="M 620 548 L 806 506 L 872 404 L 930 466 L 1006 352 L 1062 414 L 1130 204" fill="#ff8c00"/>
+      <path d="M 776 552 L 872 404 L 930 466 L 1006 352 L 1062 414 L 1130 204" fill="#ff8c00"/>
     </marker>
   </defs>
 
