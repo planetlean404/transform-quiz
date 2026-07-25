@@ -702,6 +702,25 @@ const ALLOWED_ROLES = [
   'Continuous Improvement / Lean Leader', 'Production / Shift Supervisor',
   'Quality Manager', 'Engineering', 'Executive / Owner', 'Other'
 ];
+// Traffic-source tags (fixed whitelist — no free-form, so a typo can't spawn a
+// phantom channel). The frontend resolves the tag from the ?src= param / entry
+// path and sends it; we RE-validate here (never trust the client). An empty /
+// missing value -> 'direct'; a present-but-unrecognized value -> 'other'.
+const SOURCE_TAGS = [
+  'hero', 'web1', 'web2', 'web3', 'web4', 'web5',
+  'seq1', 'seq2', 'seq3', 'seq4', 'seq5', 'linkedin', 'email'
+];
+// The frontend sends an already-RESOLVED token, so the accepted set is the tag
+// whitelist PLUS the two derived buckets it can legitimately produce: 'direct'
+// (no ?src / landing page) and 'other' (a present-but-unrecognized ?src). An
+// empty value (e.g. an older cached page that predates tracking) -> 'direct';
+// anything unrecognized -> 'other'.
+const FINAL_SOURCES = new Set([...SOURCE_TAGS, 'direct', 'other']);
+function cleanSource(raw) {
+  const c = String(raw || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 24);
+  if (!c) return 'direct';
+  return FINAL_SOURCES.has(c) ? c : 'other';
+}
 // Normalize any unicode dash variant (en/em/figure/minus) to a plain hyphen for
 // comparison only, so character-encoding differences can't blank a real value.
 const dashNorm = s => String(s || '').replace(/[‐-―−]/g, '-').trim();
@@ -945,7 +964,7 @@ async function main(event) {
     try {
       const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
       const token = await getAccessToken(sa);
-      const listUrl = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:Z`;
+      const listUrl = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/${SHEET_TAB}%21A:AB`;
       const rows = ((await (await fetch(listUrl, { headers: { Authorization: `Bearer ${token}` } })).json()).values) || [];
       const out = [];
       for (let i = 1; i < rows.length; i++) {                  // skip the header row
@@ -960,7 +979,8 @@ async function main(event) {
           score: num(14),                                       // col O maturity_overall (the headline dial score)
           phase: r[5] || '',                                    // col F phase
           industry: r[23] || '',                                // col X
-          aiStatus: (r[25] || '').trim()                        // col Z
+          aiStatus: (r[25] || '').trim(),                       // col Z
+          source: (r[27] || '').trim()                          // col AB traffic source (blank on pre-tracking rows)
         });
       }
       out.reverse();                                            // newest first
@@ -1065,7 +1085,10 @@ async function main(event) {
       '{}',
       v.plantSize,
       v.industry,
-      v.role
+      v.role,
+      '',                       // Z ai_status  — placeholder, overwritten by updateAiCells
+      '',                       // AA plan6_json — placeholder, overwritten by updateAiCells
+      cleanSource(event.source) // AB source tag — traffic attribution (hero/web1.../linkedin/email/direct/other)
     ]);
   } catch (err) {
     console.error('Sheet write failed:', err.message);

@@ -1973,7 +1973,7 @@
         <div class="next-cta">
           <div class="next-cta-headline" id="nextHeadline">Get 20 focused minutes on your plant.</div>
           <div class="next-cta-body">No pitch, no drawn-out discovery call. Just 20 minutes with the team behind this assessment, talking through what you scored on and the one or two moves that would actually shift the needle in your plant.</div>
-          <button class="next-cta-btn" onclick="bookCall('https://www.planetlean.com/rpa-book', this)">Book a free 20-min call&nbsp;&nbsp;→</button>
+          <button class="next-cta-btn" onclick="bookCall('https://www.planetlean.com/book20', this)">Book a free 20-min call&nbsp;&nbsp;→</button>
           <div class="next-cta-fine">Free · No obligation · Real call</div>
         </div>
       </section>
@@ -2012,7 +2012,7 @@
       <div class="plan-outcome" id="sixDestination"></div>
       <p class="plan-book-note">This is a real transformation — and you don't have to run it alone. Book a free 20-minute call with planet LEAN to turn this roadmap into action on your floor.</p>
       <div class="cta-row plan-actions">
-        <button class="cta-primary" onclick="bookCall('https://www.planetlean.com/rpa-book', this)">Book a free 20-min call</button>
+        <button class="cta-primary" onclick="bookCall('https://www.planetlean.com/book20', this)">Book a free 20-min call</button>
         <button class="cta-secondary" onclick="downloadPdf()">Download PDF</button>
       </div>
     </section>
@@ -2335,6 +2335,22 @@
   // that AV/DNS filters blocklist (broke Michigan users, same as the chatbot).
   // The old doserverless endpoint stays live as a rollback.
   const API_BASE = "https://rpa.planetlean.com/api/scorecard";
+
+  // ---------- Traffic source (captured ONCE at page load) ----------
+  // Resolved here, before the URL rewrites to /r/{id} on submit. A ?src= value
+  // is matched against a FIXED whitelist (a typo -> "other", never a phantom
+  // channel). No ?src -> "hero" if you arrived via the /start deep link (the
+  // planetlean.com hero button), otherwise "direct". Re-validated server-side.
+  const LEAD_SOURCE = (function () {
+    const VALID = ["hero", "web1", "web2", "web3", "web4", "web5",
+      "seq1", "seq2", "seq3", "seq4", "seq5", "linkedin", "email"];
+    const raw = new URLSearchParams(location.search).get("src");
+    if (raw != null && raw !== "") {
+      const clean = raw.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 24);
+      return VALID.includes(clean) ? clean : "other";
+    }
+    return /^\/start\/?$/.test(location.pathname) ? "hero" : "direct";
+  })();
   // Set by renderReport to a closure that re-renders the AI-dependent sections
   // (Overview summary + Category Highlights) in place. The progressive poller
   // calls it once the background AI generation lands on the instant view.
@@ -2521,6 +2537,7 @@
         answers: answers.map(a => ({ m: a.maturity, r: a.roadmap, si: a.si })),
         biggestGapCat,
         topStrengthCat,
+        source: LEAD_SOURCE,
         website: document.getElementById("hpf").value
       };
       // First call captures the lead and returns the id fast (~3–4s) — it no
@@ -3904,6 +3921,7 @@
           <td style="padding:9px 10px;color:var(--pl-text);">${esc(r.email)}</td>
           <td style="padding:9px 10px;text-align:center;font-weight:700;color:${scoreColor(r.score)};">${r.score == null ? "—" : r.score}</td>
           <td style="padding:9px 10px;color:var(--pl-text-muted);font-size:12px;">${esc(r.industry)}</td>
+          <td style="padding:9px 10px;"><span style="display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--pl-bg-soft);color:var(--pl-text);white-space:nowrap;">${esc(r.source || "—")}</span></td>
           <td style="padding:9px 10px;text-align:center;font-size:12px;color:${r.aiStatus === "ok" ? "var(--score-green)" : "var(--score-yellow)"};">${r.aiStatus === "ok" ? "✓" : (r.aiStatus ? "…" : "—")}</td>
         </tr>`).join("");
       root.innerHTML = `
@@ -3921,6 +3939,7 @@
               <th style="padding:10px;text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Email</th>
               <th style="padding:10px;text-align:center;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Score</th>
               <th style="padding:10px;text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Industry</th>
+              <th style="padding:10px;text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">Source</th>
               <th style="padding:10px;text-align:center;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pl-text-muted);">AI</th>
             </tr></thead>
             <tbody id="agBody">${rowsHtml}</tbody>
