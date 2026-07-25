@@ -1707,6 +1707,17 @@
       s.src = "https://cdn.commoninja.com/sdk/latest/commonninja.js";
       s.defer = true;
       document.head.appendChild(s);
+      // If the widget can't render on this domain (e.g. rpa.planetlean.com not
+      // yet whitelisted in the CommonNinja dashboard), hide the strip so a
+      // "Domain not allowed" message never shows to visitors. Once the domain
+      // is whitelisted the error won't appear and the logos render normally.
+      var tries = 0;
+      var iv = setInterval(function () {
+        var strip = document.querySelector(".logo-strip");
+        var comp = strip && strip.querySelector(".commonninja_component");
+        if (comp && comp.querySelector(".cn-error")) { strip.style.display = "none"; clearInterval(iv); }
+        if (++tries > 24) clearInterval(iv); // give up after ~12s
+      }, 500);
     })();
   </script>
 
