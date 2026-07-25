@@ -1692,6 +1692,24 @@
     </div>
   </section>
 
+  <!-- Social-proof logo strip (CommonNinja) — same widget as planetlean.com.
+       Sits just below the hero/sample card. The SDK is loaded ONLY on the
+       landing page (see the guarded script below) so the shared /r/ report
+       links and the /start deep link stay free of the third-party script. -->
+  <section class="logo-strip" style="max-width:1080px;margin:0 auto;padding:4px 24px 24px;">
+    <div class="commonninja_component pid-c40fffee-3145-4acf-9bb7-0a8e3dfd66ce"></div>
+  </section>
+  <script>
+    (function () {
+      // Landing page only ("/" or "/index.html"); skip /start, /r/, /admin, /id.
+      if (!/^\/(index\.html)?$/.test(location.pathname)) return;
+      var s = document.createElement("script");
+      s.src = "https://cdn.commoninja.com/sdk/latest/commonninja.js";
+      s.defer = true;
+      document.head.appendChild(s);
+    })();
+  </script>
+
   <section class="stats-band">
     <div class="stats-row">
       <div class="stat-item">
