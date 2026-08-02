@@ -391,7 +391,7 @@
      repetitive. Collapses to one column on mobile. */
   .profiles-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: 40px;
   }
   .profile-item {
@@ -754,6 +754,11 @@
     color: var(--pl-text-muted);
     margin: 14px 0 0;
   }
+
+  /* The embedded logo marquee reports a ~500px intrinsic minimum width;
+     clip it so it can never widen the hero column past the viewport. */
+  .logo-strip { max-width: 100%; overflow: hidden; }
+  .logo-strip .commonninja_component { max-width: 100%; }
 
   /* ---------- Report: two-column layout with TOC ---------- */
   .results { display: none; }
@@ -1420,7 +1425,7 @@
   }
   /* 6-Month plan standalone view (email-only). */
   .plan-standalone { max-width: 860px; margin: 0 auto; padding: 0 24px 60px; }
-  .recap-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .recap-strip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 16px; }
   .recap-item { background: var(--pl-bg-soft); border: 1px solid var(--pl-border); border-radius: 10px; padding: 14px 16px; }
   .recap-label { font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--pl-text-muted); margin-bottom: 4px; }
   .recap-value { font-size: 17px; font-weight: 800; color: var(--pl-accent-dark); line-height: 1.2; }
@@ -1428,7 +1433,7 @@
   .plan-recap-divider { margin-top: 30px; }
   .plan-book-note { margin-top: 24px; font-size: 15px; line-height: 1.55; color: var(--pl-text); }
   .plan-actions { margin-top: 12px; }
-  @media (max-width: 640px) { .recap-strip { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .recap-strip { grid-template-columns: minmax(0, 1fr); } }
 
   /* Industry comparison — two-shaded card (darker header / lighter body),
      matching the best-fit profile card. */
@@ -1582,17 +1587,17 @@
   }
 
   @media (max-width: 900px) {
-    .hero-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 40px; text-align: center; }
+    .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 40px; text-align: center; }
     .hero-copy .cta-row-hero { justify-content: center; }
     .sample-card { max-width: 380px; margin: 0 auto; transform: none; }
-    .stats-row { grid-template-columns: 1fr; justify-items: center; }
+    .stats-row { grid-template-columns: minmax(0, 1fr); justify-items: center; }
     .stat-item { text-align: center; }
     .stat-text { margin-left: auto; margin-right: auto; }
-    .areas-grid { grid-template-columns: 1fr 1fr; }
+    .areas-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .area-card { border-right: 1px solid var(--pl-border); border-bottom: 1px solid var(--pl-border); }
     .area-card:nth-child(2n) { border-right: none; }
     .area-card:last-child { border-bottom: none; }
-    .report-layout { grid-template-columns: 1fr; gap: 18px; }
+    .report-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
     /* Freeze the TOC strip just under the sticky header, like a second bar. */
     .toc {
       position: sticky;
@@ -1615,8 +1620,8 @@
     .toc a.active .toc-num { color: rgba(255,255,255,0.85); }
     /* Sections must clear the header + the frozen TOC strip on a jump. */
     .section { scroll-margin-top: 114px; }
-    .landing-cards { grid-template-columns: 1fr; }
-    .steps-grid { grid-template-columns: 1fr; }
+    .landing-cards { grid-template-columns: minmax(0, 1fr); }
+    .steps-grid { grid-template-columns: minmax(0, 1fr); }
     .step-card { border-right: none; border-bottom: 1px solid var(--pl-border); }
     .step-card:last-child { border-bottom: none; }
     .site-footer { flex-direction: column; gap: 8px; text-align: center; }
@@ -1629,10 +1634,10 @@
     .card { padding: 28px 20px; }
     .statement { font-size: 19px; }
     .cta-row { flex-direction: column; }
-    .score-card { grid-template-columns: 1fr; }
+    .score-card { grid-template-columns: minmax(0, 1fr); }
     .bar-row { grid-template-columns: 30px 92px 1fr 30px; gap: 8px; }
-    .areas-grid { grid-template-columns: 1fr; }
-    .profiles-grid { grid-template-columns: 1fr; column-gap: 0; }
+    .areas-grid { grid-template-columns: minmax(0, 1fr); }
+    .profiles-grid { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
     .area-card:last-child { border-bottom: none; }
     .how-it-works h2, .final-cta h2 { font-size: 21px; }
