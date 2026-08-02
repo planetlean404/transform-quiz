@@ -355,24 +355,51 @@
   .stat-src { font-size: 12px; color: var(--pl-text-muted); }
 
   /* The 5 areas strip */
-  .areas-section {
+  .areas-section,
+  .profiles-section {
     max-width: 980px;
     margin: 44px auto 0;
     padding: 0 24px;
     text-align: left;
   }
-  .areas-section h2 {
+  .areas-section h2,
+  .profiles-section h2 {
     font-size: 24px;
     font-weight: 800;
     letter-spacing: -0.4px;
     color: var(--pl-accent-dark);
     margin: 0 0 6px;
   }
-  .areas-section .areas-sub {
+  .areas-section .areas-sub,
+  .profiles-section .areas-sub {
     font-size: 15px;
     color: var(--pl-text-muted);
     margin-bottom: 22px;
   }
+  /* Seven profiles — a two-column list rather than a card grid: 7 doesn't
+     divide evenly, and a second card grid straight after the five areas reads
+     repetitive. Collapses to one column on mobile. */
+  .profiles-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 40px;
+  }
+  .profile-item {
+    display: flex;
+    gap: 12px;
+    padding: 13px 0;
+    border-top: 1px solid var(--pl-border);
+  }
+  .profile-num {
+    flex: 0 0 auto;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--pl-text-muted);
+    padding-top: 4px;
+  }
+  .profile-name { font-size: 15px; font-weight: 800; color: var(--pl-accent-dark); }
+  .profile-line { font-size: 13px; line-height: 1.5; color: var(--pl-text-muted); margin-top: 3px; }
   .areas-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -1590,6 +1617,7 @@
     .score-card { grid-template-columns: 1fr; }
     .bar-row { grid-template-columns: 30px 92px 1fr 30px; gap: 8px; }
     .areas-grid { grid-template-columns: 1fr; }
+    .profiles-grid { grid-template-columns: 1fr; column-gap: 0; }
     .area-card { border-right: none !important; border-bottom: 1px solid var(--pl-border); }
     .area-card:last-child { border-bottom: none; }
     .how-it-works h2, .final-cta h2 { font-size: 21px; }
@@ -1753,6 +1781,24 @@
       <div class="area-card"><div class="area-eyebrow-num">03</div><img class="area-icon" src="/icon-people.png" alt=""><h4>People</h4><p>Problem-solving teams, coaching leaders, and clear roles.</p></div>
       <div class="area-card"><div class="area-eyebrow-num">04</div><img class="area-icon" src="/icon-logistics.png" alt=""><h4>Logistics</h4><p>Material that flows — pull systems, min/max, short changeovers.</p></div>
       <div class="area-card"><div class="area-eyebrow-num">05</div><img class="area-icon" src="/icon-ci.png" alt=""><h4>Continuous Improvement</h4><p>PDCA problem-solving, live metrics, and owned countermeasures.</p></div>
+    </div>
+  </section>
+
+  <!-- The seven Lean Maturity Profiles. Sits after the five areas (what we
+       measure) and before How it works — it previews what the report actually
+       tells you, which is the most self-identifying content on the page. -->
+  <section class="profiles-section">
+    <div class="eyebrow-dash all-blue"><span class="dash">—</span> PATTERNS WE SEE IN THE FIELD</div>
+    <h2>Seven profiles we see again and again</h2>
+    <div class="areas-sub">Plants that score alike tend to share the same story. Your report matches you to your best-fit profile — what it looks like on the floor, and why it happens.</div>
+    <div class="profiles-grid">
+      <div class="profile-item"><div class="profile-num">01</div><div><div class="profile-name">The Firefighter</div><div class="profile-line">Nothing documented, so nothing repeatable.</div></div></div>
+      <div class="profile-item"><div class="profile-num">02</div><div><div class="profile-name">The Tool Show</div><div class="profile-line">Every tool installed, nobody on the floor owns them.</div></div></div>
+      <div class="profile-item"><div class="profile-num">03</div><div><div class="profile-name">The Cracked Foundation</div><div class="profile-line">Second floor built before the first.</div></div></div>
+      <div class="profile-item"><div class="profile-num">04</div><div><div class="profile-name">The Sprinter</div><div class="profile-line">Material moves fast, quality never caught up.</div></div></div>
+      <div class="profile-item"><div class="profile-num">05</div><div><div class="profile-name">The Believer</div><div class="profile-line">Every category scores high, nobody outside has checked.</div></div></div>
+      <div class="profile-item"><div class="profile-num">06</div><div><div class="profile-name">The Warehouse</div><div class="profile-line">Disciplined people, stalled material.</div></div></div>
+      <div class="profile-item"><div class="profile-num">07</div><div><div class="profile-name">The Plateau</div><div class="profile-line">Not broken, not backsliding, just done improving.</div></div></div>
     </div>
   </section>
 
