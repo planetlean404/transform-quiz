@@ -355,13 +355,21 @@
   .stat-src { font-size: 12px; color: var(--pl-text-muted); }
 
   /* The 5 areas strip */
-  .areas-section,
-  .profiles-section {
+  .areas-section {
     max-width: 980px;
     margin: 44px auto 0;
     padding: 0 24px;
     text-align: left;
   }
+  /* Full-bleed band, one step darker than the light-gray bands (stats / how it
+     works) so the page alternates white -> light -> white -> DARKER -> light -> dark. */
+  .profiles-section {
+    background: #eaedf0;
+    margin-top: 44px;
+    padding: 44px 24px 48px;
+    text-align: left;
+  }
+  .profiles-inner { max-width: 980px; margin: 0 auto; }
   .areas-section h2,
   .profiles-section h2 {
     font-size: 24px;
@@ -511,30 +519,38 @@
   .step-card p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--pl-text-muted); }
 
   /* Final CTA band */
+  /* Dark closing band — a visual full stop, and it makes the blue CTA pop.
+     #22303F (near-black navy) rather than pure #000: it's the same dark the
+     brand's own share card uses, and pure black reads harsh against an
+     otherwise light, airy page. Text colours below match that card too. */
   .final-cta {
+    background: #22303F;
     text-align: center;
-    max-width: 640px;
-    margin: 52px auto 0;
-    padding: 0 24px;
+    margin-top: 44px;
+    padding: 56px 24px 60px;
   }
+  .final-cta-inner { max-width: 640px; margin: 0 auto; }
   .final-cta .eyebrow-dash { display: flex; justify-content: center; }
+  /* lifted off the brand blue for legibility on the dark ground */
+  .final-cta .eyebrow-dash.all-blue,
+  .final-cta .eyebrow-dash .dash { color: #4FB3E4; }
   .final-cta h2 {
     font-size: 26px;
     font-weight: 800;
     letter-spacing: -0.4px;
-    color: var(--pl-accent-dark);
+    color: #ffffff;
     margin: 10px 0 10px;
   }
   .final-cta .sub {
     font-size: 15px;
     line-height: 1.6;
-    color: var(--pl-text-muted);
+    color: #c3cfd9;
     margin-bottom: 26px;
   }
   .final-cta .microline {
     margin-top: 14px;
     font-size: 13px;
-    color: var(--pl-text-muted);
+    color: #8aa0b2;
   }
 
   /* Full-width site footer, bordered like the topbar */
@@ -1788,6 +1804,7 @@
        measure) and before How it works — it previews what the report actually
        tells you, which is the most self-identifying content on the page. -->
   <section class="profiles-section">
+   <div class="profiles-inner">
     <div class="eyebrow-dash all-blue"><span class="dash">—</span> PATTERNS WE SEE IN THE FIELD</div>
     <h2>Seven profiles we see again and again</h2>
     <div class="areas-sub">Plants that score alike tend to share the same story. Your report matches you to your best-fit profile — what it looks like on the floor, and why it happens.</div>
@@ -1800,6 +1817,7 @@
       <div class="profile-item"><div class="profile-num">06</div><div><div class="profile-name">The Warehouse</div><div class="profile-line">Disciplined people, stalled material.</div></div></div>
       <div class="profile-item"><div class="profile-num">07</div><div><div class="profile-name">The Plateau</div><div class="profile-line">Not broken, not backsliding, just done improving.</div></div></div>
     </div>
+   </div>
   </section>
 
   <section class="how-it-works">
@@ -1825,11 +1843,13 @@
   </section>
 
   <section class="final-cta">
+   <div class="final-cta-inner">
     <div class="eyebrow-dash all-blue"><span class="dash">—</span> READY WHEN YOU ARE</div>
     <h2>Find out where your plant really stands</h2>
     <div class="sub">20 statements. Under 5 minutes. A straightforward assessment of where you're at and where you need to go.</div>
     <button class="start-btn" onclick="startQuiz()">Score your plant &mdash; free&nbsp;&nbsp;→</button>
     <div class="microline">Built for ops managers</div>
+   </div>
   </section>
 
   <div class="site-footer">
