@@ -355,20 +355,22 @@
   .stat-src { font-size: 12px; color: var(--pl-text-muted); }
 
   /* The 5 areas strip */
+  /* Grey band. White area cards sit on it, which reads better than the
+     white-on-white they had before. */
   .areas-section {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 48px 24px 52px;
-    text-align: left;
-  }
-  /* Full-bleed band, one step darker than the light-gray bands (stats / how it
-     works) so the page alternates white -> light -> white -> DARKER -> light -> dark. */
-  .profiles-section {
     background: var(--pl-bg-soft);
-    margin-top: 0;
+    margin: 0;
     padding: 48px 24px 52px;
     border-top: 1px solid var(--pl-border);
     border-bottom: 1px solid var(--pl-border);
+    text-align: left;
+  }
+  .areas-inner { max-width: 980px; margin: 0 auto; }
+  /* Full-bleed band, one step darker than the light-gray bands (stats / how it
+     works) so the page alternates white -> light -> white -> DARKER -> light -> dark. */
+  .profiles-section {
+    margin-top: 0;
+    padding: 48px 24px 52px;
     text-align: left;
   }
   .profiles-inner { max-width: 980px; margin: 0 auto; }
@@ -1768,6 +1770,41 @@
     })();
   </script>
 
+  <section class="areas-section">
+   <div class="areas-inner">
+    <div class="eyebrow-dash all-blue"><span class="dash">—</span> WHAT YOUR PLANT WILL BE SCORED ON</div>
+    <h2>Five areas that make or break a plant</h2>
+    <div class="areas-sub">Every statement maps to one of the five areas we use to assess plants in the field.</div>
+    <div class="areas-grid">
+      <div class="area-card"><div class="area-eyebrow-num">01</div><img class="area-icon" src="/icon-std.png" alt=""><h4>Standards</h4><p>Standard work, workplace organization, and daily equipment care.</p></div>
+      <div class="area-card"><div class="area-eyebrow-num">02</div><img class="area-icon" src="/icon-quality.png" alt=""><h4>Quality</h4><p>Defects prevented at the point of cause, not found downstream.</p></div>
+      <div class="area-card"><div class="area-eyebrow-num">03</div><img class="area-icon" src="/icon-people.png" alt=""><h4>People</h4><p>Problem-solving teams, coaching leaders, and clear roles.</p></div>
+      <div class="area-card"><div class="area-eyebrow-num">04</div><img class="area-icon" src="/icon-logistics.png" alt=""><h4>Logistics</h4><p>Material that flows — pull systems, min/max, short changeovers.</p></div>
+      <div class="area-card"><div class="area-eyebrow-num">05</div><img class="area-icon" src="/icon-ci.png" alt=""><h4>Continuous Improvement</h4><p>PDCA problem-solving, live metrics, and owned countermeasures.</p></div>
+    </div>
+   </div>
+  </section>
+
+  <!-- The seven Lean Maturity Profiles. Sits after the five areas (what we
+       measure) and before How it works — it previews what the report actually
+       tells you, which is the most self-identifying content on the page. -->
+  <section class="profiles-section">
+   <div class="profiles-inner">
+    <div class="eyebrow-dash all-blue"><span class="dash">—</span> PATTERNS WE SEE IN THE FIELD</div>
+    <h2>Seven profiles we see again and again</h2>
+    <div class="areas-sub">Plants that score alike tend to share the same story. Your report matches you to your best-fit profile — what it looks like on the floor, and why it happens.</div>
+    <div class="profiles-grid">
+      <div class="profile-item"><div class="profile-num">01</div><div><div class="profile-name">The Firefighter</div><div class="profile-line">Nothing documented, so nothing repeatable.</div></div></div>
+      <div class="profile-item"><div class="profile-num">02</div><div><div class="profile-name">The Tool Show</div><div class="profile-line">Every tool installed, nobody on the floor owns them.</div></div></div>
+      <div class="profile-item"><div class="profile-num">03</div><div><div class="profile-name">The Cracked Foundation</div><div class="profile-line">Second floor built before the first.</div></div></div>
+      <div class="profile-item"><div class="profile-num">04</div><div><div class="profile-name">The Sprinter</div><div class="profile-line">Material moves fast, quality never caught up.</div></div></div>
+      <div class="profile-item"><div class="profile-num">05</div><div><div class="profile-name">The Believer</div><div class="profile-line">Every category scores high, nobody outside has checked.</div></div></div>
+      <div class="profile-item"><div class="profile-num">06</div><div><div class="profile-name">The Warehouse</div><div class="profile-line">Disciplined people, stalled material.</div></div></div>
+      <div class="profile-item"><div class="profile-num">07</div><div><div class="profile-name">The Plateau</div><div class="profile-line">Not broken, not backsliding, just done improving.</div></div></div>
+    </div>
+   </div>
+  </section>
+
   <section class="stats-band">
     <div class="stats-row">
       <div class="stat-item">
@@ -1789,39 +1826,6 @@
         <div class="stat-src">McKinsey &amp; Company</div>
       </div>
     </div>
-  </section>
-
-  <section class="areas-section">
-    <div class="eyebrow-dash all-blue"><span class="dash">—</span> WHAT YOUR PLANT WILL BE SCORED ON</div>
-    <h2>Five areas that make or break a plant</h2>
-    <div class="areas-sub">Every statement maps to one of the five areas we use to assess plants in the field.</div>
-    <div class="areas-grid">
-      <div class="area-card"><div class="area-eyebrow-num">01</div><img class="area-icon" src="/icon-std.png" alt=""><h4>Standards</h4><p>Standard work, workplace organization, and daily equipment care.</p></div>
-      <div class="area-card"><div class="area-eyebrow-num">02</div><img class="area-icon" src="/icon-quality.png" alt=""><h4>Quality</h4><p>Defects prevented at the point of cause, not found downstream.</p></div>
-      <div class="area-card"><div class="area-eyebrow-num">03</div><img class="area-icon" src="/icon-people.png" alt=""><h4>People</h4><p>Problem-solving teams, coaching leaders, and clear roles.</p></div>
-      <div class="area-card"><div class="area-eyebrow-num">04</div><img class="area-icon" src="/icon-logistics.png" alt=""><h4>Logistics</h4><p>Material that flows — pull systems, min/max, short changeovers.</p></div>
-      <div class="area-card"><div class="area-eyebrow-num">05</div><img class="area-icon" src="/icon-ci.png" alt=""><h4>Continuous Improvement</h4><p>PDCA problem-solving, live metrics, and owned countermeasures.</p></div>
-    </div>
-  </section>
-
-  <!-- The seven Lean Maturity Profiles. Sits after the five areas (what we
-       measure) and before How it works — it previews what the report actually
-       tells you, which is the most self-identifying content on the page. -->
-  <section class="profiles-section">
-   <div class="profiles-inner">
-    <div class="eyebrow-dash all-blue"><span class="dash">—</span> PATTERNS WE SEE IN THE FIELD</div>
-    <h2>Seven profiles we see again and again</h2>
-    <div class="areas-sub">Plants that score alike tend to share the same story. Your report matches you to your best-fit profile — what it looks like on the floor, and why it happens.</div>
-    <div class="profiles-grid">
-      <div class="profile-item"><div class="profile-num">01</div><div><div class="profile-name">The Firefighter</div><div class="profile-line">Nothing documented, so nothing repeatable.</div></div></div>
-      <div class="profile-item"><div class="profile-num">02</div><div><div class="profile-name">The Tool Show</div><div class="profile-line">Every tool installed, nobody on the floor owns them.</div></div></div>
-      <div class="profile-item"><div class="profile-num">03</div><div><div class="profile-name">The Cracked Foundation</div><div class="profile-line">Second floor built before the first.</div></div></div>
-      <div class="profile-item"><div class="profile-num">04</div><div><div class="profile-name">The Sprinter</div><div class="profile-line">Material moves fast, quality never caught up.</div></div></div>
-      <div class="profile-item"><div class="profile-num">05</div><div><div class="profile-name">The Believer</div><div class="profile-line">Every category scores high, nobody outside has checked.</div></div></div>
-      <div class="profile-item"><div class="profile-num">06</div><div><div class="profile-name">The Warehouse</div><div class="profile-line">Disciplined people, stalled material.</div></div></div>
-      <div class="profile-item"><div class="profile-num">07</div><div><div class="profile-name">The Plateau</div><div class="profile-line">Not broken, not backsliding, just done improving.</div></div></div>
-    </div>
-   </div>
   </section>
 
   <section class="how-it-works">
