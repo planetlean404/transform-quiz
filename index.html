@@ -2379,6 +2379,7 @@
 
   // ---------- Quiz flow ----------
   function startQuiz() {
+    track("start");
     shuffleQuestions();
     document.getElementById("landingScreen").style.display = "none";
     document.getElementById("quizScreen").style.display = "block";
@@ -2387,6 +2388,8 @@
   }
 
   function renderQuestion() {
+    const n = current + 1;
+    if (n === 5 || n === 10 || n === 15 || n === 20) track("q" + n);
     const q = questions[current];
     document.getElementById("questionText").textContent = q.text;
     document.getElementById("progressLabel").textContent = `Statement ${current + 1} of ${questions.length}`;
@@ -2441,6 +2444,7 @@
   // After the last statement: collect general plant info, then the email gate.
   function showPlantInfo() {
     if (document.getElementById("resultsScreen").style.display === "block") return;
+    track("plantinfo");
     document.getElementById("quizScreen").style.display = "none";
     document.getElementById("plantInfoWrap").style.display = "block";
     window.scrollTo(0, 0);
@@ -2502,6 +2506,7 @@
 
   function showGate() {
     if (document.getElementById("resultsScreen").style.display === "block") return;
+    track("gate");
     document.getElementById("quizScreen").style.display = "none";
     document.getElementById("plantInfoWrap").style.display = "none";
     document.getElementById("gateWrap").style.display = "block";
@@ -2530,6 +2535,40 @@
     }
     return /^\/start\/?$/.test(location.pathname) ? "hero" : "direct";
   })();
+
+  // ---------- Funnel instrumentation ----------
+  // An anonymous per-visit id (no personal data, sessionStorage only) so the
+  // steps of one visit can be stitched into a journey. Every call is
+  // fire-and-forget with keepalive so it survives the visitor navigating away,
+  // and every failure is swallowed — measurement must never break the funnel.
+  const SESSION_ID = (function () {
+    try {
+      let id = sessionStorage.getItem("rpaSid");
+      if (!id) {
+        id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+        sessionStorage.setItem("rpaSid", id);
+      }
+      return id;
+    } catch (e) { return "nostore"; }
+  })();
+  const _fired = new Set();
+  function track(evt, detail) {
+    if (_fired.has(evt)) return;      // one of each per visit
+    _fired.add(evt);
+    try {
+      fetch(`${API_BASE}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: "event", evt, sid: SESSION_ID,
+                               source: LEAD_SOURCE, path: location.pathname, detail: detail || "" }),
+        keepalive: true
+      }).catch(function () {});
+    } catch (e) { /* never let measurement break the funnel */ }
+  }
+  // Someone arrived on the landing page or the /start deep link.
+  if (/^\/(index\.html)?$/.test(location.pathname) || /^\/start\/?$/.test(location.pathname)) {
+    track("view");
+  }
   // Set by renderReport to a closure that re-renders the AI-dependent sections
   // (Overview summary + Category Highlights) in place. The progressive poller
   // calls it once the background AI generation lands on the instant view.
@@ -2618,6 +2657,7 @@
     }
     // Arm the booking-CTA email gate: bookCall() awaits this until ZeroBounce's
     // verdict comes back with the submit response.
+    track("submit");
     emailVerdict = undefined;
     emailVerdictPromise = new Promise(r => { emailVerdictResolve = r; });
     showResults(name);
@@ -4091,6 +4131,50 @@
       });
     }
 
+    // Funnel readout. Each step counted once per visit; the percentage is of
+    // everyone who arrived, so the biggest drop is obvious at a glance.
+    function funnelHtml(f) {
+      if (!f || !f.steps) return "";
+      const STEPS = [
+        ["view", "Arrived"], ["start", "Started"], ["q5", "Statement 5"],
+        ["q10", "Statement 10"], ["q15", "Statement 15"], ["q20", "Statement 20"],
+        ["plantinfo", "Plant info"], ["gate", "Email gate"], ["submit", "Submitted"]
+      ];
+      const base = f.steps.view || 0;
+      if (!base && !f.totalEvents) {
+        return `<div style="margin-bottom:22px;padding:14px 16px;background:var(--pl-bg-soft);border-radius:10px;font-size:13px;color:var(--pl-text-muted);">
+          No funnel data yet — tracking starts collecting from the next visitor.</div>`;
+      }
+      let prev = null;
+      const bars = STEPS.map(([k, label]) => {
+        const v = f.steps[k] || 0;
+        const pct = base ? Math.round((v / base) * 100) : 0;
+        const drop = prev !== null && prev > 0 ? Math.round(((prev - v) / prev) * 100) : 0;
+        prev = v;
+        const dropTag = drop >= 25
+          ? `<span style="color:var(--score-red);font-weight:700;">-${drop}%</span>`
+          : (drop > 0 ? `<span style="color:var(--pl-text-muted);">-${drop}%</span>` : "");
+        return `<div style="display:grid;grid-template-columns:minmax(0,110px) minmax(0,1fr) 46px 52px;align-items:center;gap:10px;padding:5px 0;">
+          <div style="font-size:12px;font-weight:700;color:var(--pl-text-muted);">${label}</div>
+          <div style="background:var(--pl-border);border-radius:999px;height:9px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:var(--pl-accent);"></div></div>
+          <div style="font-size:13px;font-weight:800;color:var(--pl-text);text-align:right;">${v}</div>
+          <div style="font-size:11px;text-align:right;">${dropTag}</div>
+        </div>`;
+      }).join("");
+      const src = Object.entries(f.viewsBySource || {})
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `<span style="display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--pl-bg-soft);margin:0 6px 6px 0;">${esc(k)} <strong>${v}</strong></span>`)
+        .join("");
+      return `<div style="margin-bottom:24px;padding:16px 18px;border:1px solid var(--pl-border);border-radius:12px;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pl-text-muted);margin-bottom:10px;">Funnel &mdash; unique visits per step</div>
+        ${bars}
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--pl-border);">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pl-text-muted);margin-bottom:7px;">Arrivals by source</div>
+          ${src || '<span style="font-size:12px;color:var(--pl-text-muted);">none yet</span>'}
+        </div></div>`;
+    }
+
     function renderList(data, pass) {
       const rowsHtml = data.rows.map(r => `
         <tr data-id="${esc(r.id)}" style="cursor:pointer;border-top:1px solid var(--pl-border);">
@@ -4104,6 +4188,7 @@
           <td style="padding:9px 10px;text-align:center;font-size:12px;color:${r.aiStatus === "ok" ? "var(--score-green)" : "var(--score-yellow)"};">${r.aiStatus === "ok" ? "✓" : (r.aiStatus ? "…" : "—")}</td>
         </tr>`).join("");
       root.innerHTML = `
+        ${funnelHtml(data.funnel)}
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
           <h2 style="margin:0;font-size:22px;color:var(--pl-text);">Report roster <span style="font-size:14px;font-weight:500;color:var(--pl-text-muted);">(${data.count})</span></h2>
           <input id="agFilter" type="text" placeholder="Filter by name, email, or ID…"

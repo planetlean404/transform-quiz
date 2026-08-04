@@ -716,6 +716,18 @@ const SOURCE_TAGS = [
 // empty value (e.g. an older cached page that predates tracking) -> 'direct';
 // anything unrecognized -> 'other'.
 const FINAL_SOURCES = new Set([...SOURCE_TAGS, 'direct', 'other']);
+
+// Funnel-instrumentation events. Whitelisted so the open endpoint can't be used
+// as a junk sink, and deliberately carries NO personal data — just an anonymous
+// per-visit id so a journey can be stitched together.
+const FUNNEL_EVENTS = new Set([
+  'view',        // landing page loaded
+  'start',       // pressed "Score your plant"
+  'q5', 'q10', 'q15', 'q20',   // reached that statement
+  'plantinfo',   // reached the size/industry/role screen
+  'gate',        // reached the name/email screen
+  'submit'       // completed
+]);
 function cleanSource(raw) {
   const c = String(raw || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 24);
   if (!c) return 'direct';
@@ -954,6 +966,37 @@ async function main(event) {
   // email, main score) for the internal /admin page. Passcode-gated because it
   // exposes lead emails (PII) and the endpoint is public — same one-way-hash
   // scheme as the backfill gate (plaintext passcode never lives in the repo).
+  // Lightweight funnel instrumentation. Fire-and-forget from the browser, so it
+  // must stay fast and must never be able to break the funnel it measures:
+  // anything unrecognised is dropped with a 200 rather than surfaced as an error.
+  if (event.stage === 'event') {
+    const name = String(event.evt || '').trim();
+    if (!FUNNEL_EVENTS.has(name)) {
+      return { statusCode: 200, headers: corsHeaders(), body: { ok: true, ignored: true } };
+    }
+    try {
+      const sa = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64, 'base64').toString('utf8'));
+      const token = await getAccessToken(sa);
+      const row = [
+        new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }) + ' ET',
+        String(event.sid || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 24),
+        name,
+        cleanSource(event.source),
+        String(event.path || '').slice(0, 60),
+        String(event.detail || '').slice(0, 60)
+      ];
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/funnel%21A:F:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [row] })
+      });
+      return { statusCode: 200, headers: corsHeaders(), body: { ok: true } };
+    } catch (err) {
+      console.error('Funnel event failed (non-fatal):', err.message);
+      return { statusCode: 200, headers: corsHeaders(), body: { ok: false } };
+    }
+  }
+
   if (event.stage === 'adminlist') {
     const ADMIN_TOKEN_HASH = 'c90c9960e766cea26f9e9cdfd556a60e86155db5eb02e6cc28ca88cc0b466a23';
     const provided = event.token
@@ -984,7 +1027,32 @@ async function main(event) {
         });
       }
       out.reverse();                                            // newest first
-      return { statusCode: 200, headers: corsHeaders(), body: { ok: true, count: out.length, rows: out } };
+
+      // Funnel counts. A step is counted once per SESSION, not per row, so a
+      // visitor who reloads doesn't inflate it.
+      let funnel = null;
+      try {
+        const fUrl = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.GOOGLE_SHEET_ID}/values/funnel%21A:F`;
+        const fRows = ((await (await fetch(fUrl, { headers: { Authorization: `Bearer ${token}` } })).json()).values) || [];
+        const seen = {};        // event -> Set(session)
+        const bySource = {};    // source -> Set(session)
+        for (let i = 1; i < fRows.length; i++) {
+          const [, sid, evt, src] = fRows[i];
+          if (!evt) continue;
+          (seen[evt] = seen[evt] || new Set()).add(sid || String(i));
+          if (evt === 'view') (bySource[src || 'direct'] = bySource[src || 'direct'] || new Set()).add(sid || String(i));
+        }
+        const n = e => (seen[e] ? seen[e].size : 0);
+        funnel = {
+          steps: { view: n('view'), start: n('start'), q5: n('q5'), q10: n('q10'),
+                   q15: n('q15'), q20: n('q20'), plantinfo: n('plantinfo'),
+                   gate: n('gate'), submit: n('submit') },
+          viewsBySource: Object.fromEntries(Object.entries(bySource).map(([k, v]) => [k, v.size])),
+          totalEvents: Math.max(0, fRows.length - 1)
+        };
+      } catch (e) { /* funnel tab missing or unreadable — roster still works */ }
+
+      return { statusCode: 200, headers: corsHeaders(), body: { ok: true, count: out.length, rows: out, funnel } };
     } catch (err) {
       console.error('Admin list failed:', err.message);
       return { statusCode: 502, headers: corsHeaders(), body: { ok: false, error: err.message.slice(0, 120) } };
