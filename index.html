@@ -738,6 +738,15 @@
   .gate select:focus { outline: none; border-color: var(--pl-accent); }
   /* Gray the placeholder option until a real choice is made. */
   .gate select:not(.chosen) { color: var(--pl-text-muted); }
+  .gate select.missing { border-color: var(--score-red); }
+  .gate .field-error {
+    display: none;
+    color: var(--score-red);
+    font-size: 13.5px;
+    line-height: 1.45;
+    margin: -2px 0 12px;
+    text-align: left;
+  }
   .gate button {
     width: 100%;
     padding: 15px;
@@ -1888,7 +1897,7 @@
     <div class="gate" id="plantInfoScreen">
       <h2>General plant info</h2>
       <p>Three quick details to tailor your report. It includes an <strong>industry comparison</strong> — how your plant stacks up against a typical plant in your sector — so your industry powers that part of the report.</p>
-      <select id="plantSize" onchange="this.classList.toggle('chosen', !!this.value)">
+      <select id="plantSize" onchange="plantInfoChanged(this)">
         <option value="">Plant size</option>
         <option>1&ndash;50 employees</option>
         <option>51&ndash;200 employees</option>
@@ -1896,7 +1905,7 @@
         <option>501&ndash;2,000 employees</option>
         <option>2,000+ employees</option>
       </select>
-      <select id="industry" onchange="this.classList.toggle('chosen', !!this.value)">
+      <select id="industry" onchange="plantInfoChanged(this)">
         <option value="">Industry</option>
         <option>Automotive</option>
         <option>Food &amp; Beverage</option>
@@ -1909,7 +1918,7 @@
         <option>Consumer Goods</option>
         <option>Other</option>
       </select>
-      <select id="role" onchange="this.classList.toggle('chosen', !!this.value)">
+      <select id="role" onchange="plantInfoChanged(this)">
         <option value="">Your role</option>
         <option>Plant Manager</option>
         <option>Operations Manager / Director</option>
@@ -1920,6 +1929,7 @@
         <option>Executive / Owner</option>
         <option>Other</option>
       </select>
+      <div class="field-error" id="plantInfoError">Please answer all three — your industry powers the industry comparison in your report.</div>
       <button onclick="plantInfoContinue()">Continue&nbsp;&nbsp;→</button>
     </div>
   </div>
@@ -2418,7 +2428,35 @@
     window.scrollTo(0, 0);
   }
 
+  const PLANT_INFO_FIELDS = ["plantSize", "industry", "role"];
+
+  // Keep the placeholder/chosen styling in sync and clear the error state as
+  // soon as the visitor picks something.
+  function plantInfoChanged(el) {
+    el.classList.toggle("chosen", !!el.value);
+    if (el.value) el.classList.remove("missing");
+    if (PLANT_INFO_FIELDS.every(id => document.getElementById(id).value)) {
+      document.getElementById("plantInfoError").style.display = "none";
+    }
+  }
+
+  // All three are required. Industry drives the report's industry comparison,
+  // and size/role feed the light sector flavour in the AI writing — a blank
+  // answer quietly degrades the report, so don't let it through.
   function plantInfoContinue() {
+    let firstMissing = null;
+    PLANT_INFO_FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      const empty = !el.value;
+      el.classList.toggle("missing", empty);
+      if (empty && !firstMissing) firstMissing = el;
+    });
+    if (firstMissing) {
+      document.getElementById("plantInfoError").style.display = "block";
+      firstMissing.focus();
+      return;
+    }
+    document.getElementById("plantInfoError").style.display = "none";
     document.getElementById("plantInfoWrap").style.display = "none";
     showGate();
   }
