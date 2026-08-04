@@ -1931,6 +1931,7 @@
       </select>
       <div class="field-error" id="plantInfoError">Please answer all three — your industry powers the industry comparison in your report.</div>
       <button onclick="plantInfoContinue()">Continue&nbsp;&nbsp;→</button>
+      <button class="back-link" onclick="plantInfoBack()">← Back</button>
     </div>
   </div>
 </div>
@@ -1956,6 +1957,7 @@
              style="position:absolute;left:-9999px">
       <button onclick="submitGate()">Get My Results + Plan&nbsp;&nbsp;→</button>
       <div class="privacy">No spam, ever. We never share or sell your email.</div>
+      <button class="back-link" onclick="gateBack()">← Back</button>
     </div>
   </div>
 </div>
@@ -2438,6 +2440,27 @@
     if (PLANT_INFO_FIELDS.every(id => document.getElementById(id).value)) {
       document.getElementById("plantInfoError").style.display = "none";
     }
+  }
+
+  // Step back from the plant-info screen to re-answer the final statement.
+  // Pops the last answer so the statement is genuinely re-answerable — the same
+  // thing goBack() does between statements; renderQuestion() restores the
+  // progress bar, label and back-link state.
+  function plantInfoBack() {
+    document.getElementById("plantInfoError").style.display = "none";
+    document.getElementById("plantInfoWrap").style.display = "none";
+    document.getElementById("quizScreen").style.display = "block";
+    if (answers.length) answers.pop();
+    renderQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  // Step back from the email gate to the plant-info screen. The dropdowns keep
+  // their values, so the visitor returns to their own picks.
+  function gateBack() {
+    document.getElementById("gateWrap").style.display = "none";
+    document.getElementById("plantInfoWrap").style.display = "block";
+    window.scrollTo(0, 0);
   }
 
   // All three are required. Industry drives the report's industry comparison,
