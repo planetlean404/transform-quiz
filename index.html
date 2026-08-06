@@ -2585,9 +2585,25 @@
   // of the report is held behind #reportBuildingLoader until the AI is ready,
   // then the whole report reveals at once (so nothing looks half-built).
   let buildMsgTimer = null;
+  let buildWatchdog = null;
   function startBuildingScreen() {
     const rs = document.getElementById("resultsScreen");
     if (rs) rs.classList.add("report-building");
+    // Hard safety net. The normal reveal is driven by startProgressivePoll, but
+    // that only ever starts if /submit returned an id — so if the API is down,
+    // the request is blocked, or the network drops, nothing would ever call
+    // revealReport() and the visitor sits on a spinner forever after answering
+    // 20 statements. Everything below the score card is computed client-side and
+    // is already correct, so reveal it regardless; only the AI-written prose is
+    // actually missing. Comfortably past the poll's own ~78s REVEAL_BY so this
+    // never pre-empts the normal path.
+    clearTimeout(buildWatchdog);
+    buildWatchdog = setTimeout(() => {
+      if (rs && rs.classList.contains("report-building")) {
+        console.warn("Report reveal watchdog fired — showing report without AI text.");
+        revealWithFallback();
+      }
+    }, 95000);
     const stepEl = document.getElementById("rblStep");
     const steps = [
       "Scoring your 20 responses…",
@@ -2605,8 +2621,19 @@
       if (i >= steps.length - 1) clearInterval(buildMsgTimer);
     }, 4500);
   }
+  // Reveal when no AI text is coming at all (API down, request blocked, offline).
+  // progressiveApply({}) installs the composed fallback copy — without it the
+  // revealed report would still read "Building your personalized analysis…".
+  function revealWithFallback() {
+    const rs = document.getElementById("resultsScreen");
+    if (!rs || !rs.classList.contains("report-building")) return;
+    try { aiPending = false; } catch (e) {}
+    try { if (typeof progressiveApply === "function") progressiveApply({}); } catch (e) {}
+    revealReport();
+  }
   function revealReport() {
     clearInterval(buildMsgTimer); buildMsgTimer = null;
+    clearTimeout(buildWatchdog); buildWatchdog = null;
     const rs = document.getElementById("resultsScreen");
     if (rs) rs.classList.remove("report-building");
   }
@@ -2793,6 +2820,15 @@
     } catch (err) {
       console.error("Report sync failed (results shown anyway):", err);
       emailVerdict = null; // system error -> don't block on it
+      // We already know no id and no AI text are coming, so don't make the
+      // visitor stare at the building loader until the 95s watchdog. Reveal
+      // shortly (long enough that it still reads as "finishing up") and stop
+      // promising a report ID that will never arrive.
+      setTimeout(() => {
+        revealWithFallback();
+        const right = document.getElementById("topbarRight");
+        if (right && /pending/i.test(right.textContent)) right.innerHTML = "";
+      }, 5000);
     } finally {
       if (emailVerdictResolve) emailVerdictResolve();
     }
